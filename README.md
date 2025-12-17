@@ -9,7 +9,7 @@
 
 Display theater production references including guest performances, festivals, and awards in a structured, chronological format.
 
----
+![](assets/screenshot-1.png)
 
 ## Description
 
