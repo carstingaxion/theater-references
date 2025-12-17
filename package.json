@@ -1,8 +1,8 @@
 {
-    "name": "theater-references",
+    "name": "gatherpress-references",
     "version": "0.1.0",
-    "description": "Display theater production references including guest performances, festivals, and awards.",
-    "author": "telex block authoring tool",
+    "description": "Display production references including clients, festivals, and awards.",
+    "author": "carstenbach & telex block authoring tool",
     "license": "GPL-2.0-or-later",
     "main": "build/index.js",
     "scripts": {

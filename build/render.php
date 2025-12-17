@@ -1,30 +1,32 @@
 <?php
 /**
- * Theater References Block - Frontend Renderer
+ * GatherPress References Block - Frontend Renderer
  *
- * This file handles the server-side rendering of the Theater References block.
- * It queries events, organizes references by year and type, and outputs structured HTML.
+ * This file handles the server-side rendering of the GatherPress References block
+ * for GatherPress events. It queries GatherPress events, organizes references
+ * by year and type, and outputs structured HTML.
  *
- * @package TheaterReferences
+ * @package GatherPressReferences
  * @since 0.1.0
  */
 
-if ( ! class_exists( 'Theater_References_Renderer' ) ) {
+if ( ! class_exists( 'GatherPress_References_Renderer' ) ) {
 	/**
-	 * Theater References Renderer
+	 * GatherPress References Renderer
 	 *
 	 * Handles data retrieval, caching, and organization for block rendering.
 	 * Optimized for performance with transient caching and efficient queries.
+	 * Works with GatherPress events (gatherpress_event post type).
 	 *
 	 * @since 0.1.0
 	 */
-	class Theater_References_Renderer {
+	class GatherPress_References_Renderer {
 		/**
 		 * Cache key prefix
 		 *
 		 * @var string
 		 */
-		private string $cache_prefix = 'theater_refs_';
+		private string $cache_prefix = 'gatherpress_refs_';
 
 		/**
 		 * Cache expiration in seconds (1 hour)
@@ -79,15 +81,15 @@ if ( ! class_exists( 'Theater_References_Renderer' ) ) {
 			 *
 			 * @example
 			 * // Increase cache to 2 hours
-			 * add_filter( 'theater_references_cache_expiration', function( $seconds ) {
+			 * add_filter( 'gatherpress_references_cache_expiration', function( $seconds ) {
 			 *     return 7200;
 			 * } );
 			 *
 			 * @example
 			 * // Disable caching (use 0)
-			 * add_filter( 'theater_references_cache_expiration', '__return_zero' );
+			 * add_filter( 'gatherpress_references_cache_expiration', '__return_zero' );
 			 */
-			$this->cache_expiration = apply_filters( 'theater_references_cache_expiration', $this->cache_expiration );
+			$this->cache_expiration = apply_filters( 'gatherpress_references_cache_expiration', $this->cache_expiration );
 		}
 
 		/**
@@ -197,7 +199,7 @@ if ( ! class_exists( 'Theater_References_Renderer' ) ) {
 							<td style="padding: 8px; border: 1px solid #ddd;">Any/All</td>
 							<td style="padding: 8px; border: 1px solid #ddd;">All</td>
 							<td style="padding: 8px; border: 1px solid #ddd;">All</td>
-							<td style="padding: 8px; border: 1px solid #ddd;"><strong>Show all events, all types</strong> (no filters)</td>
+							<td style="padding: 8px; border: 1px solid #ddd;"><strong>Show all GatherPress events, all types</strong> (no filters)</td>
 						</tr>
 						<tr style="background: <?php echo ( $production_id > 0 && $type === 'all' && empty( $year ) ) ? '#e7f7ff' : 'white'; ?>">
 							<td style="padding: 8px; border: 1px solid #ddd;">2</td>
@@ -265,15 +267,15 @@ if ( ! class_exists( 'Theater_References_Renderer' ) ) {
 		/**
 		 * Get references organized by year and type
 		 *
-		 * Retrieves all matching events and organizes their taxonomy terms
+		 * Retrieves all matching GatherPress events and organizes their taxonomy terms
 		 * by year and reference type. Results are cached for performance.
 		 *
 		 * Example return structure:
 		 * array(
 		 *     '2024' => array(
-		 *         'theater-venues' => array( 'Royal Theater London', 'Vienna Burgtheater' ),
-		 *         'theater-festivals' => array( 'Edinburgh Festival' ),
-		 *         'theater-awards' => array( 'Best Director Award' )
+		 *         '_gatherpress-client' => array( 'Royal Theater London', 'Vienna Burgtheater' ),
+		 *         '_gatherpress-festival' => array( 'Edinburgh Festival' ),
+		 *         '_gatherpress-award' => array( 'Best Director Award' )
 		 *     ),
 		 *     '2023' => array(...)
 		 * )
@@ -285,7 +287,7 @@ if ( ! class_exists( 'Theater_References_Renderer' ) ) {
 		 * @return array Nested array of references organized by year and type.
 		 */
 		public function get_references( int $production_id = 0, string $year = '', string $type = 'all' ): array {
-			$this->debug( 'Starting get_references', array(
+			$this->debug( 'Starting get_references for GatherPress events', array(
 				'production_id' => $production_id,
 				'year' => $year,
 				'type' => $type,
@@ -301,10 +303,10 @@ if ( ! class_exists( 'Theater_References_Renderer' ) ) {
 				return $cached;
 			}
 
-			// Build WP_Query arguments for event posts
+			// Build WP_Query arguments for GatherPress event posts
 			$args = array(
-				'post_type'              => 'events',
-				'posts_per_page'         => -1, // Get all matching posts
+				'post_type'              => 'gatherpress_event',
+				'posts_per_page'         => -1,
 				'post_status'            => 'publish',
 				'orderby'                => 'date',
 				'order'                  => 'DESC', // Newest first
@@ -330,14 +332,14 @@ if ( ! class_exists( 'Theater_References_Renderer' ) ) {
 			 *
 			 * @example
 			 * // Limit query to 50 posts
-			 * add_filter( 'theater_references_query_args', function( $args ) {
+			 * add_filter( 'gatherpress_references_query_args', function( $args ) {
 			 *     $args['posts_per_page'] = 50;
 			 *     return $args;
 			 * } );
 			 *
 			 * @example
 			 * // Add custom meta query
-			 * add_filter( 'theater_references_query_args', function( $args ) {
+			 * add_filter( 'gatherpress_references_query_args', function( $args ) {
 			 *     $args['meta_query'] = array(
 			 *         array(
 			 *             'key'     => 'featured',
@@ -348,7 +350,7 @@ if ( ! class_exists( 'Theater_References_Renderer' ) ) {
 			 *     return $args;
 			 * } );
 			 */
-			$args = apply_filters( 'theater_references_query_args', $args, $production_id, $year, $type );
+			$args = apply_filters( 'gatherpress_references_query_args', $args, $production_id, $year, $type );
 
 			$this->debug( 'Query args after filter', $args );
 
@@ -365,7 +367,7 @@ if ( ! class_exists( 'Theater_References_Renderer' ) ) {
 			// STEP 1: Add production filter if specified
 			if ( $production_id > 0 ) {
 				$tax_query[] = array(
-					'taxonomy' => 'theater-productions',
+					'taxonomy' => 'gatherpress-productions',
 					'field'    => 'term_id',
 					'terms'    => $production_id,
 				);
@@ -406,14 +408,10 @@ if ( ! class_exists( 'Theater_References_Renderer' ) ) {
 				if ( count( $tax_query ) > 1 ) {
 					$this->debug( 'Multiple tax_query items, adding AND relation' );
 					$tax_query = array_merge( array( 'relation' => 'AND' ), $tax_query );
-				} else {
-					$this->debug( 'Single tax_query item, no relation needed' );
 				}
 				
 				$args['tax_query'] = $tax_query;
 				$this->debug( 'Final tax_query applied to args', $tax_query );
-			} else {
-				$this->debug( 'No tax_query filters to apply' );
 			}
 
 			// STEP 4: Add year filter if specified
@@ -447,8 +445,8 @@ if ( ! class_exists( 'Theater_References_Renderer' ) ) {
 					'dates' => $post_dates,
 				) );
 				
-				// For display, always get all reference taxonomies
-				$display_taxonomies = array( 'theater-venues', 'theater-festivals', 'theater-awards' );
+				// Always get all reference taxonomies for display
+				$display_taxonomies = array( '_gatherpress-client', '_gatherpress-festival', '_gatherpress-award' );
 				
 				/**
 				 * Filter the taxonomies displayed in the output.
@@ -462,18 +460,18 @@ if ( ! class_exists( 'Theater_References_Renderer' ) ) {
 				 *
 				 * @example
 				 * // Add custom taxonomy
-				 * add_filter( 'theater_references_display_taxonomies', function( $taxonomies ) {
-				 *     $taxonomies[] = 'theater-custom';
+				 * add_filter( 'gatherpress_references_display_taxonomies', function( $taxonomies ) {
+				 *     $taxonomies[] = 'gatherpress-custom';
 				 *     return $taxonomies;
 				 * } );
 				 *
 				 * @example
-				 * // Show only venues
-				 * add_filter( 'theater_references_display_taxonomies', function( $taxonomies ) {
-				 *     return array( 'theater-venues' );
+				 * // Show only clients
+				 * add_filter( 'gatherpress_references_display_taxonomies', function( $taxonomies ) {
+				 *     return array( '_gatherpress-client' );
 				 * } );
 				 */
-				$display_taxonomies = apply_filters( 'theater_references_display_taxonomies', $display_taxonomies );
+				$display_taxonomies = apply_filters( 'gatherpress_references_display_taxonomies', $display_taxonomies );
 				
 				// Batch fetch all taxonomy terms
 				$post_terms = $this->get_post_terms( $post_ids, $display_taxonomies );
@@ -493,23 +491,23 @@ if ( ! class_exists( 'Theater_References_Renderer' ) ) {
 					$post_year = $post_dates[ $post_id ]->year;
 					$terms = isset( $post_terms[ $post_id ] ) ? $post_terms[ $post_id ] : array();
 
-					$this->debug( "Processing post {$post_id}", array(
+					$this->debug( "Processing GatherPress event {$post_id}", array(
 						'year' => $post_year,
-						'has_venues' => isset( $terms['theater-venues'] ),
-						'has_festivals' => isset( $terms['theater-festivals'] ),
-						'has_awards' => isset( $terms['theater-awards'] ),
+						'has_clients' => isset( $terms['_gatherpress-client'] ),
+						'has_festivals' => isset( $terms['_gatherpress-festival'] ),
+						'has_awards' => isset( $terms['_gatherpress-award'] ),
 					) );
 
 					// Initialize year structure if not exists
 					if ( ! isset( $references[ $post_year ] ) ) {
 						$references[ $post_year ] = array(
-							'theater-venues' => array(),
-							'theater-festivals' => array(),
-							'theater-awards' => array(),
+							'_gatherpress-client' => array(),
+							'_gatherpress-festival' => array(),
+							'_gatherpress-award' => array(),
 						);
 					}
 
-					// Add term names to appropriate arrays (deduplicated)
+					// Add term names (deduplicated)
 					foreach ( $display_taxonomies as $taxonomy ) {
 						if ( isset( $terms[ $taxonomy ] ) ) {
 							foreach ( $terms[ $taxonomy ] as $term ) {
@@ -523,7 +521,7 @@ if ( ! class_exists( 'Theater_References_Renderer' ) ) {
 					}
 				}
 			} else {
-				$this->debug( 'No posts found by query' );
+				$this->debug( 'No GatherPress events found by query' );
 			}
 
 			/**
@@ -542,7 +540,7 @@ if ( ! class_exists( 'Theater_References_Renderer' ) ) {
 			 *
 			 * @example
 			 * // Sort references alphabetically within each type
-			 * add_filter( 'theater_references_data', function( $references ) {
+			 * add_filter( 'gatherpress_references_data', function( $references ) {
 			 *     foreach ( $references as $year => $types ) {
 			 *         foreach ( $types as $type => $items ) {
 			 *             sort( $references[ $year ][ $type ] );
@@ -553,13 +551,13 @@ if ( ! class_exists( 'Theater_References_Renderer' ) ) {
 			 *
 			 * @example
 			 * // Filter out years older than 2020
-			 * add_filter( 'theater_references_data', function( $references ) {
+			 * add_filter( 'gatherpress_references_data', function( $references ) {
 			 *     return array_filter( $references, function( $year ) {
 			 *         return intval( $year ) >= 2020;
 			 *     }, ARRAY_FILTER_USE_KEY );
 			 * } );
 			 */
-			$references = apply_filters( 'theater_references_data', $references, $production_id, $year, $type );
+			$references = apply_filters( 'gatherpress_references_data', $references, $production_id, $year, $type );
 
 			$this->debug( 'Final references structure', $references );
 
@@ -578,12 +576,12 @@ if ( ! class_exists( 'Theater_References_Renderer' ) ) {
 		 * @return array Array of taxonomy slugs to query.
 		 */
 		private function get_taxonomies_by_type( string $type ): array {
-			if ( $type === 'theater-venues' ) {
-				return array( 'theater-venues' );
-			} elseif ( $type === 'theater-festivals' ) {
-				return array( 'theater-festivals' );
-			} elseif ( $type === 'theater-awards' ) {
-				return array( 'theater-awards' );
+			if ( $type === '_gatherpress-client' ) {
+				return array( '_gatherpress-client' );
+			} elseif ( $type === '_gatherpress-festival' ) {
+				return array( '_gatherpress-festival' );
+			} elseif ( $type === '_gatherpress-award' ) {
+				return array( '_gatherpress-award' );
 			}
 			// 'all' - return empty array (no type filter)
 			return array();
@@ -630,8 +628,8 @@ if ( ! class_exists( 'Theater_References_Renderer' ) ) {
 		 * Example return:
 		 * array(
 		 *     123 => array(
-		 *         'theater-venues' => array( WP_Term, WP_Term ),
-		 *         'theater-festivals' => array( WP_Term )
+		 *         '_gatherpress-client' => array( WP_Term, WP_Term ),
+		 *         '_gatherpress-festival' => array( WP_Term )
 		 *     )
 		 * )
 		 *
@@ -673,9 +671,9 @@ if ( ! class_exists( 'Theater_References_Renderer' ) ) {
 		 */
 		public function get_type_labels(): array {
 			$labels = array(
-				'theater-venues'    => __( 'Guest Performances & Clients', 'theater-references' ),
-				'theater-festivals' => __( 'Festivals', 'theater-references' ),
-				'theater-awards'    => __( 'Awards', 'theater-references' ),
+				'_gatherpress-client'    => __( 'Clients', 'gatherpress-references' ),
+				'_gatherpress-festival' => __( 'Festivals', 'gatherpress-references' ),
+				'_gatherpress-award'    => __( 'Awards', 'gatherpress-references' ),
 			);
 
 			/**
@@ -691,25 +689,25 @@ if ( ! class_exists( 'Theater_References_Renderer' ) ) {
 			 *
 			 * @example
 			 * // Add custom taxonomy label
-			 * add_filter( 'theater_references_type_labels', function( $labels ) {
-			 *     $labels['theater-custom'] = __( 'Custom References', 'textdomain' );
+			 * add_filter( 'gatherpress_references_type_labels', function( $labels ) {
+			 *     $labels['gatherpress-custom'] = __( 'Custom References', 'textdomain' );
 			 *     return $labels;
 			 * } );
 			 *
 			 * @example
 			 * // Override existing label
-			 * add_filter( 'theater_references_type_labels', function( $labels ) {
-			 *     $labels['theater-awards'] = __( 'Prizes & Honours', 'textdomain' );
+			 * add_filter( 'gatherpress_references_type_labels', function( $labels ) {
+			 *     $labels['_gatherpress-award'] = __( 'Prizes & Honours', 'textdomain' );
 			 *     return $labels;
 			 * } );
 			 */
-			return apply_filters( 'theater_references_type_labels', $labels );
+			return apply_filters( 'gatherpress_references_type_labels', $labels );
 		}
 	}
 }
 
 // Initialize renderer
-$renderer = new Theater_References_Renderer();
+$renderer = new GatherPress_References_Renderer();
 
 // Extract and sanitize block attributes
 $production_id = isset( $attributes['productionId'] ) ? intval( $attributes['productionId'] ) : 0;
@@ -724,16 +722,16 @@ $heading_level = max( 1, min( 6, $heading_level ) );
 $secondary_heading_level = min( $heading_level + 1, 6 );
 
 // Map legacy attribute values to taxonomy slugs
-if ( $type === 'ref_orga' ) {
-	$type = 'theater-venues';
+if ( $type === 'ref_client' ) {
+	$type = '_gatherpress-client';
 } elseif ( $type === 'ref_festival' ) {
-	$type = 'theater-festivals';
+	$type = '_gatherpress-festival';
 } elseif ( $type === 'ref_award' ) {
-	$type = 'theater-awards';
+	$type = '_gatherpress-award';
 }
 
 // Auto-detect production from current taxonomy term if viewing a production archive
-if ( $production_id === 0 && is_tax( 'theater-productions' ) ) {
+if ( $production_id === 0 && is_tax( 'gatherpress-productions' ) ) {
 	$term = get_queried_object();
 	$production_id = $term->term_id;
 }
@@ -752,17 +750,14 @@ echo $renderer->get_test_matrix( $production_id, $type, $year );
 <div <?php echo get_block_wrapper_attributes(); ?>>
 	<?php if ( ! empty( $references ) ) : ?>
 		<?php foreach ( $references as $ref_year => $types ) : ?>
-			<!-- Year heading -->
 			<h<?php echo esc_attr( $heading_level ); ?> class="references-year"><?php echo esc_html( $ref_year ); ?></h<?php echo esc_attr( $heading_level ); ?>>
 			
 			<?php foreach ( $types as $ref_type => $items ) : ?>
 				<?php if ( ! empty( $items ) ) : ?>
-					<!-- Type heading (only shown when displaying all types) -->
 					<?php if ( ! $is_specific_type ) : ?>
 						<h<?php echo esc_attr( $secondary_heading_level ); ?> class="references-type"><?php echo esc_html( $type_labels[ $ref_type ] ); ?></h<?php echo esc_attr( $secondary_heading_level ); ?>>
 					<?php endif; ?>
 					
-					<!-- Reference list -->
 					<ul class="references-list">
 						<?php foreach ( $items as $item ) : ?>
 							<li><?php echo esc_html( $item ); ?></li>
@@ -772,7 +767,6 @@ echo $renderer->get_test_matrix( $production_id, $type, $year );
 			<?php endforeach; ?>
 		<?php endforeach; ?>
 	<?php else : ?>
-		<!-- Empty state -->
-		<p class="no-references"><?php esc_html_e( 'No references found matching the selected criteria.', 'theater-references' ); ?></p>
+		<p class="no-references"><?php esc_html_e( 'No references found matching the selected criteria.', 'gatherpress-references' ); ?></p>
 	<?php endif; ?>
 </div>

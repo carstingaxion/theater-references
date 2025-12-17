@@ -1,12 +1,12 @@
 {
   "$schema": "https://schemas.wp.org/trunk/block.json",
   "apiVersion": 3,
-  "name": "telex/theater-references",
+  "name": "gatherpress/references",
   "version": "0.1.0",
-  "title": "Theater References",
+  "title": "GatherPress References",
   "category": "widgets",
   "icon": "awards",
-  "description": "Display theater production references including guest performances, festivals, and awards.",
+  "description": "Display event references including clients, festivals, and awards.",
   "example": {},
   "attributes": {
     "productionId": {
@@ -22,7 +22,7 @@
       "default": "all",
       "enum": [
         "all",
-        "ref_orga",
+        "ref_client",
         "ref_festival",
         "ref_award"
       ]
@@ -34,7 +34,7 @@
     "metadata": {
       "type": "object",
       "default": {
-        "name": "Theater References"
+        "name": "GatherPress References"
       }
     }
   },
@@ -84,8 +84,8 @@
       }
     }
   },
-  "style": "wp-block-telex-theater-references",
-  "textdomain": "theater-references",
+  "style": "wp-block-gatherpress-references",
+  "textdomain": "gatherpress-references",
   "editorScript": "file:./index.js",
   "editorStyle": "file:./index.css",
   "render": "file:./render.php"

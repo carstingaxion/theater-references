@@ -1,11 +1,11 @@
 /**
- * Theater References Block Styles
+ * GatherPress References Block Styles
  * 
  * Comprehensive theme.json support with semantic color tokens,
  * typography scales, and spacing controls for granular styling.
  * 
  * Styling hierarchy:
- * 1. Block container (.wp-block-telex-theater-references)
+ * 1. Block container (.wp-block-gatherpress-references)
  * 2. Year headings (.references-year) - h2 level
  * 3. Type headings (.references-type) - h3 level  
  * 4. Reference lists (.references-list) - ul element
@@ -15,7 +15,7 @@
  * BLOCK CONTAINER
  * Main wrapper with comprehensive theme.json integration
  */
-.wp-block-telex-theater-references {
+.wp-block-gatherpress-references {
 	/* Spacing - block container */
 	margin-block-start: var(--wp--preset--spacing--50, 2em);
 	margin-block-end: var(--wp--preset--spacing--50, 2em);

@@ -1,5 +1,5 @@
 /**
- * Theater References Block - Editor Component
+ * GatherPress References Block - Editor Component
  *
  * Renders the block in the WordPress block editor with live preview
  * and inspector controls for filtering and customization.
@@ -22,7 +22,7 @@ import { useEffect } from '@wordpress/element';
 import './editor.scss';
 
 /**
- * Edit component for Theater References block
+ * Edit component for GatherPress References block
  *
  * Displays a preview of the block output with inspector controls
  * for customization. Shows placeholder data for better UX.
@@ -38,13 +38,13 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 	const { productionId, year, referenceType, headingLevel } = attributes;
 
 	/**
-	 * Fetch theater productions from WordPress data store
+	 * Fetch productions from WordPress data store
 	 *
 	 * Uses the core data store to fetch all production terms.
 	 * Returns empty array while loading to prevent errors.
 	 */
 	const productions = useSelect( ( select ) => {
-		const terms = select( 'core' ).getEntityRecords( 'taxonomy', 'theater-productions', {
+		const terms = select( 'core' ).getEntityRecords( 'taxonomy', 'gatherpress-productions', {
 			per_page: -1, // Fetch all productions
 		} );
 		return terms || [];
@@ -79,20 +79,20 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 		// Add reference type if not "all"
 		if ( referenceType !== 'all' ) {
 			const typeLabels = {
-				ref_orga: __( 'Venues', 'theater-references' ),
-				ref_festival: __( 'Festivals', 'theater-references' ),
-				ref_award: __( 'Awards', 'theater-references' ),
+				ref_client: __( 'Clients', 'gatherpress-references' ),
+				ref_festival: __( 'Festivals', 'gatherpress-references' ),
+				ref_award: __( 'Awards', 'gatherpress-references' ),
 			};
 			parts.push( typeLabels[ referenceType ] || referenceType );
 		}
 
 		// Construct final label
 		if ( parts.length > 0 ) {
-			return __( 'References: ', 'theater-references' ) + parts.join( ' • ' );
+			return __( 'References: ', 'gatherpress-references' ) + parts.join( ' • ' );
 		}
 
 		// Default label when no filters applied
-		return __( 'Theater References', 'theater-references' );
+		return __( 'References', 'gatherpress-references' );
 	};
 
 	/**
@@ -132,9 +132,9 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 	 * Used for displaying type headings in preview.
 	 */
 	const typeLabels = {
-		ref_orga: __( 'Guest Performances & Clients', 'theater-references' ),
-		ref_festival: __( 'Festivals', 'theater-references' ),
-		ref_award: __( 'Awards', 'theater-references' ),
+		ref_client: __( 'Clients', 'gatherpress-references' ),
+		ref_festival: __( 'Festivals', 'gatherpress-references' ),
+		ref_award: __( 'Awards', 'gatherpress-references' ),
 	};
 
 	/**
@@ -146,7 +146,7 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 	 * Structure matches the output from render.php:
 	 * {
 	 *   '2024': {
-	 *     'ref_orga': ['Venue 1', 'Venue 2'],
+	 *     'ref_client': ['Client 1', 'Client 2'],
 	 *     'ref_festival': ['Festival 1'],
 	 *     'ref_award': ['Award 1']
 	 *   }
@@ -154,24 +154,24 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 	 */
 	const placeholderData = {
 		2024: {
-			ref_orga: [
-				__( 'Royal Theater London', 'theater-references' ),
-				__( 'Vienna Burgtheater', 'theater-references' ),
+			ref_client: [
+				__( 'Royal Theater London', 'gatherpress-references' ),
+				__( 'Vienna Burgtheater', 'gatherpress-references' ),
 			],
 			ref_festival: [
-				__( 'Edinburgh International Festival', 'theater-references' ),
+				__( 'Edinburgh International Festival', 'gatherpress-references' ),
 			],
 			ref_award: [
-				__( 'Best Director Award', 'theater-references' ),
+				__( 'Best Director Award', 'gatherpress-references' ),
 			],
 		},
 		2023: {
-			ref_orga: [
-				__( 'Berlin Staatstheater', 'theater-references' ),
+			ref_client: [
+				__( 'Berlin Staatstheater', 'gatherpress-references' ),
 			],
 			ref_festival: [
-				__( 'Avignon Festival', 'theater-references' ),
-				__( 'Salzburg Festival', 'theater-references' ),
+				__( 'Avignon Festival', 'gatherpress-references' ),
+				__( 'Salzburg Festival', 'gatherpress-references' ),
 			],
 			ref_award: [],
 		},
@@ -211,14 +211,14 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 		<>
 			{/* Inspector Controls - Sidebar settings panel */}
 			<InspectorControls>
-				<PanelBody title={ __( 'Reference Settings', 'theater-references' ) }>
+				<PanelBody title={ __( 'Reference Settings', 'gatherpress-references' ) }>
 					{/* Production filter dropdown */}
 					<SelectControl
-						label={ __( 'Production', 'theater-references' ) }
+						label={ __( 'Production', 'gatherpress-references' ) }
 						value={ productionId }
 						options={ [
 							// Default option for auto-detection
-							{ label: __( 'Auto-detect (or all)', 'theater-references' ), value: 0 },
+							{ label: __( 'Auto-detect (or all)', 'gatherpress-references' ), value: 0 },
 							// Map production terms to options
 							...productions.map( ( production ) => ( {
 								label: production.name,
@@ -228,42 +228,42 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 						onChange={ ( value ) =>
 							setAttributes( { productionId: parseInt( value ) } )
 						}
-						help={ __( 'Select a specific production or leave as auto-detect', 'theater-references' ) }
+						help={ __( 'Select a specific production or leave as auto-detect', 'gatherpress-references' ) }
 					/>
 
 					{/* Year filter input */}
 					<TextControl
-						label={ __( 'Year', 'theater-references' ) }
+						label={ __( 'Year', 'gatherpress-references' ) }
 						value={ year }
 						onChange={ ( value ) => setAttributes( { year: value } ) }
-						help={ __( 'Filter by specific year (e.g., 2017). Leave empty for all years.', 'theater-references' ) }
+						help={ __( 'Filter by specific year (e.g., 2017). Leave empty for all years.', 'gatherpress-references' ) }
 						type="number"
 					/>
 
 					{/* Reference type filter dropdown */}
 					<SelectControl
-						label={ __( 'Reference Type', 'theater-references' ) }
+						label={ __( 'Reference Type', 'gatherpress-references' ) }
 						value={ referenceType }
 						options={ [
-							{ label: __( 'All Types', 'theater-references' ), value: 'all' },
-							{ label: __( 'Guest Performances & Clients', 'theater-references' ), value: 'ref_orga' },
-							{ label: __( 'Festivals', 'theater-references' ), value: 'ref_festival' },
-							{ label: __( 'Awards', 'theater-references' ), value: 'ref_award' },
+							{ label: __( 'All Types', 'gatherpress-references' ), value: 'all' },
+							{ label: __( 'Clients', 'gatherpress-references' ), value: 'ref_client' },
+							{ label: __( 'Festivals', 'gatherpress-references' ), value: 'ref_festival' },
+							{ label: __( 'Awards', 'gatherpress-references' ), value: 'ref_award' },
 						] }
 						onChange={ ( value ) =>
 							setAttributes( { referenceType: value } )
 						}
-						help={ __( 'Choose which type of references to display', 'theater-references' ) }
+						help={ __( 'Choose which type of references to display', 'gatherpress-references' ) }
 					/>
 
 					{/* Heading level slider */}
 					<RangeControl
-						label={ __( 'Year Heading Level', 'theater-references' ) }
+						label={ __( 'Year Heading Level', 'gatherpress-references' ) }
 						value={ headingLevel }
 						onChange={ ( value ) => setAttributes( { headingLevel: value } ) }
 						min={ 1 }
 						max={ 5 } // Max H5 so secondary can be H6
-						help={ __( 'Choose the heading level for year headings (H1-H5). Type headings will be one level smaller.', 'theater-references' ) }
+						help={ __( 'Choose the heading level for year headings (H1-H5). Type headings will be one level smaller.', 'gatherpress-references' ) }
 					/>
 				</PanelBody>
 			</InspectorControls>
@@ -310,7 +310,7 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 				) : (
 					// Empty state when no matching references
 					<p className="no-references">
-						{ __( 'No references found matching the selected criteria.', 'theater-references' ) }
+						{ __( 'No references found matching the selected criteria.', 'gatherpress-references' ) }
 					</p>
 				) }
 			</div>
