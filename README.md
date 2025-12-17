@@ -170,13 +170,11 @@ The block supports **theme.json** styling:
 
 You can also use custom CSS:
 
-```css
-.wp-block-telex-theater-references {}
-.references-year {}
-.references-type {}
-.references-list {}
-.no-references {}
-```
+- `.wp-block-telex-theater-references` - Main container
+- `.references-year` - Year headings
+- `.references-type` - Type headings
+- `.references-list` - Reference lists
+- `.no-references` - Empty state message
 
 ## Can I change the heading levels?
 

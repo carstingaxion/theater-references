@@ -35,7 +35,7 @@ if ( ! class_exists( 'Theater_References_Renderer' ) ) {
 
 		/**
 		 * Debug mode flag
-		 * Set to true to enable debug output
+		 * Set to true to enable debug output (requires WP_DEBUG)
 		 *
 		 * @var bool
 		 */
@@ -91,13 +91,27 @@ if ( ! class_exists( 'Theater_References_Renderer' ) ) {
 		}
 
 		/**
+		 * Check if debug mode is enabled
+		 *
+		 * Debug output only shows when both:
+		 * 1. WP_DEBUG constant is true
+		 * 2. $this->debug property is true
+		 *
+		 * @since 0.1.0
+		 * @return bool True if debug mode is enabled
+		 */
+		private function is_debug_enabled(): bool {
+			return defined( 'WP_DEBUG' ) && WP_DEBUG && $this->debug;
+		}
+
+		/**
 		 * Add debug message
 		 *
 		 * @param string $message Debug message
 		 * @param mixed  $data    Optional data to log
 		 */
 		private function debug( string $message, $data = null ): void {
-			if ( ! $this->debug ) {
+			if ( ! $this->is_debug_enabled() ) {
 				return;
 			}
 
@@ -116,15 +130,17 @@ if ( ! class_exists( 'Theater_References_Renderer' ) ) {
 		/**
 		 * Get debug log as HTML
 		 *
-		 * @return string HTML formatted debug log
+		 * Only outputs when WP_DEBUG is true.
+		 *
+		 * @return string HTML formatted debug log or empty string
 		 */
 		public function get_debug_output(): string {
-			if ( ! $this->debug || empty( $this->debug_log ) ) {
+			if ( ! $this->is_debug_enabled() || empty( $this->debug_log ) ) {
 				return '';
 			}
 
 			$output = '<div style="background: #f0f0f0; border: 2px solid #333; padding: 20px; margin: 20px 0; font-family: monospace; font-size: 12px;">';
-			$output .= '<h3 style="margin-top: 0;">Debug Log</h3>';
+			$output .= '<h3 style="margin-top: 0;">🐛 Debug Log (WP_DEBUG enabled)</h3>';
 
 			foreach ( $this->debug_log as $entry ) {
 				$output .= '<div style="margin-bottom: 10px; padding: 10px; background: white; border-left: 3px solid #2271b1;">';
@@ -141,6 +157,109 @@ if ( ! class_exists( 'Theater_References_Renderer' ) ) {
 
 			$output .= '</div>';
 			return $output;
+		}
+
+		/**
+		 * Get test matrix HTML
+		 *
+		 * Only outputs when WP_DEBUG is true.
+		 *
+		 * @since 0.1.0
+		 * @param int    $production_id Current production ID filter
+		 * @param string $type          Current type filter
+		 * @param string $year          Current year filter
+		 * @return string HTML formatted test matrix or empty string
+		 */
+		public function get_test_matrix( int $production_id, string $type, string $year ): string {
+			if ( ! $this->is_debug_enabled() ) {
+				return '';
+			}
+
+			ob_start();
+			?>
+			<div style="background: #fff; border: 2px solid #0073aa; padding: 20px; margin: 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;">
+				<h3 style="margin-top: 0; color: #0073aa;">🧪 Test Matrix - Expected Behaviors (WP_DEBUG enabled)</h3>
+				<p style="font-size: 13px; color: #666;">Test these combinations to verify filtering logic:</p>
+				
+				<table style="width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px;">
+					<thead>
+						<tr style="background: #f0f0f0;">
+							<th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Test #</th>
+							<th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Production</th>
+							<th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Type</th>
+							<th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Year</th>
+							<th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Expected Result</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr style="background: <?php echo ( $production_id === 0 && $type === 'all' && empty( $year ) ) ? '#e7f7ff' : 'white'; ?>">
+							<td style="padding: 8px; border: 1px solid #ddd;">1</td>
+							<td style="padding: 8px; border: 1px solid #ddd;">Any/All</td>
+							<td style="padding: 8px; border: 1px solid #ddd;">All</td>
+							<td style="padding: 8px; border: 1px solid #ddd;">All</td>
+							<td style="padding: 8px; border: 1px solid #ddd;"><strong>Show all events, all types</strong> (no filters)</td>
+						</tr>
+						<tr style="background: <?php echo ( $production_id > 0 && $type === 'all' && empty( $year ) ) ? '#e7f7ff' : 'white'; ?>">
+							<td style="padding: 8px; border: 1px solid #ddd;">2</td>
+							<td style="padding: 8px; border: 1px solid #ddd;">Specific</td>
+							<td style="padding: 8px; border: 1px solid #ddd;">All</td>
+							<td style="padding: 8px; border: 1px solid #ddd;">All</td>
+							<td style="padding: 8px; border: 1px solid #ddd;"><strong>Show events for production, all types</strong> (production filter only)</td>
+						</tr>
+						<tr style="background: <?php echo ( $production_id > 0 && $type !== 'all' && empty( $year ) ) ? '#e7f7ff' : 'white'; ?>">
+							<td style="padding: 8px; border: 1px solid #ddd;">3</td>
+							<td style="padding: 8px; border: 1px solid #ddd;">Specific</td>
+							<td style="padding: 8px; border: 1px solid #ddd;">Specific</td>
+							<td style="padding: 8px; border: 1px solid #ddd;">All</td>
+							<td style="padding: 8px; border: 1px solid #ddd;"><strong>Show events for production with specific type</strong> (production AND type filter)</td>
+						</tr>
+						<tr style="background: <?php echo ( $production_id === 0 && $type !== 'all' && empty( $year ) ) ? '#e7f7ff' : 'white'; ?>">
+							<td style="padding: 8px; border: 1px solid #ddd;">4</td>
+							<td style="padding: 8px; border: 1px solid #ddd;">Any/All</td>
+							<td style="padding: 8px; border: 1px solid #ddd;">Specific</td>
+							<td style="padding: 8px; border: 1px solid #ddd;">All</td>
+							<td style="padding: 8px; border: 1px solid #ddd;"><strong>Show all events with specific type</strong> (type filter only)</td>
+						</tr>
+						<tr style="background: <?php echo ( $production_id === 0 && $type === 'all' && ! empty( $year ) ) ? '#e7f7ff' : 'white'; ?>">
+							<td style="padding: 8px; border: 1px solid #ddd;">5</td>
+							<td style="padding: 8px; border: 1px solid #ddd;">Any/All</td>
+							<td style="padding: 8px; border: 1px solid #ddd;">All</td>
+							<td style="padding: 8px; border: 1px solid #ddd;">Specific</td>
+							<td style="padding: 8px; border: 1px solid #ddd;"><strong>Show all events from year, all types</strong> (year filter only)</td>
+						</tr>
+						<tr style="background: <?php echo ( $production_id > 0 && $type === 'all' && ! empty( $year ) ) ? '#e7f7ff' : 'white'; ?>">
+							<td style="padding: 8px; border: 1px solid #ddd;">6</td>
+							<td style="padding: 8px; border: 1px solid #ddd;">Specific</td>
+							<td style="padding: 8px; border: 1px solid #ddd;">All</td>
+							<td style="padding: 8px; border: 1px solid #ddd;">Specific</td>
+							<td style="padding: 8px; border: 1px solid #ddd;"><strong>Show production events from year, all types</strong> (production AND year filter)</td>
+						</tr>
+						<tr style="background: <?php echo ( $production_id > 0 && $type !== 'all' && ! empty( $year ) ) ? '#e7f7ff' : 'white'; ?>">
+							<td style="padding: 8px; border: 1px solid #ddd;">7</td>
+							<td style="padding: 8px; border: 1px solid #ddd;">Specific</td>
+							<td style="padding: 8px; border: 1px solid #ddd;">Specific</td>
+							<td style="padding: 8px; border: 1px solid #ddd;">Specific</td>
+							<td style="padding: 8px; border: 1px solid #ddd;"><strong>Show production events from year with specific type</strong> (all three filters)</td>
+						</tr>
+						<tr style="background: <?php echo ( $production_id === 0 && $type !== 'all' && ! empty( $year ) ) ? '#e7f7ff' : 'white'; ?>">
+							<td style="padding: 8px; border: 1px solid #ddd;">8</td>
+							<td style="padding: 8px; border: 1px solid #ddd;">Any/All</td>
+							<td style="padding: 8px; border: 1px solid #ddd;">Specific</td>
+							<td style="padding: 8px; border: 1px solid #ddd;">Specific</td>
+							<td style="padding: 8px; border: 1px solid #ddd;"><strong>Show all events from year with specific type</strong> (type AND year filter)</td>
+						</tr>
+					</tbody>
+				</table>
+				
+				<div style="margin-top: 15px; padding: 10px; background: #fff8e5; border-left: 3px solid #ffb900;">
+					<strong>📌 Current Test:</strong><br>
+					<code style="background: #f0f0f0; padding: 2px 6px; border-radius: 3px;">Production: <?php echo $production_id > 0 ? "ID {$production_id}" : 'Any/All'; ?></code>
+					<code style="background: #f0f0f0; padding: 2px 6px; border-radius: 3px; margin-left: 5px;">Type: <?php echo esc_html( $type ); ?></code>
+					<code style="background: #f0f0f0; padding: 2px 6px; border-radius: 3px; margin-left: 5px;">Year: <?php echo ! empty( $year ) ? esc_html( $year ) : 'All'; ?></code>
+				</div>
+			</div>
+			<?php
+			return ob_get_clean();
 		}
 
 		/**
@@ -175,11 +294,12 @@ if ( ! class_exists( 'Theater_References_Renderer' ) ) {
 			// Generate unique cache key based on parameters
 			$cache_key = $this->cache_prefix . md5( serialize( array( $production_id, $year, $type ) ) );
 			
-			// SKIP CACHE FOR DEBUGGING
-			// $cached = get_transient( $cache_key );
-			// if ( false !== $cached ) {
-			// 	return $cached;
-			// }
+			// Try cache first
+			$cached = get_transient( $cache_key );
+			if ( false !== $cached ) {
+				$this->debug( 'Returning cached data' );
+				return $cached;
+			}
 
 			// Build WP_Query arguments for event posts
 			$args = array(
@@ -625,8 +745,9 @@ $type_labels = $renderer->get_type_labels();
 // Determine if we're showing a specific type (affects heading display)
 $is_specific_type = ( $type !== 'all' );
 
-// Output debug log if enabled
+// Output debug information only if WP_DEBUG is true
 echo $renderer->get_debug_output();
+echo $renderer->get_test_matrix( $production_id, $type, $year );
 ?>
 <div <?php echo get_block_wrapper_attributes(); ?>>
 	<?php if ( ! empty( $references ) ) : ?>
@@ -654,87 +775,4 @@ echo $renderer->get_debug_output();
 		<!-- Empty state -->
 		<p class="no-references"><?php esc_html_e( 'No references found matching the selected criteria.', 'theater-references' ); ?></p>
 	<?php endif; ?>
-</div>
-
-<!-- Test Matrix -->
-<div style="background: #fff; border: 2px solid #0073aa; padding: 20px; margin: 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;">
-	<h3 style="margin-top: 0; color: #0073aa;">🧪 Test Matrix - Expected Behaviors</h3>
-	<p style="font-size: 13px; color: #666;">Test these combinations to verify filtering logic:</p>
-	
-	<table style="width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px;">
-		<thead>
-			<tr style="background: #f0f0f0;">
-				<th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Test #</th>
-				<th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Production</th>
-				<th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Type</th>
-				<th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Year</th>
-				<th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Expected Result</th>
-			</tr>
-		</thead>
-		<tbody>
-			<tr style="background: <?php echo ( $production_id === 0 && $type === 'all' && empty( $year ) ) ? '#e7f7ff' : 'white'; ?>">
-				<td style="padding: 8px; border: 1px solid #ddd;">1</td>
-				<td style="padding: 8px; border: 1px solid #ddd;">Any/All</td>
-				<td style="padding: 8px; border: 1px solid #ddd;">All</td>
-				<td style="padding: 8px; border: 1px solid #ddd;">All</td>
-				<td style="padding: 8px; border: 1px solid #ddd;"><strong>Show all events, all types</strong> (no filters)</td>
-			</tr>
-			<tr style="background: <?php echo ( $production_id > 0 && $type === 'all' && empty( $year ) ) ? '#e7f7ff' : 'white'; ?>">
-				<td style="padding: 8px; border: 1px solid #ddd;">2</td>
-				<td style="padding: 8px; border: 1px solid #ddd;">Specific</td>
-				<td style="padding: 8px; border: 1px solid #ddd;">All</td>
-				<td style="padding: 8px; border: 1px solid #ddd;">All</td>
-				<td style="padding: 8px; border: 1px solid #ddd;"><strong>Show events for production, all types</strong> (production filter only)</td>
-			</tr>
-			<tr style="background: <?php echo ( $production_id > 0 && $type !== 'all' && empty( $year ) ) ? '#e7f7ff' : 'white'; ?>">
-				<td style="padding: 8px; border: 1px solid #ddd;">3</td>
-				<td style="padding: 8px; border: 1px solid #ddd;">Specific</td>
-				<td style="padding: 8px; border: 1px solid #ddd;">Specific</td>
-				<td style="padding: 8px; border: 1px solid #ddd;">All</td>
-				<td style="padding: 8px; border: 1px solid #ddd;"><strong>Show events for production with specific type</strong> (production AND type filter)</td>
-			</tr>
-			<tr style="background: <?php echo ( $production_id === 0 && $type !== 'all' && empty( $year ) ) ? '#e7f7ff' : 'white'; ?>">
-				<td style="padding: 8px; border: 1px solid #ddd;">4</td>
-				<td style="padding: 8px; border: 1px solid #ddd;">Any/All</td>
-				<td style="padding: 8px; border: 1px solid #ddd;">Specific</td>
-				<td style="padding: 8px; border: 1px solid #ddd;">All</td>
-				<td style="padding: 8px; border: 1px solid #ddd;"><strong>Show all events with specific type</strong> (type filter only)</td>
-			</tr>
-			<tr style="background: <?php echo ( $production_id === 0 && $type === 'all' && ! empty( $year ) ) ? '#e7f7ff' : 'white'; ?>">
-				<td style="padding: 8px; border: 1px solid #ddd;">5</td>
-				<td style="padding: 8px; border: 1px solid #ddd;">Any/All</td>
-				<td style="padding: 8px; border: 1px solid #ddd;">All</td>
-				<td style="padding: 8px; border: 1px solid #ddd;">Specific</td>
-				<td style="padding: 8px; border: 1px solid #ddd;"><strong>Show all events from year, all types</strong> (year filter only)</td>
-			</tr>
-			<tr style="background: <?php echo ( $production_id > 0 && $type === 'all' && ! empty( $year ) ) ? '#e7f7ff' : 'white'; ?>">
-				<td style="padding: 8px; border: 1px solid #ddd;">6</td>
-				<td style="padding: 8px; border: 1px solid #ddd;">Specific</td>
-				<td style="padding: 8px; border: 1px solid #ddd;">All</td>
-				<td style="padding: 8px; border: 1px solid #ddd;">Specific</td>
-				<td style="padding: 8px; border: 1px solid #ddd;"><strong>Show production events from year, all types</strong> (production AND year filter)</td>
-			</tr>
-			<tr style="background: <?php echo ( $production_id > 0 && $type !== 'all' && ! empty( $year ) ) ? '#e7f7ff' : 'white'; ?>">
-				<td style="padding: 8px; border: 1px solid #ddd;">7</td>
-				<td style="padding: 8px; border: 1px solid #ddd;">Specific</td>
-				<td style="padding: 8px; border: 1px solid #ddd;">Specific</td>
-				<td style="padding: 8px; border: 1px solid #ddd;">Specific</td>
-				<td style="padding: 8px; border: 1px solid #ddd;"><strong>Show production events from year with specific type</strong> (all three filters)</td>
-			</tr>
-			<tr style="background: <?php echo ( $production_id === 0 && $type !== 'all' && ! empty( $year ) ) ? '#e7f7ff' : 'white'; ?>">
-				<td style="padding: 8px; border: 1px solid #ddd;">8</td>
-				<td style="padding: 8px; border: 1px solid #ddd;">Any/All</td>
-				<td style="padding: 8px; border: 1px solid #ddd;">Specific</td>
-				<td style="padding: 8px; border: 1px solid #ddd;">Specific</td>
-				<td style="padding: 8px; border: 1px solid #ddd;"><strong>Show all events from year with specific type</strong> (type AND year filter)</td>
-			</tr>
-		</tbody>
-	</table>
-	
-	<div style="margin-top: 15px; padding: 10px; background: #fff8e5; border-left: 3px solid #ffb900;">
-		<strong>📌 Current Test:</strong><br>
-		<code style="background: #f0f0f0; padding: 2px 6px; border-radius: 3px;">Production: <?php echo $production_id > 0 ? "ID {$production_id}" : 'Any/All'; ?></code>
-		<code style="background: #f0f0f0; padding: 2px 6px; border-radius: 3px; margin-left: 5px;">Type: <?php echo esc_html( $type ); ?></code>
-		<code style="background: #f0f0f0; padding: 2px 6px; border-radius: 3px; margin-left: 5px;">Year: <?php echo ! empty( $year ) ? esc_html( $year ) : 'All'; ?></code>
-	</div>
 </div>
