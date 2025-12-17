@@ -49,6 +49,48 @@ if ( ! class_exists( 'Theater_References_Renderer' ) ) {
 		private array $debug_log = array();
 
 		/**
+		 * Constructor
+		 *
+		 * Applies filterable properties on instantiation.
+		 *
+		 * @since 0.1.0
+		 */
+		public function __construct() {
+			$this->apply_filters();
+		}
+
+		/**
+		 * Apply filterable properties
+		 *
+		 * Allows developers to modify class properties via filters.
+		 *
+		 * @since 0.1.0
+		 */
+		private function apply_filters(): void {
+			/**
+			 * Filter the cache expiration time in seconds.
+			 *
+			 * Allows modification of how long reference data is cached.
+			 * Default is 3600 seconds (1 hour).
+			 *
+			 * @since 0.1.0
+			 *
+			 * @param int $cache_expiration Cache expiration time in seconds.
+			 *
+			 * @example
+			 * // Increase cache to 2 hours
+			 * add_filter( 'theater_references_cache_expiration', function( $seconds ) {
+			 *     return 7200;
+			 * } );
+			 *
+			 * @example
+			 * // Disable caching (use 0)
+			 * add_filter( 'theater_references_cache_expiration', '__return_zero' );
+			 */
+			$this->cache_expiration = apply_filters( 'theater_references_cache_expiration', $this->cache_expiration );
+		}
+
+		/**
 		 * Add debug message
 		 *
 		 * @param string $message Debug message
@@ -152,7 +194,43 @@ if ( ! class_exists( 'Theater_References_Renderer' ) ) {
 				'update_post_term_cache' => true, // Do cache terms (we need them)
 			);
 
-			$this->debug( 'Initial query args', $args );
+			/**
+			 * Filter the base query arguments before filters are applied.
+			 *
+			 * Allows modification of the WP_Query arguments before production,
+			 * year, and type filters are added. Useful for adding custom
+			 * meta queries or other query modifications.
+			 *
+			 * @since 0.1.0
+			 *
+			 * @param array  $args          WP_Query arguments array.
+			 * @param int    $production_id Production term ID filter.
+			 * @param string $year          Year filter.
+			 * @param string $type          Reference type filter.
+			 *
+			 * @example
+			 * // Limit query to 50 posts
+			 * add_filter( 'theater_references_query_args', function( $args ) {
+			 *     $args['posts_per_page'] = 50;
+			 *     return $args;
+			 * } );
+			 *
+			 * @example
+			 * // Add custom meta query
+			 * add_filter( 'theater_references_query_args', function( $args ) {
+			 *     $args['meta_query'] = array(
+			 *         array(
+			 *             'key'     => 'featured',
+			 *             'value'   => '1',
+			 *             'compare' => '='
+			 *         )
+			 *     );
+			 *     return $args;
+			 * } );
+			 */
+			$args = apply_filters( 'theater_references_query_args', $args, $production_id, $year, $type );
+
+			$this->debug( 'Query args after filter', $args );
 
 			// Get taxonomies to query based on type filter
 			$taxonomies = $this->get_taxonomies_by_type( $type );
@@ -252,6 +330,31 @@ if ( ! class_exists( 'Theater_References_Renderer' ) ) {
 				// For display, always get all reference taxonomies
 				$display_taxonomies = array( 'theater-venues', 'theater-festivals', 'theater-awards' );
 				
+				/**
+				 * Filter the taxonomies displayed in the output.
+				 *
+				 * Allows adding or removing taxonomies from the final output.
+				 * Useful when registering custom reference taxonomies.
+				 *
+				 * @since 0.1.0
+				 *
+				 * @param array $display_taxonomies Array of taxonomy slugs to display.
+				 *
+				 * @example
+				 * // Add custom taxonomy
+				 * add_filter( 'theater_references_display_taxonomies', function( $taxonomies ) {
+				 *     $taxonomies[] = 'theater-custom';
+				 *     return $taxonomies;
+				 * } );
+				 *
+				 * @example
+				 * // Show only venues
+				 * add_filter( 'theater_references_display_taxonomies', function( $taxonomies ) {
+				 *     return array( 'theater-venues' );
+				 * } );
+				 */
+				$display_taxonomies = apply_filters( 'theater_references_display_taxonomies', $display_taxonomies );
+				
 				// Batch fetch all taxonomy terms
 				$post_terms = $this->get_post_terms( $post_ids, $display_taxonomies );
 				$this->debug( 'Fetched post terms', array(
@@ -302,6 +405,41 @@ if ( ! class_exists( 'Theater_References_Renderer' ) ) {
 			} else {
 				$this->debug( 'No posts found by query' );
 			}
+
+			/**
+			 * Filter the final organized references data.
+			 *
+			 * Allows modification of the references structure before it's
+			 * cached and returned. Useful for sorting, filtering, or
+			 * reorganizing the data.
+			 *
+			 * @since 0.1.0
+			 *
+			 * @param array  $references    Nested array of year => type => references.
+			 * @param int    $production_id Production term ID filter.
+			 * @param string $year          Year filter.
+			 * @param string $type          Reference type filter.
+			 *
+			 * @example
+			 * // Sort references alphabetically within each type
+			 * add_filter( 'theater_references_data', function( $references ) {
+			 *     foreach ( $references as $year => $types ) {
+			 *         foreach ( $types as $type => $items ) {
+			 *             sort( $references[ $year ][ $type ] );
+			 *         }
+			 *     }
+			 *     return $references;
+			 * } );
+			 *
+			 * @example
+			 * // Filter out years older than 2020
+			 * add_filter( 'theater_references_data', function( $references ) {
+			 *     return array_filter( $references, function( $year ) {
+			 *         return intval( $year ) >= 2020;
+			 *     }, ARRAY_FILTER_USE_KEY );
+			 * } );
+			 */
+			$references = apply_filters( 'theater_references_data', $references, $production_id, $year, $type );
 
 			$this->debug( 'Final references structure', $references );
 
@@ -414,11 +552,38 @@ if ( ! class_exists( 'Theater_References_Renderer' ) ) {
 		 * @return array Associative array of taxonomy => label.
 		 */
 		public function get_type_labels(): array {
-			return array(
+			$labels = array(
 				'theater-venues'    => __( 'Guest Performances & Clients', 'theater-references' ),
 				'theater-festivals' => __( 'Festivals', 'theater-references' ),
 				'theater-awards'    => __( 'Awards', 'theater-references' ),
 			);
+
+			/**
+			 * Filter the type labels displayed in headings.
+			 *
+			 * Allows customization of the human-readable labels for each
+			 * reference type. Useful when adding custom taxonomies or
+			 * translating for specific locales.
+			 *
+			 * @since 0.1.0
+			 *
+			 * @param array $labels Array of taxonomy slug => label pairs.
+			 *
+			 * @example
+			 * // Add custom taxonomy label
+			 * add_filter( 'theater_references_type_labels', function( $labels ) {
+			 *     $labels['theater-custom'] = __( 'Custom References', 'textdomain' );
+			 *     return $labels;
+			 * } );
+			 *
+			 * @example
+			 * // Override existing label
+			 * add_filter( 'theater_references_type_labels', function( $labels ) {
+			 *     $labels['theater-awards'] = __( 'Prizes & Honours', 'textdomain' );
+			 *     return $labels;
+			 * } );
+			 */
+			return apply_filters( 'theater_references_type_labels', $labels );
 		}
 	}
 }

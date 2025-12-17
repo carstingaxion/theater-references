@@ -332,6 +332,317 @@ Results are organized in a nested structure:
 ]
 ```
 
+### Filter Hooks Reference
+
+The plugin provides several filter hooks for customization:
+
+#### theater_references_cache_expiration
+
+**Description:** Modify the cache expiration time in seconds.
+
+**Default:** 3600 (1 hour)
+
+**Parameters:**
+- `$seconds` (int) - Cache expiration time in seconds
+
+**Example - Increase cache to 2 hours:**
+```php
+add_filter( 'theater_references_cache_expiration', function( $seconds ) {
+    return 7200; // 2 hours
+} );
+```
+
+**Example - Disable caching:**
+```php
+add_filter( 'theater_references_cache_expiration', '__return_zero' );
+```
+
+**Example - Different cache times based on user role:**
+```php
+add_filter( 'theater_references_cache_expiration', function( $seconds ) {
+    if ( current_user_can( 'edit_posts' ) ) {
+        return 300; // 5 minutes for editors (more frequent updates)
+    }
+    return 7200; // 2 hours for regular visitors
+} );
+```
+
+---
+
+#### theater_references_query_args
+
+**Description:** Modify WP_Query arguments before the query is executed.
+
+**Parameters:**
+- `$args` (array) - WP_Query arguments array
+- `$production_id` (int) - Production term ID filter
+- `$year` (string) - Year filter
+- `$type` (string) - Reference type filter
+
+**Example - Limit results to 50 posts:**
+```php
+add_filter( 'theater_references_query_args', function( $args ) {
+    $args['posts_per_page'] = 50;
+    return $args;
+} );
+```
+
+**Example - Add custom meta query:**
+```php
+add_filter( 'theater_references_query_args', function( $args ) {
+    $args['meta_query'] = array(
+        array(
+            'key'     => 'featured',
+            'value'   => '1',
+            'compare' => '='
+        )
+    );
+    return $args;
+} );
+```
+
+**Example - Exclude specific post IDs:**
+```php
+add_filter( 'theater_references_query_args', function( $args ) {
+    $args['post__not_in'] = array( 123, 456, 789 );
+    return $args;
+} );
+```
+
+**Example - Conditional ordering:**
+```php
+add_filter( 'theater_references_query_args', function( $args, $production_id, $year, $type ) {
+    // Order by title alphabetically for award references
+    if ( $type === 'theater-awards' ) {
+        $args['orderby'] = 'title';
+        $args['order'] = 'ASC';
+    }
+    return $args;
+}, 10, 4 );
+```
+
+---
+
+#### theater_references_display_taxonomies
+
+**Description:** Modify which taxonomies are displayed in the output.
+
+**Default:** `array( 'theater-venues', 'theater-festivals', 'theater-awards' )`
+
+**Parameters:**
+- `$display_taxonomies` (array) - Array of taxonomy slugs to display
+
+**Example - Add custom taxonomy:**
+```php
+add_filter( 'theater_references_display_taxonomies', function( $taxonomies ) {
+    $taxonomies[] = 'theater-custom';
+    return $taxonomies;
+} );
+```
+
+**Example - Show only venues:**
+```php
+add_filter( 'theater_references_display_taxonomies', function( $taxonomies ) {
+    return array( 'theater-venues' );
+} );
+```
+
+**Example - Reorder taxonomies:**
+```php
+add_filter( 'theater_references_display_taxonomies', function( $taxonomies ) {
+    // Display awards first, then festivals, then venues
+    return array(
+        'theater-awards',
+        'theater-festivals',
+        'theater-venues'
+    );
+} );
+```
+
+---
+
+#### theater_references_data
+
+**Description:** Modify the final organized references data before caching and output.
+
+**Parameters:**
+- `$references` (array) - Nested array of year => type => references
+- `$production_id` (int) - Production term ID filter
+- `$year` (string) - Year filter
+- `$type` (string) - Reference type filter
+
+**Example - Sort references alphabetically:**
+```php
+add_filter( 'theater_references_data', function( $references ) {
+    foreach ( $references as $year => $types ) {
+        foreach ( $types as $type => $items ) {
+            sort( $references[ $year ][ $type ] );
+        }
+    }
+    return $references;
+} );
+```
+
+**Example - Filter out years older than 2020:**
+```php
+add_filter( 'theater_references_data', function( $references ) {
+    return array_filter( $references, function( $year ) {
+        return intval( $year ) >= 2020;
+    }, ARRAY_FILTER_USE_KEY );
+} );
+```
+
+**Example - Add custom data to each reference:**
+```php
+add_filter( 'theater_references_data', function( $references ) {
+    foreach ( $references as $year => $types ) {
+        foreach ( $types as $type => $items ) {
+            // Add emoji prefix based on type
+            $prefix = '';
+            if ( $type === 'theater-venues' ) {
+                $prefix = '🎭 ';
+            } elseif ( $type === 'theater-festivals' ) {
+                $prefix = '🎪 ';
+            } elseif ( $type === 'theater-awards' ) {
+                $prefix = '🏆 ';
+            }
+            
+            $references[ $year ][ $type ] = array_map( function( $item ) use ( $prefix ) {
+                return $prefix . $item;
+            }, $items );
+        }
+    }
+    return $references;
+} );
+```
+
+**Example - Limit number of references per type:**
+```php
+add_filter( 'theater_references_data', function( $references ) {
+    foreach ( $references as $year => $types ) {
+        foreach ( $types as $type => $items ) {
+            // Show max 5 items per type
+            $references[ $year ][ $type ] = array_slice( $items, 0, 5 );
+        }
+    }
+    return $references;
+} );
+```
+
+---
+
+#### theater_references_type_labels
+
+**Description:** Customize the human-readable labels for each reference type displayed in headings.
+
+**Default:**
+```php
+array(
+    'theater-venues'    => __( 'Guest Performances & Clients', 'theater-references' ),
+    'theater-festivals' => __( 'Festivals', 'theater-references' ),
+    'theater-awards'    => __( 'Awards', 'theater-references' ),
+)
+```
+
+**Parameters:**
+- `$labels` (array) - Array of taxonomy slug => label pairs
+
+**Example - Add custom taxonomy label:**
+```php
+add_filter( 'theater_references_type_labels', function( $labels ) {
+    $labels['theater-custom'] = __( 'Custom References', 'textdomain' );
+    return $labels;
+} );
+```
+
+**Example - Override existing label:**
+```php
+add_filter( 'theater_references_type_labels', function( $labels ) {
+    $labels['theater-awards'] = __( 'Prizes & Honours', 'textdomain' );
+    return $labels;
+} );
+```
+
+**Example - Locale-specific labels:**
+```php
+add_filter( 'theater_references_type_labels', function( $labels ) {
+    $locale = get_locale();
+    
+    if ( $locale === 'de_DE' ) {
+        $labels['theater-venues'] = 'Gastspiele & Kunden';
+        $labels['theater-festivals'] = 'Festivals';
+        $labels['theater-awards'] = 'Auszeichnungen';
+    }
+    
+    return $labels;
+} );
+```
+
+### Common Filter Combinations
+
+**Example - High-performance mode for large sites:**
+```php
+// Reduce cache time and limit query results
+add_filter( 'theater_references_cache_expiration', function() {
+    return 1800; // 30 minutes
+} );
+
+add_filter( 'theater_references_query_args', function( $args ) {
+    $args['posts_per_page'] = 100; // Limit to 100 posts
+    return $args;
+} );
+```
+
+**Example - Featured references only:**
+```php
+// Show only featured events with sorted output
+add_filter( 'theater_references_query_args', function( $args ) {
+    $args['meta_query'] = array(
+        array(
+            'key'   => 'featured',
+            'value' => '1'
+        )
+    );
+    return $args;
+} );
+
+add_filter( 'theater_references_data', function( $references ) {
+    // Sort alphabetically
+    foreach ( $references as $year => $types ) {
+        foreach ( $types as $type => $items ) {
+            sort( $references[ $year ][ $type ] );
+        }
+    }
+    return $references;
+} );
+```
+
+**Example - Custom taxonomy integration:**
+```php
+// Register custom taxonomy
+add_action( 'init', function() {
+    register_taxonomy( 'theater-collaborations', 'events', array(
+        'hierarchical' => false,
+        'show_in_rest' => true,
+        'labels' => array(
+            'name' => 'Collaborations'
+        )
+    ) );
+} );
+
+// Add to display
+add_filter( 'theater_references_display_taxonomies', function( $taxonomies ) {
+    $taxonomies[] = 'theater-collaborations';
+    return $taxonomies;
+} );
+
+// Add label
+add_filter( 'theater_references_type_labels', function( $labels ) {
+    $labels['theater-collaborations'] = __( 'Collaborations', 'textdomain' );
+    return $labels;
+} );
+```
+
 ### Extending the Block
 
 **Add a new reference type:**
@@ -351,14 +662,12 @@ private function register_custom_taxonomy(): void {
 }
 ```
 
-2. Add to type labels in `render.php`:
+2. Add to type labels via filter:
 ```php
-public function get_type_labels(): array {
-    return [
-        // ... existing types
-        'theater-custom' => __('Custom References', 'theater-references'),
-    ];
-}
+add_filter( 'theater_references_type_labels', function( $labels ) {
+    $labels['theater-custom'] = __( 'Custom References', 'theater-references' );
+    return $labels;
+} );
 ```
 
 3. Update block.json to include new type in enum:
@@ -392,21 +701,6 @@ Override CSS classes in your theme:
     content: "★"; /* Custom bullet */
     color: gold;
 }
-```
-
-**Filter hook examples:**
-
-```php
-// Modify cache expiration time
-add_filter('theater_references_cache_expiration', function($seconds) {
-    return 7200; // 2 hours instead of 1
-});
-
-// Modify query arguments before execution
-add_filter('theater_references_query_args', function($args) {
-    $args['posts_per_page'] = 50; // Limit results
-    return $args;
-});
 ```
 
 ### Performance Considerations
@@ -488,6 +782,7 @@ The block fully supports WordPress theme.json:
 * Block metadata labeling
 * Responsive design
 * Accessibility features
+* Five filter hooks for extensibility
 
 == Upgrade Notice ==
 

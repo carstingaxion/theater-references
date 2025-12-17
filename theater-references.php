@@ -53,6 +53,7 @@ class Theater_References_Manager {
 	 *
 	 * Default: 1 hour (3600 seconds)
 	 * Automatically cleared on content/term changes.
+	 * Can be modified via 'theater_references_cache_expiration' filter.
 	 *
 	 * @var int
 	 */
@@ -65,6 +66,7 @@ class Theater_References_Manager {
 	 */
 	private function __construct() {
 		$this->init_hooks();
+		$this->apply_filters();
 	}
 
 	/**
@@ -107,6 +109,37 @@ class Theater_References_Manager {
 
 		// Admin interface hooks
 		add_action( 'admin_menu', array( $this, 'add_demo_data_menu' ) );
+	}
+
+	/**
+	 * Apply filterable properties
+	 *
+	 * Allows developers to modify class properties via filters.
+	 *
+	 * @since 0.1.0
+	 */
+	private function apply_filters(): void {
+		/**
+		 * Filter the cache expiration time in seconds.
+		 *
+		 * Allows modification of how long reference data is cached.
+		 * Default is 3600 seconds (1 hour).
+		 *
+		 * @since 0.1.0
+		 *
+		 * @param int $cache_expiration Cache expiration time in seconds.
+		 *
+		 * @example
+		 * // Increase cache to 2 hours
+		 * add_filter( 'theater_references_cache_expiration', function( $seconds ) {
+		 *     return 7200;
+		 * } );
+		 *
+		 * @example
+		 * // Disable caching (use 0)
+		 * add_filter( 'theater_references_cache_expiration', '__return_zero' );
+		 */
+		$this->cache_expiration = apply_filters( 'theater_references_cache_expiration', $this->cache_expiration );
 	}
 
 	/**
