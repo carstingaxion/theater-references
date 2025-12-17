@@ -1,0 +1,713 @@
+<?php
+/**
+ * Plugin Name:       Theater References
+ * Description:       Display theater production references including guest performances, festivals, and awards in a structured, chronological format.
+ * Version:           0.1.0
+ * Requires at least: 6.1
+ * Requires PHP:      7.4
+ * Author:            caba & WordPress Telex
+ * License:           GPLv2 or later
+ * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
+ * Text Domain:       theater-references
+ *
+ * @package TheaterReferences
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * Theater References Manager
+ *
+ * Core singleton class that manages the Theater References block functionality.
+ * Handles post type registration, taxonomy management, caching, and demo data generation.
+ *
+ * Architecture:
+ * - Singleton pattern ensures single instance throughout request lifecycle
+ * - Cache management with automatic invalidation on content changes
+ * - Custom post type and taxonomy registration for structured data
+ * - Demo data generator for development and testing
+ *
+ * @since 0.1.0
+ */
+class Theater_References_Manager {
+	/**
+	 * Singleton instance
+	 *
+	 * @var Theater_References_Manager|null
+	 */
+	private static ?Theater_References_Manager $instance = null;
+
+	/**
+	 * Cache key prefix for transients
+	 *
+	 * Used to namespace all cache keys to avoid conflicts with other plugins.
+	 *
+	 * @var string
+	 */
+	private string $cache_prefix = 'theater_refs_';
+
+	/**
+	 * Cache expiration time in seconds
+	 *
+	 * Default: 1 hour (3600 seconds)
+	 * Automatically cleared on content/term changes.
+	 *
+	 * @var int
+	 */
+	private int $cache_expiration = 3600;
+
+	/**
+	 * Private constructor to enforce singleton pattern
+	 *
+	 * @since 0.1.0
+	 */
+	private function __construct() {
+		$this->init_hooks();
+	}
+
+	/**
+	 * Get singleton instance
+	 *
+	 * Creates instance on first call, returns existing instance on subsequent calls.
+	 *
+	 * @since 0.1.0
+	 * @return Theater_References_Manager The singleton instance
+	 */
+	public static function get_instance(): Theater_References_Manager {
+		if ( null === self::$instance ) {
+			self::$instance = new self();
+		}
+		return self::$instance;
+	}
+
+	/**
+	 * Initialize WordPress hooks
+	 *
+	 * Registers all necessary WordPress actions and filters:
+	 * - Post type and taxonomy registration on 'init'
+	 * - Block registration on 'init'
+	 * - Cache invalidation on content changes
+	 * - Admin menu for demo data generator
+	 *
+	 * @since 0.1.0
+	 */
+	private function init_hooks(): void {
+		// Core registration hooks
+		add_action( 'init', array( $this, 'register_post_type' ) );
+		add_action( 'init', array( $this, 'register_taxonomies' ) );
+		add_action( 'init', array( $this, 'register_block' ) );
+
+		// Cache invalidation hooks
+		add_action( 'save_post', array( $this, 'clear_cache_on_post_save' ) );
+		add_action( 'delete_post', array( $this, 'clear_cache_on_post_delete' ) );
+		add_action( 'edited_term', array( $this, 'clear_cache_on_term_change' ), 10, 3 );
+		add_action( 'delete_term', array( $this, 'clear_cache_on_term_change' ), 10, 3 );
+
+		// Admin interface hooks
+		add_action( 'admin_menu', array( $this, 'add_demo_data_menu' ) );
+	}
+
+	/**
+	 * Register the 'events' custom post type
+	 *
+	 * Creates a custom post type for theater events if it doesn't already exist.
+	 * Events are the core content type that references are attached to via taxonomies.
+	 *
+	 * Post type features:
+	 * - Public and queryable
+	 * - REST API enabled for block editor
+	 * - Supports title, editor, and thumbnail
+	 * - Has archive page
+	 * - Calendar icon in admin menu
+	 *
+	 * @since 0.1.0
+	 */
+	public function register_post_type(): void {
+		// Check if post type already exists to avoid conflicts
+		if ( post_type_exists( 'events' ) ) {
+			return;
+		}
+
+		// Translatable labels for admin interface
+		$labels = array(
+			'name'                  => __( 'Events', 'theater-references' ),
+			'singular_name'         => __( 'Event', 'theater-references' ),
+			'menu_name'             => __( 'Events', 'theater-references' ),
+			'add_new'               => __( 'Add New', 'theater-references' ),
+			'add_new_item'          => __( 'Add New Event', 'theater-references' ),
+			'new_item'              => __( 'New Event', 'theater-references' ),
+			'edit_item'             => __( 'Edit Event', 'theater-references' ),
+			'view_item'             => __( 'View Event', 'theater-references' ),
+			'all_items'             => __( 'All Events', 'theater-references' ),
+			'search_items'          => __( 'Search Events', 'theater-references' ),
+			'not_found'             => __( 'No events found.', 'theater-references' ),
+			'not_found_in_trash'    => __( 'No events found in Trash.', 'theater-references' ),
+		);
+
+		$args = array(
+			'labels'             => $labels,
+			'public'             => true,
+			'publicly_queryable' => true,
+			'show_ui'            => true,
+			'show_in_menu'       => true,
+			'query_var'          => true,
+			'rewrite'            => array( 'slug' => 'events' ),
+			'capability_type'    => 'post',
+			'has_archive'        => true,
+			'hierarchical'       => false,
+			'menu_position'      => 20,
+			'menu_icon'          => 'dashicons-calendar-alt',
+			'show_in_rest'       => true, // Required for block editor
+			'supports'           => array( 'title', 'editor', 'thumbnail' ),
+		);
+
+		register_post_type( 'events', $args );
+	}
+
+	/**
+	 * Register all taxonomies
+	 *
+	 * Orchestrates registration of all custom taxonomies:
+	 * - theater-productions: Hierarchical taxonomy for productions
+	 * - theater-venues: Flat taxonomy for venues and clients
+	 * - theater-festivals: Flat taxonomy for festival participations
+	 * - theater-awards: Flat taxonomy for awards received
+	 *
+	 * @since 0.1.0
+	 */
+	public function register_taxonomies(): void {
+		$this->register_productions_taxonomy();
+		$this->register_venues_taxonomy();
+		$this->register_festivals_taxonomy();
+		$this->register_awards_taxonomy();
+	}
+
+	/**
+	 * Register the 'theater-productions' taxonomy
+	 *
+	 * Hierarchical taxonomy (like categories) for theater productions.
+	 * Allows events to be grouped by production and enables filtering by production.
+	 *
+	 * @since 0.1.0
+	 */
+	private function register_productions_taxonomy(): void {
+		// Guard against re-registration
+		if ( taxonomy_exists( 'theater-productions' ) ) {
+			return;
+		}
+
+		$labels = array(
+			'name'              => __( 'Theater Productions', 'theater-references' ),
+			'singular_name'     => __( 'Theater Production', 'theater-references' ),
+			'search_items'      => __( 'Search Productions', 'theater-references' ),
+			'all_items'         => __( 'All Productions', 'theater-references' ),
+			'parent_item'       => __( 'Parent Production', 'theater-references' ),
+			'parent_item_colon' => __( 'Parent Production:', 'theater-references' ),
+			'edit_item'         => __( 'Edit Production', 'theater-references' ),
+			'update_item'       => __( 'Update Production', 'theater-references' ),
+			'add_new_item'      => __( 'Add New Production', 'theater-references' ),
+			'new_item_name'     => __( 'New Production Name', 'theater-references' ),
+			'menu_name'         => __( 'Productions', 'theater-references' ),
+		);
+
+		$args = array(
+			'labels'            => $labels,
+			'hierarchical'      => true, // Allows parent/child relationships
+			'public'            => true,
+			'show_ui'           => true,
+			'show_admin_column' => true, // Shows in posts list table
+			'query_var'         => true,
+			'rewrite'           => array( 'slug' => 'production' ),
+			'show_in_rest'      => true, // Required for block editor
+		);
+
+		register_taxonomy( 'theater-productions', array( 'events' ), $args );
+	}
+
+	/**
+	 * Register the 'theater-venues' taxonomy
+	 *
+	 * Flat taxonomy (like tags) for guest performance venues and clients.
+	 * Non-hierarchical for quick tagging of venue relationships.
+	 *
+	 * @since 0.1.0
+	 */
+	private function register_venues_taxonomy(): void {
+		if ( taxonomy_exists( 'theater-venues' ) ) {
+			return;
+		}
+
+		$labels = array(
+			'name'              => __( 'Venues & Clients', 'theater-references' ),
+			'singular_name'     => __( 'Venue/Client', 'theater-references' ),
+			'search_items'      => __( 'Search Venues', 'theater-references' ),
+			'all_items'         => __( 'All Venues', 'theater-references' ),
+			'edit_item'         => __( 'Edit Venue', 'theater-references' ),
+			'update_item'       => __( 'Update Venue', 'theater-references' ),
+			'add_new_item'      => __( 'Add New Venue', 'theater-references' ),
+			'new_item_name'     => __( 'New Venue Name', 'theater-references' ),
+			'menu_name'         => __( 'Venues', 'theater-references' ),
+		);
+
+		$args = array(
+			'labels'            => $labels,
+			'hierarchical'      => false, // Flat structure like tags
+			'public'            => true,
+			'show_ui'           => true,
+			'show_admin_column' => true,
+			'query_var'         => true,
+			'rewrite'           => array( 'slug' => 'venue' ),
+			'show_in_rest'      => true,
+		);
+
+		register_taxonomy( 'theater-venues', array( 'events' ), $args );
+	}
+
+	/**
+	 * Register the 'theater-festivals' taxonomy
+	 *
+	 * Flat taxonomy for festival participations.
+	 * Allows tracking of festival appearances across events.
+	 *
+	 * @since 0.1.0
+	 */
+	private function register_festivals_taxonomy(): void {
+		if ( taxonomy_exists( 'theater-festivals' ) ) {
+			return;
+		}
+
+		$labels = array(
+			'name'              => __( 'Festivals', 'theater-references' ),
+			'singular_name'     => __( 'Festival', 'theater-references' ),
+			'search_items'      => __( 'Search Festivals', 'theater-references' ),
+			'all_items'         => __( 'All Festivals', 'theater-references' ),
+			'edit_item'         => __( 'Edit Festival', 'theater-references' ),
+			'update_item'       => __( 'Update Festival', 'theater-references' ),
+			'add_new_item'      => __( 'Add New Festival', 'theater-references' ),
+			'new_item_name'     => __( 'New Festival Name', 'theater-references' ),
+			'menu_name'         => __( 'Festivals', 'theater-references' ),
+		);
+
+		$args = array(
+			'labels'            => $labels,
+			'hierarchical'      => false,
+			'public'            => true,
+			'show_ui'           => true,
+			'show_admin_column' => true,
+			'query_var'         => true,
+			'rewrite'           => array( 'slug' => 'festival' ),
+			'show_in_rest'      => true,
+		);
+
+		register_taxonomy( 'theater-festivals', array( 'events' ), $args );
+	}
+
+	/**
+	 * Register the 'theater-awards' taxonomy
+	 *
+	 * Flat taxonomy for awards received.
+	 * Enables tracking and display of achievements.
+	 *
+	 * @since 0.1.0
+	 */
+	private function register_awards_taxonomy(): void {
+		if ( taxonomy_exists( 'theater-awards' ) ) {
+			return;
+		}
+
+		$labels = array(
+			'name'              => __( 'Awards', 'theater-references' ),
+			'singular_name'     => __( 'Award', 'theater-references' ),
+			'search_items'      => __( 'Search Awards', 'theater-references' ),
+			'all_items'         => __( 'All Awards', 'theater-references' ),
+			'edit_item'         => __( 'Edit Award', 'theater-references' ),
+			'update_item'       => __( 'Update Award', 'theater-references' ),
+			'add_new_item'      => __( 'Add New Award', 'theater-references' ),
+			'new_item_name'     => __( 'New Award Name', 'theater-references' ),
+			'menu_name'         => __( 'Awards', 'theater-references' ),
+		);
+
+		$args = array(
+			'labels'            => $labels,
+			'hierarchical'      => false,
+			'public'            => true,
+			'show_ui'           => true,
+			'show_admin_column' => true,
+			'query_var'         => true,
+			'rewrite'           => array( 'slug' => 'award' ),
+			'show_in_rest'      => true,
+		);
+
+		register_taxonomy( 'theater-awards', array( 'events' ), $args );
+	}
+
+	/**
+	 * Register the Theater References block
+	 *
+	 * Registers the block type from the compiled build directory.
+	 * Uses block.json for metadata (requires WordPress 5.8+).
+	 *
+	 * @since 0.1.0
+	 */
+	public function register_block(): void {
+		register_block_type( __DIR__ . '/build/' );
+	}
+
+	/**
+	 * Clear cache when an event post is saved
+	 *
+	 * Hooked to 'save_post' action to invalidate cache when event content changes.
+	 *
+	 * @since 0.1.0
+	 * @param int $post_id The post ID being saved
+	 */
+	public function clear_cache_on_post_save( int $post_id ): void {
+		// Only clear cache for 'events' post type
+		if ( get_post_type( $post_id ) === 'events' ) {
+			$this->clear_all_caches();
+		}
+	}
+
+	/**
+	 * Clear cache when an event post is deleted
+	 *
+	 * Hooked to 'delete_post' action to invalidate cache when event is removed.
+	 *
+	 * @since 0.1.0
+	 * @param int $post_id The post ID being deleted
+	 */
+	public function clear_cache_on_post_delete( int $post_id ): void {
+		if ( get_post_type( $post_id ) === 'events' ) {
+			$this->clear_all_caches();
+		}
+	}
+
+	/**
+	 * Clear cache when a taxonomy term is changed or deleted
+	 *
+	 * Hooked to 'edited_term' and 'delete_term' actions.
+	 * Only clears cache for our custom taxonomies.
+	 *
+	 * @since 0.1.0
+	 * @param int    $term_id  The term ID
+	 * @param int    $tt_id    The term taxonomy ID
+	 * @param string $taxonomy The taxonomy slug
+	 */
+	public function clear_cache_on_term_change( int $term_id, int $tt_id, string $taxonomy ): void {
+		// List of taxonomies that require cache invalidation
+		$ref_taxonomies = array( 'theater-productions', 'theater-venues', 'theater-festivals', 'theater-awards' );
+		
+		if ( in_array( $taxonomy, $ref_taxonomies, true ) ) {
+			$this->clear_all_caches();
+		}
+	}
+
+	/**
+	 * Clear all cached references
+	 *
+	 * Removes all transients with our cache prefix from the database.
+	 * Uses direct database queries for efficiency.
+	 *
+	 * @since 0.1.0
+	 */
+	private function clear_all_caches(): void {
+		global $wpdb;
+
+		// Delete transient values
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
+				$wpdb->esc_like( '_transient_' . $this->cache_prefix ) . '%'
+			)
+		);
+
+		// Delete transient timeout entries
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
+				$wpdb->esc_like( '_transient_timeout_' . $this->cache_prefix ) . '%'
+			)
+		);
+	}
+
+	/**
+	 * Add demo data submenu page
+	 *
+	 * Creates an admin page under Events menu for generating test data.
+	 *
+	 * @since 0.1.0
+	 */
+	public function add_demo_data_menu(): void {
+		add_submenu_page(
+			'edit.php?post_type=events',
+			__( 'Generate Demo Data', 'theater-references' ),
+			__( 'Demo Data', 'theater-references' ),
+			'manage_options',
+			'theater-references-demo-data',
+			array( $this, 'render_demo_data_page' )
+		);
+	}
+
+	/**
+	 * Render demo data admin page
+	 *
+	 * Displays interface for generating and deleting demo content.
+	 * Includes nonce verification for security.
+	 *
+	 * @since 0.1.0
+	 */
+	public function render_demo_data_page(): void {
+		// Security check
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		// Handle demo data generation
+		if ( isset( $_POST['generate_demo_data'] ) && check_admin_referer( 'theater_references_demo_data' ) ) {
+			$this->generate_demo_data();
+			echo '<div class="notice notice-success"><p>' . esc_html__( 'Demo data generated successfully!', 'theater-references' ) . '</p></div>';
+		}
+
+		// Handle demo data deletion
+		if ( isset( $_POST['delete_demo_data'] ) && check_admin_referer( 'theater_references_demo_data' ) ) {
+			$this->delete_demo_data();
+			echo '<div class="notice notice-success"><p>' . esc_html__( 'Demo data deleted successfully!', 'theater-references' ) . '</p></div>';
+		}
+
+		?>
+		<div class="wrap">
+			<h1><?php esc_html_e( 'Theater References Demo Data', 'theater-references' ); ?></h1>
+			<p><?php esc_html_e( 'Generate sample events, productions, and references for development and testing.', 'theater-references' ); ?></p>
+			
+			<div style="background: #fff; padding: 20px; margin: 20px 0; border: 1px solid #ccc;">
+				<h2><?php esc_html_e( 'Generate Demo Data', 'theater-references' ); ?></h2>
+				<p><?php esc_html_e( 'This will create:', 'theater-references' ); ?></p>
+				<ul style="list-style: disc; margin-left: 20px;">
+					<li><?php esc_html_e( '5 theater productions', 'theater-references' ); ?></li>
+					<li><?php esc_html_e( '20 event posts', 'theater-references' ); ?></li>
+					<li><?php esc_html_e( '8 venue/client terms', 'theater-references' ); ?></li>
+					<li><?php esc_html_e( '6 festival terms', 'theater-references' ); ?></li>
+					<li><?php esc_html_e( '6 award terms', 'theater-references' ); ?></li>
+				</ul>
+				<form method="post" style="margin-top: 20px;">
+					<?php wp_nonce_field( 'theater_references_demo_data' ); ?>
+					<button type="submit" name="generate_demo_data" class="button button-primary">
+						<?php esc_html_e( 'Generate Demo Data', 'theater-references' ); ?>
+					</button>
+				</form>
+			</div>
+
+			<div style="background: #fff; padding: 20px; margin: 20px 0; border: 1px solid #ccc;">
+				<h2><?php esc_html_e( 'Delete Demo Data', 'theater-references' ); ?></h2>
+				<p><?php esc_html_e( 'This will remove all demo events and terms created by this tool.', 'theater-references' ); ?></p>
+				<form method="post" style="margin-top: 20px;">
+					<?php wp_nonce_field( 'theater_references_demo_data' ); ?>
+					<button type="submit" name="delete_demo_data" class="button button-secondary" onclick="return confirm('<?php esc_attr_e( 'Are you sure you want to delete all demo data?', 'theater-references' ); ?>')">
+						<?php esc_html_e( 'Delete Demo Data', 'theater-references' ); ?>
+					</button>
+				</form>
+			</div>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Generate demo data
+	 *
+	 * Creates sample content for testing:
+	 * - 5 production terms
+	 * - 8 venue terms
+	 * - 6 festival terms
+	 * - 6 award terms
+	 * - 20 event posts with random term assignments
+	 *
+	 * All demo items are marked with '_demo_data' meta for easy cleanup.
+	 *
+	 * @since 0.1.0
+	 */
+	private function generate_demo_data(): void {
+		// Sample production names
+		$productions = array( 'Hamlet', 'Romeo and Juliet', 'A Midsummer Night\'s Dream', 'Macbeth', 'The Tempest' );
+		
+		// Sample venue names from major theater cities
+		$venues = array(
+			'Royal Theater London', 'Berlin Staatstheater', 'Paris National Opera',
+			'Vienna Burgtheater', 'Moscow Art Theatre', 'Sydney Opera House',
+			'New York Broadway Theater', 'Madrid Teatro Real'
+		);
+		
+		// Sample festival names from renowned international festivals
+		$festivals = array(
+			'Edinburgh International Festival', 'Avignon Festival', 'Salzburg Festival',
+			'Venice Biennale Teatro', 'Festival d\'Automne à Paris', 'Berlin Theatertreffen'
+		);
+		
+		// Sample award names
+		$awards = array(
+			'Best Director Award', 'Outstanding Production', 'Best Ensemble Performance',
+			'Critics\' Choice Award', 'Theatre Excellence Prize', 'Innovation in Theatre Award'
+		);
+
+		// Create production terms and store IDs
+		$production_ids = array();
+		foreach ( $productions as $production ) {
+			$term = wp_insert_term( $production, 'theater-productions' );
+			if ( ! is_wp_error( $term ) ) {
+				$production_ids[] = $term['term_id'];
+				// Mark as demo data for cleanup
+				update_term_meta( $term['term_id'], '_demo_data', '1' );
+			}
+		}
+
+		// Create venue terms
+		$venue_ids = array();
+		foreach ( $venues as $venue ) {
+			$term = wp_insert_term( $venue, 'theater-venues' );
+			if ( ! is_wp_error( $term ) ) {
+				$venue_ids[] = $term['term_id'];
+				update_term_meta( $term['term_id'], '_demo_data', '1' );
+			}
+		}
+
+		// Create festival terms
+		$festival_ids = array();
+		foreach ( $festivals as $festival ) {
+			$term = wp_insert_term( $festival, 'theater-festivals' );
+			if ( ! is_wp_error( $term ) ) {
+				$festival_ids[] = $term['term_id'];
+				update_term_meta( $term['term_id'], '_demo_data', '1' );
+			}
+		}
+
+		// Create award terms
+		$award_ids = array();
+		foreach ( $awards as $award ) {
+			$term = wp_insert_term( $award, 'theater-awards' );
+			if ( ! is_wp_error( $term ) ) {
+				$award_ids[] = $term['term_id'];
+				update_term_meta( $term['term_id'], '_demo_data', '1' );
+			}
+		}
+
+		// Generate 20 event posts with realistic data
+		for ( $i = 0; $i < 20; $i++ ) {
+			// Generate random date between 2018-2024
+			$year = rand( 2018, 2024 );
+			$month = rand( 1, 12 );
+			$day = rand( 1, 28 );
+			$date = sprintf( '%04d-%02d-%02d', $year, $month, $day );
+			$production = $productions[ array_rand( $productions ) ];
+
+			$event_data = array(
+				'post_title'   => $production . ' - Event ' . ( $i + 1 ),
+				'post_content' => 'Demo event for ' . $production . '.',
+				'post_status'  => 'publish',
+				'post_type'    => 'events',
+				'post_date'    => $date . ' 19:00:00',
+			);
+
+			$post_id = wp_insert_post( $event_data );
+
+			if ( $post_id ) {
+				// Mark as demo data
+				update_post_meta( $post_id, '_demo_data', '1' );
+
+				// Assign random production
+				if ( ! empty( $production_ids ) ) {
+					wp_set_object_terms( $post_id, array( $production_ids[ array_rand( $production_ids ) ] ), 'theater-productions' );
+				}
+
+				// Use randomization to create varied reference patterns
+				$rand = rand( 1, 100 );
+
+				// 60% chance of having venue references (1-2 venues)
+				if ( $rand < 60 && ! empty( $venue_ids ) ) {
+					$selected_venues = array_rand( array_flip( $venue_ids ), rand( 1, 2 ) );
+					wp_set_object_terms( $post_id, (array) $selected_venues, 'theater-venues' );
+				}
+
+				// 40% chance of festival participation (30-70 range)
+				if ( $rand > 30 && $rand < 70 && ! empty( $festival_ids ) ) {
+					$selected_festivals = array( $festival_ids[ array_rand( $festival_ids ) ] );
+					wp_set_object_terms( $post_id, $selected_festivals, 'theater-festivals' );
+				}
+
+				// 40% chance of award (60-100 range)
+				if ( $rand > 60 && ! empty( $award_ids ) ) {
+					$selected_awards = array( $award_ids[ array_rand( $award_ids ) ] );
+					wp_set_object_terms( $post_id, $selected_awards, 'theater-awards' );
+				}
+			}
+		}
+
+		// Clear cache after generating demo data
+		$this->clear_all_caches();
+	}
+
+	/**
+	 * Delete demo data
+	 *
+	 * Removes all posts and terms marked with '_demo_data' meta.
+	 * Uses permanent deletion (bypass trash).
+	 *
+	 * @since 0.1.0
+	 */
+	private function delete_demo_data(): void {
+		// Find all demo event posts
+		$demo_events = get_posts(
+			array(
+				'post_type'      => 'events',
+				'posts_per_page' => -1,
+				'meta_key'       => '_demo_data',
+				'meta_value'     => '1',
+			)
+		);
+
+		// Permanently delete demo events
+		foreach ( $demo_events as $event ) {
+			wp_delete_post( $event->ID, true );
+		}
+
+		// Delete demo terms from all taxonomies
+		$taxonomies = array( 'theater-productions', 'theater-venues', 'theater-festivals', 'theater-awards' );
+		foreach ( $taxonomies as $taxonomy ) {
+			$demo_terms = get_terms(
+				array(
+					'taxonomy'   => $taxonomy,
+					'hide_empty' => false,
+					'meta_key'   => '_demo_data',
+					'meta_value' => '1',
+				)
+			);
+
+			foreach ( $demo_terms as $term ) {
+				wp_delete_term( $term->term_id, $taxonomy );
+			}
+		}
+
+		// Clear cache after cleanup
+		$this->clear_all_caches();
+	}
+
+	/**
+	 * Prevent cloning of singleton instance
+	 *
+	 * @since 0.1.0
+	 */
+	private function __clone() {}
+
+	/**
+	 * Prevent unserialization of singleton instance
+	 *
+	 * @since 0.1.0
+	 * @throws Exception Always throws exception
+	 */
+	public function __wakeup() {
+		throw new \Exception( 'Cannot unserialize singleton' );
+	}
+}
+
+// Initialize the singleton instance
+Theater_References_Manager::get_instance();

@@ -1,0 +1,2183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<artefact xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="artefact.xsd" name="Theater References (Remix)" slug="theater-references" type="code-package" schemaVersion="2">
+  <file path="readme.txt">
+    <description>This file contains the readme information for the block. It is used to provide information about the block, its usage, and any other relevant details.</description>
+    <content><![CDATA[=== Theater References ===
+
+Contributors:      WordPress Telex
+Tags:              block, references, theater, events
+Tested up to:      6.8
+Stable tag:        0.1.0
+License:           GPLv2 or later
+License URI:       https://www.gnu.org/licenses/gpl-2.0.html
+
+Display theater production references including guest performances, festivals, and awards in a structured, chronological format.
+
+== Description ==
+
+The Theater References block displays a curated list of references from past theater events. It automatically organizes references by year and type (guest performances/clients, festivals, awards).
+
+Key features:
+- Uses custom taxonomies for efficient data management and querying
+- Automatic context detection when used within a production page
+- Filter by specific production (by ID)
+- Filter by year for annual reviews
+- Filter by reference type (venues/clients, festivals, awards, or all)
+- Nested list output organized by year and reference type
+- Native WordPress term management UI
+- Better performance through taxonomy-based queries
+
+Perfect for creating dynamic reference pages, production portfolios, and annual summaries of achievements.
+
+== Installation ==
+
+1. Upload the plugin files to the `/wp-content/plugins/theater-references` directory, or install the plugin through the WordPress plugins screen directly.
+1. Activate the plugin through the 'Plugins' screen in WordPress
+1. The plugin will create three custom taxonomies: Venues & Clients, Festivals, and Awards
+1. Add terms to these taxonomies via the Events admin menu
+1. Assign taxonomy terms to event posts
+1. Insert the block into any page, post, or production content
+1. Use the block settings to filter by production, year, or reference type
+
+== Frequently Asked Questions ==
+
+= What taxonomies does this plugin create? =
+
+The plugin creates three custom taxonomies associated with the 'events' post type:
+- theater-venues: Guest performance venues or clients
+- theater-festivals: Festival participations
+- theater-awards: Awards received
+
+= Why use taxonomies instead of post meta? =
+
+Taxonomies offer several advantages:
+- Better query performance for filtering
+- Reusable terms across multiple events
+- Native WordPress UI for term management
+- More semantic data structure
+- Better for faceted search and filtering
+
+= Can I show only awards for a specific production? =
+
+Yes! Use the block settings to select a specific production and set the type filter to "Awards Only".
+
+= Does it work automatically on production pages? =
+
+Yes, when placed on a production archive or single page, the block automatically detects the production context and shows only its references.
+
+== Screenshots ==
+
+1. Block editor view with inspector controls
+2. Frontend display showing references grouped by year
+3. Filtered view showing only awards
+4. Term management interface for venues, festivals, and awards
+
+== Changelog ==
+
+= 0.1.0 =
+* Initial release
+* Custom taxonomies for venues, festivals, and awards
+* Support for production filtering
+* Support for year filtering
+* Support for reference type filtering
+* Automatic production context detection
+* Demo data generator]]></content>
+  </file>
+  <file path="theater-references.php">
+    <description>This file contains the block registration code in the form of a single block plugin. Any other plugin related functionality should be added to this file. All block rendering functionality should go to the `render.php` file.</description>
+    <content><![CDATA[<?php
+/**
+ * Plugin Name:       Theater References
+ * Description:       Display theater production references including guest performances, festivals, and awards in a structured, chronological format.
+ * Version:           0.1.0
+ * Requires at least: 6.1
+ * Requires PHP:      7.4
+ * Author:            caba & WordPress Telex
+ * License:           GPLv2 or later
+ * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
+ * Text Domain:       theater-references
+ *
+ * @package TheaterReferences
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * Theater References Manager
+ *
+ * Core singleton class that manages the Theater References block functionality.
+ * Handles post type registration, taxonomy management, caching, and demo data generation.
+ *
+ * Architecture:
+ * - Singleton pattern ensures single instance throughout request lifecycle
+ * - Cache management with automatic invalidation on content changes
+ * - Custom post type and taxonomy registration for structured data
+ * - Demo data generator for development and testing
+ *
+ * @since 0.1.0
+ */
+class Theater_References_Manager {
+	/**
+	 * Singleton instance
+	 *
+	 * @var Theater_References_Manager|null
+	 */
+	private static ?Theater_References_Manager $instance = null;
+
+	/**
+	 * Cache key prefix for transients
+	 *
+	 * Used to namespace all cache keys to avoid conflicts with other plugins.
+	 *
+	 * @var string
+	 */
+	private string $cache_prefix = 'theater_refs_';
+
+	/**
+	 * Cache expiration time in seconds
+	 *
+	 * Default: 1 hour (3600 seconds)
+	 * Automatically cleared on content/term changes.
+	 *
+	 * @var int
+	 */
+	private int $cache_expiration = 3600;
+
+	/**
+	 * Private constructor to enforce singleton pattern
+	 *
+	 * @since 0.1.0
+	 */
+	private function __construct() {
+		$this->init_hooks();
+	}
+
+	/**
+	 * Get singleton instance
+	 *
+	 * Creates instance on first call, returns existing instance on subsequent calls.
+	 *
+	 * @since 0.1.0
+	 * @return Theater_References_Manager The singleton instance
+	 */
+	public static function get_instance(): Theater_References_Manager {
+		if ( null === self::$instance ) {
+			self::$instance = new self();
+		}
+		return self::$instance;
+	}
+
+	/**
+	 * Initialize WordPress hooks
+	 *
+	 * Registers all necessary WordPress actions and filters:
+	 * - Post type and taxonomy registration on 'init'
+	 * - Block registration on 'init'
+	 * - Cache invalidation on content changes
+	 * - Admin menu for demo data generator
+	 *
+	 * @since 0.1.0
+	 */
+	private function init_hooks(): void {
+		// Core registration hooks
+		add_action( 'init', array( $this, 'register_post_type' ) );
+		add_action( 'init', array( $this, 'register_taxonomies' ) );
+		add_action( 'init', array( $this, 'register_block' ) );
+
+		// Cache invalidation hooks
+		add_action( 'save_post', array( $this, 'clear_cache_on_post_save' ) );
+		add_action( 'delete_post', array( $this, 'clear_cache_on_post_delete' ) );
+		add_action( 'edited_term', array( $this, 'clear_cache_on_term_change' ), 10, 3 );
+		add_action( 'delete_term', array( $this, 'clear_cache_on_term_change' ), 10, 3 );
+
+		// Admin interface hooks
+		add_action( 'admin_menu', array( $this, 'add_demo_data_menu' ) );
+	}
+
+	/**
+	 * Register the 'events' custom post type
+	 *
+	 * Creates a custom post type for theater events if it doesn't already exist.
+	 * Events are the core content type that references are attached to via taxonomies.
+	 *
+	 * Post type features:
+	 * - Public and queryable
+	 * - REST API enabled for block editor
+	 * - Supports title, editor, and thumbnail
+	 * - Has archive page
+	 * - Calendar icon in admin menu
+	 *
+	 * @since 0.1.0
+	 */
+	public function register_post_type(): void {
+		// Check if post type already exists to avoid conflicts
+		if ( post_type_exists( 'events' ) ) {
+			return;
+		}
+
+		// Translatable labels for admin interface
+		$labels = array(
+			'name'                  => __( 'Events', 'theater-references' ),
+			'singular_name'         => __( 'Event', 'theater-references' ),
+			'menu_name'             => __( 'Events', 'theater-references' ),
+			'add_new'               => __( 'Add New', 'theater-references' ),
+			'add_new_item'          => __( 'Add New Event', 'theater-references' ),
+			'new_item'              => __( 'New Event', 'theater-references' ),
+			'edit_item'             => __( 'Edit Event', 'theater-references' ),
+			'view_item'             => __( 'View Event', 'theater-references' ),
+			'all_items'             => __( 'All Events', 'theater-references' ),
+			'search_items'          => __( 'Search Events', 'theater-references' ),
+			'not_found'             => __( 'No events found.', 'theater-references' ),
+			'not_found_in_trash'    => __( 'No events found in Trash.', 'theater-references' ),
+		);
+
+		$args = array(
+			'labels'             => $labels,
+			'public'             => true,
+			'publicly_queryable' => true,
+			'show_ui'            => true,
+			'show_in_menu'       => true,
+			'query_var'          => true,
+			'rewrite'            => array( 'slug' => 'events' ),
+			'capability_type'    => 'post',
+			'has_archive'        => true,
+			'hierarchical'       => false,
+			'menu_position'      => 20,
+			'menu_icon'          => 'dashicons-calendar-alt',
+			'show_in_rest'       => true, // Required for block editor
+			'supports'           => array( 'title', 'editor', 'thumbnail' ),
+		);
+
+		register_post_type( 'events', $args );
+	}
+
+	/**
+	 * Register all taxonomies
+	 *
+	 * Orchestrates registration of all custom taxonomies:
+	 * - theater-productions: Hierarchical taxonomy for productions
+	 * - theater-venues: Flat taxonomy for venues and clients
+	 * - theater-festivals: Flat taxonomy for festival participations
+	 * - theater-awards: Flat taxonomy for awards received
+	 *
+	 * @since 0.1.0
+	 */
+	public function register_taxonomies(): void {
+		$this->register_productions_taxonomy();
+		$this->register_venues_taxonomy();
+		$this->register_festivals_taxonomy();
+		$this->register_awards_taxonomy();
+	}
+
+	/**
+	 * Register the 'theater-productions' taxonomy
+	 *
+	 * Hierarchical taxonomy (like categories) for theater productions.
+	 * Allows events to be grouped by production and enables filtering by production.
+	 *
+	 * @since 0.1.0
+	 */
+	private function register_productions_taxonomy(): void {
+		// Guard against re-registration
+		if ( taxonomy_exists( 'theater-productions' ) ) {
+			return;
+		}
+
+		$labels = array(
+			'name'              => __( 'Theater Productions', 'theater-references' ),
+			'singular_name'     => __( 'Theater Production', 'theater-references' ),
+			'search_items'      => __( 'Search Productions', 'theater-references' ),
+			'all_items'         => __( 'All Productions', 'theater-references' ),
+			'parent_item'       => __( 'Parent Production', 'theater-references' ),
+			'parent_item_colon' => __( 'Parent Production:', 'theater-references' ),
+			'edit_item'         => __( 'Edit Production', 'theater-references' ),
+			'update_item'       => __( 'Update Production', 'theater-references' ),
+			'add_new_item'      => __( 'Add New Production', 'theater-references' ),
+			'new_item_name'     => __( 'New Production Name', 'theater-references' ),
+			'menu_name'         => __( 'Productions', 'theater-references' ),
+		);
+
+		$args = array(
+			'labels'            => $labels,
+			'hierarchical'      => true, // Allows parent/child relationships
+			'public'            => true,
+			'show_ui'           => true,
+			'show_admin_column' => true, // Shows in posts list table
+			'query_var'         => true,
+			'rewrite'           => array( 'slug' => 'production' ),
+			'show_in_rest'      => true, // Required for block editor
+		);
+
+		register_taxonomy( 'theater-productions', array( 'events' ), $args );
+	}
+
+	/**
+	 * Register the 'theater-venues' taxonomy
+	 *
+	 * Flat taxonomy (like tags) for guest performance venues and clients.
+	 * Non-hierarchical for quick tagging of venue relationships.
+	 *
+	 * @since 0.1.0
+	 */
+	private function register_venues_taxonomy(): void {
+		if ( taxonomy_exists( 'theater-venues' ) ) {
+			return;
+		}
+
+		$labels = array(
+			'name'              => __( 'Venues & Clients', 'theater-references' ),
+			'singular_name'     => __( 'Venue/Client', 'theater-references' ),
+			'search_items'      => __( 'Search Venues', 'theater-references' ),
+			'all_items'         => __( 'All Venues', 'theater-references' ),
+			'edit_item'         => __( 'Edit Venue', 'theater-references' ),
+			'update_item'       => __( 'Update Venue', 'theater-references' ),
+			'add_new_item'      => __( 'Add New Venue', 'theater-references' ),
+			'new_item_name'     => __( 'New Venue Name', 'theater-references' ),
+			'menu_name'         => __( 'Venues', 'theater-references' ),
+		);
+
+		$args = array(
+			'labels'            => $labels,
+			'hierarchical'      => false, // Flat structure like tags
+			'public'            => true,
+			'show_ui'           => true,
+			'show_admin_column' => true,
+			'query_var'         => true,
+			'rewrite'           => array( 'slug' => 'venue' ),
+			'show_in_rest'      => true,
+		);
+
+		register_taxonomy( 'theater-venues', array( 'events' ), $args );
+	}
+
+	/**
+	 * Register the 'theater-festivals' taxonomy
+	 *
+	 * Flat taxonomy for festival participations.
+	 * Allows tracking of festival appearances across events.
+	 *
+	 * @since 0.1.0
+	 */
+	private function register_festivals_taxonomy(): void {
+		if ( taxonomy_exists( 'theater-festivals' ) ) {
+			return;
+		}
+
+		$labels = array(
+			'name'              => __( 'Festivals', 'theater-references' ),
+			'singular_name'     => __( 'Festival', 'theater-references' ),
+			'search_items'      => __( 'Search Festivals', 'theater-references' ),
+			'all_items'         => __( 'All Festivals', 'theater-references' ),
+			'edit_item'         => __( 'Edit Festival', 'theater-references' ),
+			'update_item'       => __( 'Update Festival', 'theater-references' ),
+			'add_new_item'      => __( 'Add New Festival', 'theater-references' ),
+			'new_item_name'     => __( 'New Festival Name', 'theater-references' ),
+			'menu_name'         => __( 'Festivals', 'theater-references' ),
+		);
+
+		$args = array(
+			'labels'            => $labels,
+			'hierarchical'      => false,
+			'public'            => true,
+			'show_ui'           => true,
+			'show_admin_column' => true,
+			'query_var'         => true,
+			'rewrite'           => array( 'slug' => 'festival' ),
+			'show_in_rest'      => true,
+		);
+
+		register_taxonomy( 'theater-festivals', array( 'events' ), $args );
+	}
+
+	/**
+	 * Register the 'theater-awards' taxonomy
+	 *
+	 * Flat taxonomy for awards received.
+	 * Enables tracking and display of achievements.
+	 *
+	 * @since 0.1.0
+	 */
+	private function register_awards_taxonomy(): void {
+		if ( taxonomy_exists( 'theater-awards' ) ) {
+			return;
+		}
+
+		$labels = array(
+			'name'              => __( 'Awards', 'theater-references' ),
+			'singular_name'     => __( 'Award', 'theater-references' ),
+			'search_items'      => __( 'Search Awards', 'theater-references' ),
+			'all_items'         => __( 'All Awards', 'theater-references' ),
+			'edit_item'         => __( 'Edit Award', 'theater-references' ),
+			'update_item'       => __( 'Update Award', 'theater-references' ),
+			'add_new_item'      => __( 'Add New Award', 'theater-references' ),
+			'new_item_name'     => __( 'New Award Name', 'theater-references' ),
+			'menu_name'         => __( 'Awards', 'theater-references' ),
+		);
+
+		$args = array(
+			'labels'            => $labels,
+			'hierarchical'      => false,
+			'public'            => true,
+			'show_ui'           => true,
+			'show_admin_column' => true,
+			'query_var'         => true,
+			'rewrite'           => array( 'slug' => 'award' ),
+			'show_in_rest'      => true,
+		);
+
+		register_taxonomy( 'theater-awards', array( 'events' ), $args );
+	}
+
+	/**
+	 * Register the Theater References block
+	 *
+	 * Registers the block type from the compiled build directory.
+	 * Uses block.json for metadata (requires WordPress 5.8+).
+	 *
+	 * @since 0.1.0
+	 */
+	public function register_block(): void {
+		register_block_type( __DIR__ . '/build/' );
+	}
+
+	/**
+	 * Clear cache when an event post is saved
+	 *
+	 * Hooked to 'save_post' action to invalidate cache when event content changes.
+	 *
+	 * @since 0.1.0
+	 * @param int $post_id The post ID being saved
+	 */
+	public function clear_cache_on_post_save( int $post_id ): void {
+		// Only clear cache for 'events' post type
+		if ( get_post_type( $post_id ) === 'events' ) {
+			$this->clear_all_caches();
+		}
+	}
+
+	/**
+	 * Clear cache when an event post is deleted
+	 *
+	 * Hooked to 'delete_post' action to invalidate cache when event is removed.
+	 *
+	 * @since 0.1.0
+	 * @param int $post_id The post ID being deleted
+	 */
+	public function clear_cache_on_post_delete( int $post_id ): void {
+		if ( get_post_type( $post_id ) === 'events' ) {
+			$this->clear_all_caches();
+		}
+	}
+
+	/**
+	 * Clear cache when a taxonomy term is changed or deleted
+	 *
+	 * Hooked to 'edited_term' and 'delete_term' actions.
+	 * Only clears cache for our custom taxonomies.
+	 *
+	 * @since 0.1.0
+	 * @param int    $term_id  The term ID
+	 * @param int    $tt_id    The term taxonomy ID
+	 * @param string $taxonomy The taxonomy slug
+	 */
+	public function clear_cache_on_term_change( int $term_id, int $tt_id, string $taxonomy ): void {
+		// List of taxonomies that require cache invalidation
+		$ref_taxonomies = array( 'theater-productions', 'theater-venues', 'theater-festivals', 'theater-awards' );
+		
+		if ( in_array( $taxonomy, $ref_taxonomies, true ) ) {
+			$this->clear_all_caches();
+		}
+	}
+
+	/**
+	 * Clear all cached references
+	 *
+	 * Removes all transients with our cache prefix from the database.
+	 * Uses direct database queries for efficiency.
+	 *
+	 * @since 0.1.0
+	 */
+	private function clear_all_caches(): void {
+		global $wpdb;
+
+		// Delete transient values
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
+				$wpdb->esc_like( '_transient_' . $this->cache_prefix ) . '%'
+			)
+		);
+
+		// Delete transient timeout entries
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
+				$wpdb->esc_like( '_transient_timeout_' . $this->cache_prefix ) . '%'
+			)
+		);
+	}
+
+	/**
+	 * Add demo data submenu page
+	 *
+	 * Creates an admin page under Events menu for generating test data.
+	 *
+	 * @since 0.1.0
+	 */
+	public function add_demo_data_menu(): void {
+		add_submenu_page(
+			'edit.php?post_type=events',
+			__( 'Generate Demo Data', 'theater-references' ),
+			__( 'Demo Data', 'theater-references' ),
+			'manage_options',
+			'theater-references-demo-data',
+			array( $this, 'render_demo_data_page' )
+		);
+	}
+
+	/**
+	 * Render demo data admin page
+	 *
+	 * Displays interface for generating and deleting demo content.
+	 * Includes nonce verification for security.
+	 *
+	 * @since 0.1.0
+	 */
+	public function render_demo_data_page(): void {
+		// Security check
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		// Handle demo data generation
+		if ( isset( $_POST['generate_demo_data'] ) && check_admin_referer( 'theater_references_demo_data' ) ) {
+			$this->generate_demo_data();
+			echo '<div class="notice notice-success"><p>' . esc_html__( 'Demo data generated successfully!', 'theater-references' ) . '</p></div>';
+		}
+
+		// Handle demo data deletion
+		if ( isset( $_POST['delete_demo_data'] ) && check_admin_referer( 'theater_references_demo_data' ) ) {
+			$this->delete_demo_data();
+			echo '<div class="notice notice-success"><p>' . esc_html__( 'Demo data deleted successfully!', 'theater-references' ) . '</p></div>';
+		}
+
+		?>
+		<div class="wrap">
+			<h1><?php esc_html_e( 'Theater References Demo Data', 'theater-references' ); ?></h1>
+			<p><?php esc_html_e( 'Generate sample events, productions, and references for development and testing.', 'theater-references' ); ?></p>
+			
+			<div style="background: #fff; padding: 20px; margin: 20px 0; border: 1px solid #ccc;">
+				<h2><?php esc_html_e( 'Generate Demo Data', 'theater-references' ); ?></h2>
+				<p><?php esc_html_e( 'This will create:', 'theater-references' ); ?></p>
+				<ul style="list-style: disc; margin-left: 20px;">
+					<li><?php esc_html_e( '5 theater productions', 'theater-references' ); ?></li>
+					<li><?php esc_html_e( '20 event posts', 'theater-references' ); ?></li>
+					<li><?php esc_html_e( '8 venue/client terms', 'theater-references' ); ?></li>
+					<li><?php esc_html_e( '6 festival terms', 'theater-references' ); ?></li>
+					<li><?php esc_html_e( '6 award terms', 'theater-references' ); ?></li>
+				</ul>
+				<form method="post" style="margin-top: 20px;">
+					<?php wp_nonce_field( 'theater_references_demo_data' ); ?>
+					<button type="submit" name="generate_demo_data" class="button button-primary">
+						<?php esc_html_e( 'Generate Demo Data', 'theater-references' ); ?>
+					</button>
+				</form>
+			</div>
+
+			<div style="background: #fff; padding: 20px; margin: 20px 0; border: 1px solid #ccc;">
+				<h2><?php esc_html_e( 'Delete Demo Data', 'theater-references' ); ?></h2>
+				<p><?php esc_html_e( 'This will remove all demo events and terms created by this tool.', 'theater-references' ); ?></p>
+				<form method="post" style="margin-top: 20px;">
+					<?php wp_nonce_field( 'theater_references_demo_data' ); ?>
+					<button type="submit" name="delete_demo_data" class="button button-secondary" onclick="return confirm('<?php esc_attr_e( 'Are you sure you want to delete all demo data?', 'theater-references' ); ?>')">
+						<?php esc_html_e( 'Delete Demo Data', 'theater-references' ); ?>
+					</button>
+				</form>
+			</div>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Generate demo data
+	 *
+	 * Creates sample content for testing:
+	 * - 5 production terms
+	 * - 8 venue terms
+	 * - 6 festival terms
+	 * - 6 award terms
+	 * - 20 event posts with random term assignments
+	 *
+	 * All demo items are marked with '_demo_data' meta for easy cleanup.
+	 *
+	 * @since 0.1.0
+	 */
+	private function generate_demo_data(): void {
+		// Sample production names
+		$productions = array( 'Hamlet', 'Romeo and Juliet', 'A Midsummer Night\'s Dream', 'Macbeth', 'The Tempest' );
+		
+		// Sample venue names from major theater cities
+		$venues = array(
+			'Royal Theater London', 'Berlin Staatstheater', 'Paris National Opera',
+			'Vienna Burgtheater', 'Moscow Art Theatre', 'Sydney Opera House',
+			'New York Broadway Theater', 'Madrid Teatro Real'
+		);
+		
+		// Sample festival names from renowned international festivals
+		$festivals = array(
+			'Edinburgh International Festival', 'Avignon Festival', 'Salzburg Festival',
+			'Venice Biennale Teatro', 'Festival d\'Automne à Paris', 'Berlin Theatertreffen'
+		);
+		
+		// Sample award names
+		$awards = array(
+			'Best Director Award', 'Outstanding Production', 'Best Ensemble Performance',
+			'Critics\' Choice Award', 'Theatre Excellence Prize', 'Innovation in Theatre Award'
+		);
+
+		// Create production terms and store IDs
+		$production_ids = array();
+		foreach ( $productions as $production ) {
+			$term = wp_insert_term( $production, 'theater-productions' );
+			if ( ! is_wp_error( $term ) ) {
+				$production_ids[] = $term['term_id'];
+				// Mark as demo data for cleanup
+				update_term_meta( $term['term_id'], '_demo_data', '1' );
+			}
+		}
+
+		// Create venue terms
+		$venue_ids = array();
+		foreach ( $venues as $venue ) {
+			$term = wp_insert_term( $venue, 'theater-venues' );
+			if ( ! is_wp_error( $term ) ) {
+				$venue_ids[] = $term['term_id'];
+				update_term_meta( $term['term_id'], '_demo_data', '1' );
+			}
+		}
+
+		// Create festival terms
+		$festival_ids = array();
+		foreach ( $festivals as $festival ) {
+			$term = wp_insert_term( $festival, 'theater-festivals' );
+			if ( ! is_wp_error( $term ) ) {
+				$festival_ids[] = $term['term_id'];
+				update_term_meta( $term['term_id'], '_demo_data', '1' );
+			}
+		}
+
+		// Create award terms
+		$award_ids = array();
+		foreach ( $awards as $award ) {
+			$term = wp_insert_term( $award, 'theater-awards' );
+			if ( ! is_wp_error( $term ) ) {
+				$award_ids[] = $term['term_id'];
+				update_term_meta( $term['term_id'], '_demo_data', '1' );
+			}
+		}
+
+		// Generate 20 event posts with realistic data
+		for ( $i = 0; $i < 20; $i++ ) {
+			// Generate random date between 2018-2024
+			$year = rand( 2018, 2024 );
+			$month = rand( 1, 12 );
+			$day = rand( 1, 28 );
+			$date = sprintf( '%04d-%02d-%02d', $year, $month, $day );
+			$production = $productions[ array_rand( $productions ) ];
+
+			$event_data = array(
+				'post_title'   => $production . ' - Event ' . ( $i + 1 ),
+				'post_content' => 'Demo event for ' . $production . '.',
+				'post_status'  => 'publish',
+				'post_type'    => 'events',
+				'post_date'    => $date . ' 19:00:00',
+			);
+
+			$post_id = wp_insert_post( $event_data );
+
+			if ( $post_id ) {
+				// Mark as demo data
+				update_post_meta( $post_id, '_demo_data', '1' );
+
+				// Assign random production
+				if ( ! empty( $production_ids ) ) {
+					wp_set_object_terms( $post_id, array( $production_ids[ array_rand( $production_ids ) ] ), 'theater-productions' );
+				}
+
+				// Use randomization to create varied reference patterns
+				$rand = rand( 1, 100 );
+
+				// 60% chance of having venue references (1-2 venues)
+				if ( $rand < 60 && ! empty( $venue_ids ) ) {
+					$selected_venues = array_rand( array_flip( $venue_ids ), rand( 1, 2 ) );
+					wp_set_object_terms( $post_id, (array) $selected_venues, 'theater-venues' );
+				}
+
+				// 40% chance of festival participation (30-70 range)
+				if ( $rand > 30 && $rand < 70 && ! empty( $festival_ids ) ) {
+					$selected_festivals = array( $festival_ids[ array_rand( $festival_ids ) ] );
+					wp_set_object_terms( $post_id, $selected_festivals, 'theater-festivals' );
+				}
+
+				// 40% chance of award (60-100 range)
+				if ( $rand > 60 && ! empty( $award_ids ) ) {
+					$selected_awards = array( $award_ids[ array_rand( $award_ids ) ] );
+					wp_set_object_terms( $post_id, $selected_awards, 'theater-awards' );
+				}
+			}
+		}
+
+		// Clear cache after generating demo data
+		$this->clear_all_caches();
+	}
+
+	/**
+	 * Delete demo data
+	 *
+	 * Removes all posts and terms marked with '_demo_data' meta.
+	 * Uses permanent deletion (bypass trash).
+	 *
+	 * @since 0.1.0
+	 */
+	private function delete_demo_data(): void {
+		// Find all demo event posts
+		$demo_events = get_posts(
+			array(
+				'post_type'      => 'events',
+				'posts_per_page' => -1,
+				'meta_key'       => '_demo_data',
+				'meta_value'     => '1',
+			)
+		);
+
+		// Permanently delete demo events
+		foreach ( $demo_events as $event ) {
+			wp_delete_post( $event->ID, true );
+		}
+
+		// Delete demo terms from all taxonomies
+		$taxonomies = array( 'theater-productions', 'theater-venues', 'theater-festivals', 'theater-awards' );
+		foreach ( $taxonomies as $taxonomy ) {
+			$demo_terms = get_terms(
+				array(
+					'taxonomy'   => $taxonomy,
+					'hide_empty' => false,
+					'meta_key'   => '_demo_data',
+					'meta_value' => '1',
+				)
+			);
+
+			foreach ( $demo_terms as $term ) {
+				wp_delete_term( $term->term_id, $taxonomy );
+			}
+		}
+
+		// Clear cache after cleanup
+		$this->clear_all_caches();
+	}
+
+	/**
+	 * Prevent cloning of singleton instance
+	 *
+	 * @since 0.1.0
+	 */
+	private function __clone() {}
+
+	/**
+	 * Prevent unserialization of singleton instance
+	 *
+	 * @since 0.1.0
+	 * @throws Exception Always throws exception
+	 */
+	public function __wakeup() {
+		throw new \Exception( 'Cannot unserialize singleton' );
+	}
+}
+
+// Initialize the singleton instance
+Theater_References_Manager::get_instance();]]></content>
+  </file>
+  <file path="src/block.json">
+    <description>This file contains metadata about the block including its name, title, category, icon, and other properties.</description>
+    <content><![CDATA[{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "telex/theater-references",
+	"version": "0.1.0",
+	"title": "Theater References",
+	"category": "widgets",
+	"icon": "awards",
+	"description": "Display theater production references including guest performances, festivals, and awards.",
+	"example": {},
+	"attributes": {
+		"productionId": {
+			"type": "number",
+			"default": 0
+		},
+		"year": {
+			"type": "string",
+			"default": ""
+		},
+		"referenceType": {
+			"type": "string",
+			"default": "all",
+			"enum": ["all", "ref_orga", "ref_festival", "ref_award"]
+		},
+		"headingLevel": {
+			"type": "number",
+			"default": 2
+		},
+		"metadata": {
+			"type": "object",
+			"default": {
+				"name": "Theater References"
+			}
+		}
+	},
+	"supports": {
+		"html": false,
+		"color": {
+			"background": true,
+			"text": true,
+			"link": true,
+			"gradients": true,
+			"__experimentalDefaultControls": {
+				"background": true,
+				"text": true
+			}
+		},
+		"spacing": {
+			"margin": true,
+			"padding": true,
+			"blockGap": true,
+			"__experimentalDefaultControls": {
+				"margin": true,
+				"padding": true,
+				"blockGap": true
+			}
+		},
+		"typography": {
+			"fontSize": true,
+			"lineHeight": true,
+			"fontFamily": true,
+			"fontWeight": true,
+			"fontStyle": true,
+			"textTransform": true,
+			"letterSpacing": true,
+			"__experimentalDefaultControls": {
+				"fontSize": true,
+				"fontFamily": true
+			}
+		},
+		"__experimentalBorder": {
+			"color": true,
+			"radius": true,
+			"style": true,
+			"width": true,
+			"__experimentalDefaultControls": {
+				"color": true,
+				"radius": true
+			}
+		}
+	},
+	"style": "wp-block-telex-theater-references",
+	"textdomain": "theater-references",
+	"editorScript": "file:./index.js",
+	"editorStyle": "file:./index.css",
+	"render": "file:./render.php"
+}]]></content>
+  </file>
+  <file path="src/index.js">
+    <description>This file registers the block, specifies the edit and save functions, and loads the block's metadata</description>
+    <content><![CDATA[/**
+ * Registers a new block provided a unique name and an object defining its behavior.
+ *
+ * @see https://developer.wordpress.org/block-editor/reference-guides/block-api/block-registration/
+ */
+import { registerBlockType } from '@wordpress/blocks';
+
+/**
+ * Lets webpack process CSS, SASS or SCSS files referenced in JavaScript files.
+ * All files containing `style` keyword are bundled together. The code used
+ * gets applied both to the front of your site and to the editor.
+ *
+ * @see https://www.npmjs.com/package/@wordpress/scripts#using-css
+ */
+import './style.scss';
+
+/**
+ * Internal dependencies
+ */
+import Edit from './edit';
+import metadata from './block.json';
+
+/**
+ * Every block starts by registering a new block type definition.
+ *
+ * @see https://developer.wordpress.org/block-editor/reference-guides/block-api/block-registration/
+ */
+registerBlockType( metadata.name, {
+	/**
+	 * @see ./edit.js
+	 */
+	edit: Edit,
+} );
+	]]></content>
+  </file>
+  <file path="src/edit.js">
+    <description>This file contains the edit function for the block which is responsible for rendering the block in the editor.</description>
+    <content><![CDATA[/**
+ * Theater References Block - Editor Component
+ *
+ * Renders the block in the WordPress block editor with live preview
+ * and inspector controls for filtering and customization.
+ *
+ * @since 0.1.0
+ */
+
+/**
+ * WordPress dependencies
+ */
+import { __ } from '@wordpress/i18n';
+import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
+import { PanelBody, SelectControl, TextControl, RangeControl } from '@wordpress/components';
+import { useSelect } from '@wordpress/data';
+import { useEffect } from '@wordpress/element';
+
+/**
+ * Editor styles
+ */
+import './editor.scss';
+
+/**
+ * Edit component for Theater References block
+ *
+ * Displays a preview of the block output with inspector controls
+ * for customization. Shows placeholder data for better UX.
+ *
+ * @param {Object}   props               Block properties from WordPress
+ * @param {Object}   props.attributes    Current block attribute values
+ * @param {Function} props.setAttributes Function to update block attributes
+ * @param {string}   props.clientId      The block's unique client ID
+ * @return {Element} React element to render in editor
+ */
+export default function Edit( { attributes, setAttributes, clientId } ) {
+	// Destructure attributes for easier access
+	const { productionId, year, referenceType, headingLevel } = attributes;
+
+	/**
+	 * Fetch theater productions from WordPress data store
+	 *
+	 * Uses the core data store to fetch all production terms.
+	 * Returns empty array while loading to prevent errors.
+	 */
+	const productions = useSelect( ( select ) => {
+		const terms = select( 'core' ).getEntityRecords( 'taxonomy', 'theater-productions', {
+			per_page: -1, // Fetch all productions
+		} );
+		return terms || [];
+	}, [] );
+
+	/**
+	 * Generate dynamic block label based on attributes
+	 *
+	 * Creates a human-readable label that reflects current filters:
+	 * - Production name (if specific production selected)
+	 * - Year (if specified)
+	 * - Reference type (if not "all")
+	 *
+	 * @return {string} Dynamic label for block
+	 */
+	const getBlockLabel = () => {
+		const parts = [];
+
+		// Add production name if specific production selected
+		if ( productionId > 0 ) {
+			const production = productions.find( ( p ) => p.id === productionId );
+			if ( production ) {
+				parts.push( production.name );
+			}
+		}
+
+		// Add year if specified
+		if ( year ) {
+			parts.push( year );
+		}
+
+		// Add reference type if not "all"
+		if ( referenceType !== 'all' ) {
+			const typeLabels = {
+				ref_orga: __( 'Venues', 'theater-references' ),
+				ref_festival: __( 'Festivals', 'theater-references' ),
+				ref_award: __( 'Awards', 'theater-references' ),
+			};
+			parts.push( typeLabels[ referenceType ] || referenceType );
+		}
+
+		// Construct final label
+		if ( parts.length > 0 ) {
+			return __( 'References: ', 'theater-references' ) + parts.join( ' • ' );
+		}
+
+		// Default label when no filters applied
+		return __( 'Theater References', 'theater-references' );
+	};
+
+	/**
+	 * Update block metadata with dynamic label
+	 *
+	 * This effect runs whenever the attributes change that affect the label.
+	 * It updates the block's metadata attribute so the label appears in the list view.
+	 */
+	useEffect( () => {
+		const label = getBlockLabel();
+		
+		// Update the metadata attribute with the new name
+		setAttributes( {
+			metadata: {
+				...attributes.metadata,
+				name: label,
+			},
+		} );
+	}, [ productionId, year, referenceType, productions ] );
+
+	/**
+	 * Calculate secondary heading level
+	 *
+	 * Type headings are always one level smaller than year headings,
+	 * but capped at H6 (no H7 or higher).
+	 */
+	const secondaryHeadingLevel = Math.min( headingLevel + 1, 6 );
+
+	// Create dynamic heading tag components
+	const YearHeading = `h${ headingLevel }`;
+	const TypeHeading = `h${ secondaryHeadingLevel }`;
+
+	/**
+	 * Type labels mapping
+	 *
+	 * Maps internal taxonomy slugs to user-facing labels.
+	 * Used for displaying type headings in preview.
+	 */
+	const typeLabels = {
+		ref_orga: __( 'Guest Performances & Clients', 'theater-references' ),
+		ref_festival: __( 'Festivals', 'theater-references' ),
+		ref_award: __( 'Awards', 'theater-references' ),
+	};
+
+	/**
+	 * Placeholder data for editor preview
+	 *
+	 * Provides realistic sample data to show users what the block
+	 * will look like with actual content. Organized by year and type.
+	 *
+	 * Structure matches the output from render.php:
+	 * {
+	 *   '2024': {
+	 *     'ref_orga': ['Venue 1', 'Venue 2'],
+	 *     'ref_festival': ['Festival 1'],
+	 *     'ref_award': ['Award 1']
+	 *   }
+	 * }
+	 */
+	const placeholderData = {
+		2024: {
+			ref_orga: [
+				__( 'Royal Theater London', 'theater-references' ),
+				__( 'Vienna Burgtheater', 'theater-references' ),
+			],
+			ref_festival: [
+				__( 'Edinburgh International Festival', 'theater-references' ),
+			],
+			ref_award: [
+				__( 'Best Director Award', 'theater-references' ),
+			],
+		},
+		2023: {
+			ref_orga: [
+				__( 'Berlin Staatstheater', 'theater-references' ),
+			],
+			ref_festival: [
+				__( 'Avignon Festival', 'theater-references' ),
+				__( 'Salzburg Festival', 'theater-references' ),
+			],
+			ref_award: [],
+		},
+	};
+
+	/**
+	 * Filter placeholder data based on reference type
+	 *
+	 * If a specific type is selected, only show data for that type.
+	 * Otherwise show all types. Removes empty years after filtering.
+	 *
+	 * @return {Object} Filtered placeholder data structure
+	 */
+	const getFilteredPlaceholderData = () => {
+		// Show all types if 'all' is selected
+		if ( referenceType === 'all' ) {
+			return placeholderData;
+		}
+
+		// Filter to show only selected type
+		const filtered = {};
+		Object.keys( placeholderData ).forEach( ( yearKey ) => {
+			const yearData = placeholderData[ yearKey ];
+			// Only include year if it has data for the selected type
+			if ( yearData[ referenceType ] && yearData[ referenceType ].length > 0 ) {
+				filtered[ yearKey ] = {
+					[ referenceType ]: yearData[ referenceType ],
+				};
+			}
+		} );
+		return filtered;
+	};
+
+	const filteredData = getFilteredPlaceholderData();
+
+	return (
+		<>
+			{/* Inspector Controls - Sidebar settings panel */}
+			<InspectorControls>
+				<PanelBody title={ __( 'Reference Settings', 'theater-references' ) }>
+					{/* Production filter dropdown */}
+					<SelectControl
+						label={ __( 'Production', 'theater-references' ) }
+						value={ productionId }
+						options={ [
+							// Default option for auto-detection
+							{ label: __( 'Auto-detect (or all)', 'theater-references' ), value: 0 },
+							// Map production terms to options
+							...productions.map( ( production ) => ( {
+								label: production.name,
+								value: production.id,
+							} ) ),
+						] }
+						onChange={ ( value ) =>
+							setAttributes( { productionId: parseInt( value ) } )
+						}
+						help={ __( 'Select a specific production or leave as auto-detect', 'theater-references' ) }
+					/>
+
+					{/* Year filter input */}
+					<TextControl
+						label={ __( 'Year', 'theater-references' ) }
+						value={ year }
+						onChange={ ( value ) => setAttributes( { year: value } ) }
+						help={ __( 'Filter by specific year (e.g., 2017). Leave empty for all years.', 'theater-references' ) }
+						type="number"
+					/>
+
+					{/* Reference type filter dropdown */}
+					<SelectControl
+						label={ __( 'Reference Type', 'theater-references' ) }
+						value={ referenceType }
+						options={ [
+							{ label: __( 'All Types', 'theater-references' ), value: 'all' },
+							{ label: __( 'Guest Performances & Clients', 'theater-references' ), value: 'ref_orga' },
+							{ label: __( 'Festivals', 'theater-references' ), value: 'ref_festival' },
+							{ label: __( 'Awards', 'theater-references' ), value: 'ref_award' },
+						] }
+						onChange={ ( value ) =>
+							setAttributes( { referenceType: value } )
+						}
+						help={ __( 'Choose which type of references to display', 'theater-references' ) }
+					/>
+
+					{/* Heading level slider */}
+					<RangeControl
+						label={ __( 'Year Heading Level', 'theater-references' ) }
+						value={ headingLevel }
+						onChange={ ( value ) => setAttributes( { headingLevel: value } ) }
+						min={ 1 }
+						max={ 5 } // Max H5 so secondary can be H6
+						help={ __( 'Choose the heading level for year headings (H1-H5). Type headings will be one level smaller.', 'theater-references' ) }
+					/>
+				</PanelBody>
+			</InspectorControls>
+
+			{/* Block content preview */}
+			<div { ...useBlockProps() }>
+				{ Object.keys( filteredData ).length > 0 ? (
+					<>
+						{/* Loop through years in placeholder data */}
+						{ Object.keys( filteredData ).map( ( yearKey ) => {
+							const yearData = filteredData[ yearKey ];
+							return (
+								<div key={ yearKey }>
+									{/* Year heading */}
+									<YearHeading className="references-year">
+										{ yearKey }
+									</YearHeading>
+
+									{/* Loop through types within year */}
+									{ Object.keys( yearData ).map( ( typeKey ) => {
+										const items = yearData[ typeKey ];
+										if ( items.length === 0 ) return null;
+
+										return (
+											<div key={ typeKey }>
+												{/* Type heading */}
+												<TypeHeading className="references-type">
+													{ typeLabels[ typeKey ] }
+												</TypeHeading>
+
+												{/* Reference list */}
+												<ul className="references-list">
+													{ items.map( ( item, index ) => (
+														<li key={ index }>{ item }</li>
+													) ) }
+												</ul>
+											</div>
+										);
+									} ) }
+								</div>
+							);
+						} ) }
+					</>
+				) : (
+					// Empty state when no matching references
+					<p className="no-references">
+						{ __( 'No references found matching the selected criteria.', 'theater-references' ) }
+					</p>
+				) }
+			</div>
+		</>
+	);
+}
+	]]></content>
+  </file>
+  <file path="src/save.js">
+    <description>This file contains the save function for the block which is responsible for creating the static result of rendering the block on the client to display the saved result on the front end.</description>
+    <content><![CDATA[]]></content>
+  </file>
+  <file path="src/style.scss">
+    <description>This file contains styles for the block in the front end.</description>
+    <content><![CDATA[/**
+ * Theater References Block Styles
+ * 
+ * Comprehensive theme.json support with semantic color tokens,
+ * typography scales, and spacing controls for granular styling.
+ * 
+ * Styling hierarchy:
+ * 1. Block container (.wp-block-telex-theater-references)
+ * 2. Year headings (.references-year) - h2 level
+ * 3. Type headings (.references-type) - h3 level  
+ * 4. Reference lists (.references-list) - ul element
+ */
+
+/**
+ * BLOCK CONTAINER
+ * Main wrapper with comprehensive theme.json integration
+ */
+.wp-block-telex-theater-references {
+	/* Spacing - block container */
+	margin-block-start: var(--wp--preset--spacing--50, 2em);
+	margin-block-end: var(--wp--preset--spacing--50, 2em);
+	margin-inline-start: var(--wp--preset--spacing--20, 0.5em);
+	margin-inline-end: var(--wp--preset--spacing--20, 0.5em);
+	padding-block: var(--wp--preset--spacing--40, 1.5em);
+	padding-inline: var(--wp--preset--spacing--40, 1.5em);
+
+	/* Colors - block container */
+	background-color: var(--wp--preset--color--base, transparent);
+	color: var(--wp--preset--color--contrast, inherit);
+
+	/* Typography - block container */
+	font-family: var(--wp--preset--font-family--body, inherit);
+	font-size: var(--wp--preset--font-size--medium, 1rem);
+	font-weight: var(--wp--custom--typography--font-weight--normal, 400);
+	line-height: var(--wp--custom--typography--line-height--body, 1.6);
+	letter-spacing: var(--wp--custom--typography--letter-spacing--normal, 0);
+
+	/* Border - block container */
+	border-width: var(--wp--custom--border--width--thin, 1px);
+	border-style: var(--wp--custom--border--style--default, solid);
+	border-color: var(--wp--preset--color--contrast-2, transparent);
+	border-radius: var(--wp--custom--border-radius--default, 0);
+
+	/**
+	 * YEAR HEADINGS (H2)
+	 * Primary level headings with distinct styling
+	 */
+	.references-year {
+		/* Spacing - year headings */
+		margin-block-start: var(--wp--preset--spacing--60, 2.5em);
+		margin-block-end: var(--wp--preset--spacing--30, 0.75em);
+		margin-inline-start: 0;
+		margin-inline-end: 0;
+		padding-block-start: 0;
+		padding-block-end: var(--wp--preset--spacing--20, 0.5em);
+		padding-inline-start: 0;
+		padding-inline-end: 0;
+
+		/* Colors - year headings */
+		color: var(--wp--preset--color--contrast-2, var(--wp--preset--color--contrast, currentColor));
+		border-bottom-color: var(--wp--preset--color--primary, currentColor);
+
+		/* Typography - year headings */
+		font-family: var(--wp--preset--font-family--heading, inherit);
+		font-size: var(--wp--preset--font-size--x-large, 1.75rem);
+		font-weight: var(--wp--custom--typography--font-weight--bold, 700);
+		font-style: var(--wp--custom--typography--font-style--normal, normal);
+		line-height: var(--wp--custom--typography--line-height--heading, 1.2);
+		letter-spacing: var(--wp--custom--typography--letter-spacing--heading, -0.02em);
+		text-transform: var(--wp--custom--typography--text-transform--none, none);
+
+		/* Border - year headings */
+		border-bottom-width: var(--wp--custom--border--width--thick, 2px);
+		border-bottom-style: solid;
+
+		/* First year heading has no top margin */
+		&:first-child {
+			margin-block-start: 0;
+		}
+	}
+
+	/**
+	 * TYPE HEADINGS (H3)
+	 * Secondary level headings for reference categories
+	 */
+	.references-type {
+		/* Spacing - type headings */
+		margin-block-start: var(--wp--preset--spacing--40, 1.5em);
+		margin-block-end: var(--wp--preset--spacing--20, 0.5em);
+		margin-inline-start: 0;
+		margin-inline-end: 0;
+		padding-block-start: 0;
+		padding-block-end: 0;
+		padding-inline-start: var(--wp--preset--spacing--30, 0.75em);
+		padding-inline-end: 0;
+
+		/* Colors - type headings */
+		color: var(--wp--preset--color--contrast-3, var(--wp--preset--color--contrast, currentColor));
+		border-inline-start-color: var(--wp--preset--color--secondary, var(--wp--preset--color--primary, currentColor));
+
+		/* Typography - type headings */
+		font-family: var(--wp--preset--font-family--heading, inherit);
+		font-size: var(--wp--preset--font-size--large, 1.25rem);
+		font-weight: var(--wp--custom--typography--font-weight--semibold, 600);
+		font-style: var(--wp--custom--typography--font-style--normal, normal);
+		line-height: var(--wp--custom--typography--line-height--heading, 1.3);
+		letter-spacing: var(--wp--custom--typography--letter-spacing--normal, 0);
+		text-transform: var(--wp--custom--typography--text-transform--none, none);
+
+		/* Border - type headings */
+		border-inline-start-width: var(--wp--custom--border--width--medium, 3px);
+		border-inline-start-style: solid;
+	}
+
+	/**
+	 * REFERENCE LISTS (UL)
+	 * Unordered lists with custom styling and bullets
+	 */
+	.references-list {
+		/* Reset default list styling */
+		list-style: none;
+
+		/* Spacing - list container */
+		margin-block-start: var(--wp--preset--spacing--20, 0.5em);
+		margin-block-end: var(--wp--preset--spacing--40, 1.5em);
+		margin-inline-start: 0;
+		margin-inline-end: 0;
+		padding-block-start: 0;
+		padding-block-end: 0;
+		padding-inline-start: var(--wp--preset--spacing--50, 2em);
+		padding-inline-end: 0;
+
+		/* Colors - list container */
+		color: var(--wp--preset--color--contrast, currentColor);
+
+		/**
+		 * LIST ITEMS (LI)
+		 * Individual reference entries
+		 */
+		li {
+			position: relative;
+
+			/* Spacing - list items */
+			margin-block-start: 0;
+			margin-block-end: 0;
+			margin-inline-start: 0;
+			margin-inline-end: 0;
+			padding-block-start: var(--wp--preset--spacing--10, 0.25em);
+			padding-block-end: var(--wp--preset--spacing--10, 0.25em);
+			padding-inline-start: 0;
+			padding-inline-end: 0;
+
+			/* Colors - list items */
+			color: inherit;
+
+			/* Typography - list items */
+			font-family: inherit;
+			font-size: var(--wp--preset--font-size--medium, 1rem);
+			font-weight: var(--wp--custom--typography--font-weight--normal, 400);
+			font-style: var(--wp--custom--typography--font-style--normal, normal);
+			line-height: var(--wp--custom--typography--line-height--body, 1.6);
+			letter-spacing: var(--wp--custom--typography--letter-spacing--normal, 0);
+
+			/**
+			 * CUSTOM BULLET
+			 * Pseudo-element for customizable list markers
+			 */
+			&::before {
+				content: var(--wp--custom--list--bullet-content, "→");
+				position: absolute;
+				inset-inline-start: calc(var(--wp--preset--spacing--50, 2em) * -1);
+				
+				/* Colors - bullet */
+				color: var(--wp--preset--color--tertiary, var(--wp--preset--color--contrast-3, #666));
+				
+				/* Typography - bullet */
+				font-weight: var(--wp--custom--typography--font-weight--normal, 400);
+				font-size: var(--wp--custom--list--bullet-size, 1em);
+				line-height: inherit;
+			}
+
+			/* Hover state for interactive feel */
+			&:hover {
+				color: var(--wp--preset--color--primary, currentColor);
+				transition: color 0.2s ease;
+			}
+		}
+	}
+
+	/**
+	 * NO REFERENCES MESSAGE
+	 * Empty state styling
+	 */
+	.no-references {
+		/* Spacing */
+		padding-block: var(--wp--preset--spacing--40, 1.5em);
+		padding-inline: var(--wp--preset--spacing--40, 1.5em);
+		margin-block-start: var(--wp--preset--spacing--30, 1em);
+		margin-block-end: var(--wp--preset--spacing--30, 1em);
+		margin-inline-start: 0;
+		margin-inline-end: 0;
+
+		/* Colors */
+		background-color: var(--wp--preset--color--contrast-2, #f0f0f0);
+		color: var(--wp--preset--color--contrast-3, #666);
+		border-inline-start-color: var(--wp--preset--color--tertiary, #999);
+
+		/* Typography */
+		font-size: var(--wp--preset--font-size--small, 0.875rem);
+		font-style: italic;
+		line-height: var(--wp--custom--typography--line-height--body, 1.6);
+
+		/* Border */
+		border-inline-start-width: var(--wp--custom--border--width--thick, 4px);
+		border-inline-start-style: solid;
+		border-radius: var(--wp--custom--border-radius--small, 4px);
+	}
+
+	/**
+	 * RESPONSIVE ADJUSTMENTS
+	 * Mobile and tablet optimizations
+	 */
+	@media (max-width: 781px) {
+		/* Reduce block container spacing */
+		margin-block: var(--wp--preset--spacing--40, 1.5em);
+		padding-block: var(--wp--preset--spacing--30, 1em);
+		padding-inline: var(--wp--preset--spacing--30, 1em);
+
+		/* Adjust year heading size and spacing */
+		.references-year {
+			font-size: var(--wp--preset--font-size--large, 1.5rem);
+			margin-block-start: var(--wp--preset--spacing--50, 2em);
+		}
+
+		/* Adjust type heading size and spacing */
+		.references-type {
+			font-size: var(--wp--preset--font-size--medium, 1.125rem);
+			padding-inline-start: var(--wp--preset--spacing--20, 0.5em);
+		}
+
+		/* Adjust list spacing and item size */
+		.references-list {
+			padding-inline-start: var(--wp--preset--spacing--40, 1.5em);
+
+			li {
+				font-size: var(--wp--preset--font-size--small, 0.9375rem);
+			}
+		}
+	}
+
+	/**
+	 * HIGH CONTRAST MODE
+	 * Enhanced borders for accessibility
+	 */
+	@media (prefers-contrast: high) {
+		.references-year {
+			border-bottom-width: 3px;
+		}
+
+		.references-type {
+			border-inline-start-width: 4px;
+		}
+
+		.no-references {
+			border-inline-start-width: 5px;
+		}
+	}
+
+	/**
+	 * PRINT STYLES
+	 * Optimized for printed output
+	 */
+	@media print {
+		padding: 0;
+		margin-block: 1em;
+		margin-inline: 0;
+
+		.references-year,
+		.references-type {
+			page-break-after: avoid;
+		}
+
+		.references-list li {
+			page-break-inside: avoid;
+		}
+	}
+
+	/**
+	 * REDUCED MOTION
+	 * Respect user preferences for animations
+	 */
+	@media (prefers-reduced-motion: reduce) {
+		.references-list li:hover {
+			transition: none;
+		}
+	}
+}]]></content>
+  </file>
+  <file path="src/editor.scss">
+    <description>This file contains styles for the block in the editor.</description>
+    <content><![CDATA[/**
+ * Theater References Block - Editor Styles
+ * 
+ * Editor-specific styles with theme.json integration for accurate
+ * WYSIWYG preview in the block editor. Supports dynamic heading levels.
+ */
+
+.wp-block-telex-theater-references {
+	/* No custom placeholder needed - block now shows actual preview */
+	
+	/* Ensure headings in editor match frontend styling */
+	.references-year,
+	.references-type {
+		/* All heading level styles inherited from style.scss */
+	}
+
+	/* Editor-specific adjustments for better UX */
+	&.is-selected {
+		outline: 2px solid var(--wp--preset--color--primary, #2271b1);
+		outline-offset: 2px;
+	}
+
+	/* Dark mode support in editor */
+	.is-dark-theme & {
+		.no-references {
+			background: var(--wp--preset--color--contrast-2, rgba(255, 255, 255, 0.05));
+			border-color: var(--wp--preset--color--contrast-3, rgba(255, 255, 255, 0.1));
+			color: var(--wp--preset--color--base, rgba(255, 255, 255, 0.7));
+		}
+	}
+
+	/* Reduced motion support */
+	@media (prefers-reduced-motion: reduce) {
+		&.is-selected {
+			transition: none;
+		}
+	}
+}]]></content>
+  </file>
+  <file path="src/view.js">
+    <description>This file contains the view function for the block which is responsible for rendering interactive behaviors of the block on the front end.</description>
+    <content><![CDATA[/**
+ * Use this file for JavaScript code that you want to run in the front-end
+ * on posts/pages that contain this block.
+ */
+	]]></content>
+  </file>
+  <file path="src/render.php">
+    <description>This file contains the render callback function for the block, which is responsible for rendering the block content on the front end.</description>
+    <content><![CDATA[<?php
+/**
+ * Theater References Block - Frontend Renderer
+ *
+ * This file handles the server-side rendering of the Theater References block.
+ * It queries events, organizes references by year and type, and outputs structured HTML.
+ *
+ * @package TheaterReferences
+ * @since 0.1.0
+ */
+
+if ( ! class_exists( 'Theater_References_Renderer' ) ) {
+	/**
+	 * Theater References Renderer
+	 *
+	 * Handles data retrieval, caching, and organization for block rendering.
+	 * Optimized for performance with transient caching and efficient queries.
+	 *
+	 * @since 0.1.0
+	 */
+	class Theater_References_Renderer {
+		/**
+		 * Cache key prefix
+		 *
+		 * @var string
+		 */
+		private string $cache_prefix = 'theater_refs_';
+
+		/**
+		 * Cache expiration in seconds (1 hour)
+		 *
+		 * @var int
+		 */
+		private int $cache_expiration = 3600;
+
+		/**
+		 * Debug mode flag
+		 * Set to true to enable debug output
+		 *
+		 * @var bool
+		 */
+		private bool $debug = true;
+
+		/**
+		 * Debug log storage
+		 *
+		 * @var array
+		 */
+		private array $debug_log = array();
+
+		/**
+		 * Add debug message
+		 *
+		 * @param string $message Debug message
+		 * @param mixed  $data    Optional data to log
+		 */
+		private function debug( string $message, $data = null ): void {
+			if ( ! $this->debug ) {
+				return;
+			}
+
+			$entry = array(
+				'message' => $message,
+				'time' => microtime( true ),
+			);
+
+			if ( $data !== null ) {
+				$entry['data'] = $data;
+			}
+
+			$this->debug_log[] = $entry;
+		}
+
+		/**
+		 * Get debug log as HTML
+		 *
+		 * @return string HTML formatted debug log
+		 */
+		public function get_debug_output(): string {
+			if ( ! $this->debug || empty( $this->debug_log ) ) {
+				return '';
+			}
+
+			$output = '<div style="background: #f0f0f0; border: 2px solid #333; padding: 20px; margin: 20px 0; font-family: monospace; font-size: 12px;">';
+			$output .= '<h3 style="margin-top: 0;">Debug Log</h3>';
+
+			foreach ( $this->debug_log as $entry ) {
+				$output .= '<div style="margin-bottom: 10px; padding: 10px; background: white; border-left: 3px solid #2271b1;">';
+				$output .= '<strong>' . esc_html( $entry['message'] ) . '</strong>';
+
+				if ( isset( $entry['data'] ) ) {
+					$output .= '<pre style="margin: 5px 0 0 0; overflow-x: auto;">';
+					$output .= esc_html( print_r( $entry['data'], true ) );
+					$output .= '</pre>';
+				}
+
+				$output .= '</div>';
+			}
+
+			$output .= '</div>';
+			return $output;
+		}
+
+		/**
+		 * Get references organized by year and type
+		 *
+		 * Retrieves all matching events and organizes their taxonomy terms
+		 * by year and reference type. Results are cached for performance.
+		 *
+		 * Example return structure:
+		 * array(
+		 *     '2024' => array(
+		 *         'theater-venues' => array( 'Royal Theater London', 'Vienna Burgtheater' ),
+		 *         'theater-festivals' => array( 'Edinburgh Festival' ),
+		 *         'theater-awards' => array( 'Best Director Award' )
+		 *     ),
+		 *     '2023' => array(...)
+		 * )
+		 *
+		 * @since 0.1.0
+		 * @param int    $production_id Optional. Filter by production term ID. Default 0 (all).
+		 * @param string $year          Optional. Filter by specific year (e.g., '2024'). Default '' (all).
+		 * @param string $type          Optional. Filter by reference type or 'all'. Default 'all'.
+		 * @return array Nested array of references organized by year and type.
+		 */
+		public function get_references( int $production_id = 0, string $year = '', string $type = 'all' ): array {
+			$this->debug( 'Starting get_references', array(
+				'production_id' => $production_id,
+				'year' => $year,
+				'type' => $type,
+			) );
+
+			// Generate unique cache key based on parameters
+			$cache_key = $this->cache_prefix . md5( serialize( array( $production_id, $year, $type ) ) );
+			
+			// SKIP CACHE FOR DEBUGGING
+			// $cached = get_transient( $cache_key );
+			// if ( false !== $cached ) {
+			// 	return $cached;
+			// }
+
+			// Build WP_Query arguments for event posts
+			$args = array(
+				'post_type'              => 'events',
+				'posts_per_page'         => -1, // Get all matching posts
+				'post_status'            => 'publish',
+				'orderby'                => 'date',
+				'order'                  => 'DESC', // Newest first
+				'fields'                 => 'ids', // Only get IDs for performance
+				'no_found_rows'          => true, // Skip pagination count
+				'update_post_meta_cache' => false, // Don't cache meta (we don't use it)
+				'update_post_term_cache' => true, // Do cache terms (we need them)
+			);
+
+			$this->debug( 'Initial query args', $args );
+
+			// Get taxonomies to query based on type filter
+			$taxonomies = $this->get_taxonomies_by_type( $type );
+			$this->debug( 'Taxonomies for type filter', array(
+				'type' => $type,
+				'taxonomies' => $taxonomies,
+			) );
+			
+			// Build tax_query - START FRESH
+			$tax_query = array();
+			
+			// STEP 1: Add production filter if specified
+			if ( $production_id > 0 ) {
+				$tax_query[] = array(
+					'taxonomy' => 'theater-productions',
+					'field'    => 'term_id',
+					'terms'    => $production_id,
+				);
+				$this->debug( 'Added production filter to tax_query', $tax_query );
+			}
+			
+			// STEP 2: Add type filter ONLY if not 'all'
+			if ( $type !== 'all' && ! empty( $taxonomies ) ) {
+				$this->debug( 'Type is not all, adding type filter' );
+				
+				// When filtering by type, we want posts that have ANY of these taxonomies
+				if ( count( $taxonomies ) === 1 ) {
+					// Single taxonomy - simple EXISTS check
+					$tax_query[] = array(
+						'taxonomy' => $taxonomies[0],
+						'operator' => 'EXISTS',
+					);
+					$this->debug( 'Added single taxonomy EXISTS', $tax_query );
+				} else {
+					// Multiple taxonomies - use OR relation
+					$type_query = array( 'relation' => 'OR' );
+					foreach ( $taxonomies as $taxonomy ) {
+						$type_query[] = array(
+							'taxonomy' => $taxonomy,
+							'operator' => 'EXISTS',
+						);
+					}
+					$tax_query[] = $type_query;
+					$this->debug( 'Added multiple taxonomy OR', $tax_query );
+				}
+			}
+			
+			// STEP 3: Apply tax_query to args ONLY if we have filters
+			if ( ! empty( $tax_query ) ) {
+				$this->debug( 'Tax query is not empty, count: ' . count( $tax_query ) );
+				
+				// Only add 'relation' if we have MORE than one top-level filter
+				if ( count( $tax_query ) > 1 ) {
+					$this->debug( 'Multiple tax_query items, adding AND relation' );
+					$tax_query = array_merge( array( 'relation' => 'AND' ), $tax_query );
+				} else {
+					$this->debug( 'Single tax_query item, no relation needed' );
+				}
+				
+				$args['tax_query'] = $tax_query;
+				$this->debug( 'Final tax_query applied to args', $tax_query );
+			} else {
+				$this->debug( 'No tax_query filters to apply' );
+			}
+
+			// STEP 4: Add year filter if specified
+			if ( ! empty( $year ) ) {
+				$args['date_query'] = array(
+					array( 'year' => intval( $year ) ),
+				);
+				$this->debug( 'Added year filter', $args['date_query'] );
+			}
+
+			$this->debug( 'Final query args before execution', $args );
+
+			// Execute query
+			$query = new WP_Query( $args );
+			
+			$this->debug( 'Query executed', array(
+				'found_posts' => count( $query->posts ),
+				'post_ids' => $query->posts,
+				'request' => $query->request,
+			) );
+
+			$references = array();
+
+			if ( ! empty( $query->posts ) ) {
+				$post_ids = $query->posts;
+				
+				// Batch fetch post dates for efficiency
+				$post_dates = $this->get_post_dates( $post_ids );
+				$this->debug( 'Fetched post dates', array(
+					'count' => count( $post_dates ),
+					'dates' => $post_dates,
+				) );
+				
+				// For display, always get all reference taxonomies
+				$display_taxonomies = array( 'theater-venues', 'theater-festivals', 'theater-awards' );
+				
+				// Batch fetch all taxonomy terms
+				$post_terms = $this->get_post_terms( $post_ids, $display_taxonomies );
+				$this->debug( 'Fetched post terms', array(
+					'post_count' => count( $post_terms ),
+					'sample' => array_slice( $post_terms, 0, 2, true ),
+				) );
+
+				// Organize data by year and type
+				foreach ( $post_ids as $post_id ) {
+					if ( ! isset( $post_dates[ $post_id ] ) ) {
+						$this->debug( "Skipping post {$post_id} - no date found" );
+						continue;
+					}
+
+					// Extract year from post date
+					$post_year = $post_dates[ $post_id ]->year;
+					$terms = isset( $post_terms[ $post_id ] ) ? $post_terms[ $post_id ] : array();
+
+					$this->debug( "Processing post {$post_id}", array(
+						'year' => $post_year,
+						'has_venues' => isset( $terms['theater-venues'] ),
+						'has_festivals' => isset( $terms['theater-festivals'] ),
+						'has_awards' => isset( $terms['theater-awards'] ),
+					) );
+
+					// Initialize year structure if not exists
+					if ( ! isset( $references[ $post_year ] ) ) {
+						$references[ $post_year ] = array(
+							'theater-venues' => array(),
+							'theater-festivals' => array(),
+							'theater-awards' => array(),
+						);
+					}
+
+					// Add term names to appropriate arrays (deduplicated)
+					foreach ( $display_taxonomies as $taxonomy ) {
+						if ( isset( $terms[ $taxonomy ] ) ) {
+							foreach ( $terms[ $taxonomy ] as $term ) {
+								// Only add if not already present (deduplication)
+								if ( ! in_array( $term->name, $references[ $post_year ][ $taxonomy ], true ) ) {
+									$references[ $post_year ][ $taxonomy ][] = $term->name;
+									$this->debug( "Added term: {$term->name} to {$taxonomy}" );
+								}
+							}
+						}
+					}
+				}
+			} else {
+				$this->debug( 'No posts found by query' );
+			}
+
+			$this->debug( 'Final references structure', $references );
+
+			// Cache results
+			set_transient( $cache_key, $references, $this->cache_expiration );
+			return $references;
+		}
+
+		/**
+		 * Get taxonomy slugs based on type filter
+		 *
+		 * Converts block attribute reference types to taxonomy slugs.
+		 *
+		 * @since 0.1.0
+		 * @param string $type Reference type from block attributes.
+		 * @return array Array of taxonomy slugs to query.
+		 */
+		private function get_taxonomies_by_type( string $type ): array {
+			if ( $type === 'theater-venues' ) {
+				return array( 'theater-venues' );
+			} elseif ( $type === 'theater-festivals' ) {
+				return array( 'theater-festivals' );
+			} elseif ( $type === 'theater-awards' ) {
+				return array( 'theater-awards' );
+			}
+			// 'all' - return empty array (no type filter)
+			return array();
+		}
+
+		/**
+		 * Batch fetch post dates
+		 *
+		 * Uses direct database query for efficiency when fetching many post dates.
+		 *
+		 * @since 0.1.0
+		 * @param array $post_ids Array of post IDs.
+		 * @return array Associative array of post_id => year data.
+		 */
+		private function get_post_dates( array $post_ids ): array {
+			global $wpdb;
+			
+			if ( empty( $post_ids ) ) {
+				return array();
+			}
+			
+			// Sanitize IDs for safe SQL
+			$safe_ids = array_map( 'intval', $post_ids );
+			$placeholders = implode( ',', array_fill( 0, count( $safe_ids ), '%d' ) );
+			
+			// Execute optimized query to get year from post_date
+			$results = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT ID, YEAR(post_date) as year FROM {$wpdb->posts} WHERE ID IN ({$placeholders}) ORDER BY post_date DESC",
+					...$safe_ids
+				),
+				OBJECT_K // Use ID as array key
+			);
+			
+			return $results;
+		}
+
+		/**
+		 * Batch fetch post terms
+		 *
+		 * Retrieves all terms for given posts and taxonomies.
+		 * Organized by post_id and taxonomy for easy lookup.
+		 *
+		 * Example return:
+		 * array(
+		 *     123 => array(
+		 *         'theater-venues' => array( WP_Term, WP_Term ),
+		 *         'theater-festivals' => array( WP_Term )
+		 *     )
+		 * )
+		 *
+		 * @since 0.1.0
+		 * @param array $post_ids   Array of post IDs.
+		 * @param array $taxonomies Array of taxonomy slugs to fetch.
+		 * @return array Nested array of post_id => taxonomy => terms.
+		 */
+		private function get_post_terms( array $post_ids, array $taxonomies ): array {
+			if ( empty( $post_ids ) || empty( $taxonomies ) ) {
+				return array();
+			}
+
+			$organized_terms = array();
+			
+			// Fetch terms for each post and taxonomy
+			foreach ( $post_ids as $post_id ) {
+				$organized_terms[ $post_id ] = array();
+				
+				foreach ( $taxonomies as $taxonomy ) {
+					$terms = get_the_terms( $post_id, $taxonomy );
+					
+					if ( $terms && ! is_wp_error( $terms ) ) {
+						$organized_terms[ $post_id ][ $taxonomy ] = $terms;
+					}
+				}
+			}
+			
+			return $organized_terms;
+		}
+
+		/**
+		 * Get human-readable type labels
+		 *
+		 * Maps taxonomy slugs to translatable display labels.
+		 *
+		 * @since 0.1.0
+		 * @return array Associative array of taxonomy => label.
+		 */
+		public function get_type_labels(): array {
+			return array(
+				'theater-venues'    => __( 'Guest Performances & Clients', 'theater-references' ),
+				'theater-festivals' => __( 'Festivals', 'theater-references' ),
+				'theater-awards'    => __( 'Awards', 'theater-references' ),
+			);
+		}
+	}
+}
+
+// Initialize renderer
+$renderer = new Theater_References_Renderer();
+
+// Extract and sanitize block attributes
+$production_id = isset( $attributes['productionId'] ) ? intval( $attributes['productionId'] ) : 0;
+$year = isset( $attributes['year'] ) ? sanitize_text_field( $attributes['year'] ) : '';
+$type = isset( $attributes['referenceType'] ) ? sanitize_text_field( $attributes['referenceType'] ) : 'all';
+$heading_level = isset( $attributes['headingLevel'] ) ? intval( $attributes['headingLevel'] ) : 2;
+
+// Ensure heading level is within valid range (H1-H6)
+$heading_level = max( 1, min( 6, $heading_level ) );
+
+// Calculate secondary heading level (type headings are one level smaller)
+$secondary_heading_level = min( $heading_level + 1, 6 );
+
+// Map legacy attribute values to taxonomy slugs
+if ( $type === 'ref_orga' ) {
+	$type = 'theater-venues';
+} elseif ( $type === 'ref_festival' ) {
+	$type = 'theater-festivals';
+} elseif ( $type === 'ref_award' ) {
+	$type = 'theater-awards';
+}
+
+// Auto-detect production from current taxonomy term if viewing a production archive
+if ( $production_id === 0 && is_tax( 'theater-productions' ) ) {
+	$term = get_queried_object();
+	$production_id = $term->term_id;
+}
+
+// Fetch organized reference data
+$references = $renderer->get_references( $production_id, $year, $type );
+$type_labels = $renderer->get_type_labels();
+
+// Determine if we're showing a specific type (affects heading display)
+$is_specific_type = ( $type !== 'all' );
+
+// Output debug log if enabled
+echo $renderer->get_debug_output();
+?>
+<div <?php echo get_block_wrapper_attributes(); ?>>
+	<?php if ( ! empty( $references ) ) : ?>
+		<?php foreach ( $references as $ref_year => $types ) : ?>
+			<!-- Year heading -->
+			<h<?php echo esc_attr( $heading_level ); ?> class="references-year"><?php echo esc_html( $ref_year ); ?></h<?php echo esc_attr( $heading_level ); ?>>
+			
+			<?php foreach ( $types as $ref_type => $items ) : ?>
+				<?php if ( ! empty( $items ) ) : ?>
+					<!-- Type heading (only shown when displaying all types) -->
+					<?php if ( ! $is_specific_type ) : ?>
+						<h<?php echo esc_attr( $secondary_heading_level ); ?> class="references-type"><?php echo esc_html( $type_labels[ $ref_type ] ); ?></h<?php echo esc_attr( $secondary_heading_level ); ?>>
+					<?php endif; ?>
+					
+					<!-- Reference list -->
+					<ul class="references-list">
+						<?php foreach ( $items as $item ) : ?>
+							<li><?php echo esc_html( $item ); ?></li>
+						<?php endforeach; ?>
+					</ul>
+				<?php endif; ?>
+			<?php endforeach; ?>
+		<?php endforeach; ?>
+	<?php else : ?>
+		<!-- Empty state -->
+		<p class="no-references"><?php esc_html_e( 'No references found matching the selected criteria.', 'theater-references' ); ?></p>
+	<?php endif; ?>
+</div>
+
+<!-- Test Matrix -->
+<div style="background: #fff; border: 2px solid #0073aa; padding: 20px; margin: 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;">
+	<h3 style="margin-top: 0; color: #0073aa;">🧪 Test Matrix - Expected Behaviors</h3>
+	<p style="font-size: 13px; color: #666;">Test these combinations to verify filtering logic:</p>
+	
+	<table style="width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px;">
+		<thead>
+			<tr style="background: #f0f0f0;">
+				<th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Test #</th>
+				<th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Production</th>
+				<th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Type</th>
+				<th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Year</th>
+				<th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Expected Result</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr style="background: <?php echo ( $production_id === 0 && $type === 'all' && empty( $year ) ) ? '#e7f7ff' : 'white'; ?>">
+				<td style="padding: 8px; border: 1px solid #ddd;">1</td>
+				<td style="padding: 8px; border: 1px solid #ddd;">Any/All</td>
+				<td style="padding: 8px; border: 1px solid #ddd;">All</td>
+				<td style="padding: 8px; border: 1px solid #ddd;">All</td>
+				<td style="padding: 8px; border: 1px solid #ddd;"><strong>Show all events, all types</strong> (no filters)</td>
+			</tr>
+			<tr style="background: <?php echo ( $production_id > 0 && $type === 'all' && empty( $year ) ) ? '#e7f7ff' : 'white'; ?>">
+				<td style="padding: 8px; border: 1px solid #ddd;">2</td>
+				<td style="padding: 8px; border: 1px solid #ddd;">Specific</td>
+				<td style="padding: 8px; border: 1px solid #ddd;">All</td>
+				<td style="padding: 8px; border: 1px solid #ddd;">All</td>
+				<td style="padding: 8px; border: 1px solid #ddd;"><strong>Show events for production, all types</strong> (production filter only)</td>
+			</tr>
+			<tr style="background: <?php echo ( $production_id > 0 && $type !== 'all' && empty( $year ) ) ? '#e7f7ff' : 'white'; ?>">
+				<td style="padding: 8px; border: 1px solid #ddd;">3</td>
+				<td style="padding: 8px; border: 1px solid #ddd;">Specific</td>
+				<td style="padding: 8px; border: 1px solid #ddd;">Specific</td>
+				<td style="padding: 8px; border: 1px solid #ddd;">All</td>
+				<td style="padding: 8px; border: 1px solid #ddd;"><strong>Show events for production with specific type</strong> (production AND type filter)</td>
+			</tr>
+			<tr style="background: <?php echo ( $production_id === 0 && $type !== 'all' && empty( $year ) ) ? '#e7f7ff' : 'white'; ?>">
+				<td style="padding: 8px; border: 1px solid #ddd;">4</td>
+				<td style="padding: 8px; border: 1px solid #ddd;">Any/All</td>
+				<td style="padding: 8px; border: 1px solid #ddd;">Specific</td>
+				<td style="padding: 8px; border: 1px solid #ddd;">All</td>
+				<td style="padding: 8px; border: 1px solid #ddd;"><strong>Show all events with specific type</strong> (type filter only)</td>
+			</tr>
+			<tr style="background: <?php echo ( $production_id === 0 && $type === 'all' && ! empty( $year ) ) ? '#e7f7ff' : 'white'; ?>">
+				<td style="padding: 8px; border: 1px solid #ddd;">5</td>
+				<td style="padding: 8px; border: 1px solid #ddd;">Any/All</td>
+				<td style="padding: 8px; border: 1px solid #ddd;">All</td>
+				<td style="padding: 8px; border: 1px solid #ddd;">Specific</td>
+				<td style="padding: 8px; border: 1px solid #ddd;"><strong>Show all events from year, all types</strong> (year filter only)</td>
+			</tr>
+			<tr style="background: <?php echo ( $production_id > 0 && $type === 'all' && ! empty( $year ) ) ? '#e7f7ff' : 'white'; ?>">
+				<td style="padding: 8px; border: 1px solid #ddd;">6</td>
+				<td style="padding: 8px; border: 1px solid #ddd;">Specific</td>
+				<td style="padding: 8px; border: 1px solid #ddd;">All</td>
+				<td style="padding: 8px; border: 1px solid #ddd;">Specific</td>
+				<td style="padding: 8px; border: 1px solid #ddd;"><strong>Show production events from year, all types</strong> (production AND year filter)</td>
+			</tr>
+			<tr style="background: <?php echo ( $production_id > 0 && $type !== 'all' && ! empty( $year ) ) ? '#e7f7ff' : 'white'; ?>">
+				<td style="padding: 8px; border: 1px solid #ddd;">7</td>
+				<td style="padding: 8px; border: 1px solid #ddd;">Specific</td>
+				<td style="padding: 8px; border: 1px solid #ddd;">Specific</td>
+				<td style="padding: 8px; border: 1px solid #ddd;">Specific</td>
+				<td style="padding: 8px; border: 1px solid #ddd;"><strong>Show production events from year with specific type</strong> (all three filters)</td>
+			</tr>
+			<tr style="background: <?php echo ( $production_id === 0 && $type !== 'all' && ! empty( $year ) ) ? '#e7f7ff' : 'white'; ?>">
+				<td style="padding: 8px; border: 1px solid #ddd;">8</td>
+				<td style="padding: 8px; border: 1px solid #ddd;">Any/All</td>
+				<td style="padding: 8px; border: 1px solid #ddd;">Specific</td>
+				<td style="padding: 8px; border: 1px solid #ddd;">Specific</td>
+				<td style="padding: 8px; border: 1px solid #ddd;"><strong>Show all events from year with specific type</strong> (type AND year filter)</td>
+			</tr>
+		</tbody>
+	</table>
+	
+	<div style="margin-top: 15px; padding: 10px; background: #fff8e5; border-left: 3px solid #ffb900;">
+		<strong>📌 Current Test:</strong><br>
+		<code style="background: #f0f0f0; padding: 2px 6px; border-radius: 3px;">Production: <?php echo $production_id > 0 ? "ID {$production_id}" : 'Any/All'; ?></code>
+		<code style="background: #f0f0f0; padding: 2px 6px; border-radius: 3px; margin-left: 5px;">Type: <?php echo esc_html( $type ); ?></code>
+		<code style="background: #f0f0f0; padding: 2px 6px; border-radius: 3px; margin-left: 5px;">Year: <?php echo ! empty( $year ) ? esc_html( $year ) : 'All'; ?></code>
+	</div>
+</div>]]></content>
+  </file>
+</artefact>
