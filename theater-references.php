@@ -5,6 +5,7 @@
  * Version:           0.1.0
  * Requires at least: 6.1
  * Requires PHP:      7.4
+ * Requires Plugins:  gatherpress
  * Author:            caba & WordPress Telex
  * License:           GPLv2 or later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
@@ -21,12 +22,12 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Theater References Manager
  *
  * Core singleton class that manages the Theater References block functionality.
- * Handles post type registration, taxonomy management, caching, and demo data generation.
+ * Handles taxonomy management for GatherPress events, caching, and demo data generation.
  *
  * Architecture:
  * - Singleton pattern ensures single instance throughout request lifecycle
  * - Cache management with automatic invalidation on content changes
- * - Custom post type and taxonomy registration for structured data
+ * - Custom taxonomy registration for GatherPress events
  * - Demo data generator for development and testing
  *
  * @since 0.1.0
@@ -88,7 +89,7 @@ class Theater_References_Manager {
 	 * Initialize WordPress hooks
 	 *
 	 * Registers all necessary WordPress actions and filters:
-	 * - Post type and taxonomy registration on 'init'
+	 * - Taxonomy registration on 'init'
 	 * - Block registration on 'init'
 	 * - Cache invalidation on content changes
 	 * - Admin menu for demo data generator
@@ -97,7 +98,6 @@ class Theater_References_Manager {
 	 */
 	private function init_hooks(): void {
 		// Core registration hooks
-		add_action( 'init', array( $this, 'register_post_type' ) );
 		add_action( 'init', array( $this, 'register_taxonomies' ) );
 		add_action( 'init', array( $this, 'register_block' ) );
 
@@ -143,70 +143,16 @@ class Theater_References_Manager {
 	}
 
 	/**
-	 * Register the 'events' custom post type
-	 *
-	 * Creates a custom post type for theater events if it doesn't already exist.
-	 * Events are the core content type that references are attached to via taxonomies.
-	 *
-	 * Post type features:
-	 * - Public and queryable
-	 * - REST API enabled for block editor
-	 * - Supports title, editor, and thumbnail
-	 * - Has archive page
-	 * - Calendar icon in admin menu
-	 *
-	 * @since 0.1.0
-	 */
-	public function register_post_type(): void {
-		// Check if post type already exists to avoid conflicts
-		if ( post_type_exists( 'events' ) ) {
-			return;
-		}
-
-		// Translatable labels for admin interface
-		$labels = array(
-			'name'                  => __( 'Events', 'theater-references' ),
-			'singular_name'         => __( 'Event', 'theater-references' ),
-			'menu_name'             => __( 'Events', 'theater-references' ),
-			'add_new'               => __( 'Add New', 'theater-references' ),
-			'add_new_item'          => __( 'Add New Event', 'theater-references' ),
-			'new_item'              => __( 'New Event', 'theater-references' ),
-			'edit_item'             => __( 'Edit Event', 'theater-references' ),
-			'view_item'             => __( 'View Event', 'theater-references' ),
-			'all_items'             => __( 'All Events', 'theater-references' ),
-			'search_items'          => __( 'Search Events', 'theater-references' ),
-			'not_found'             => __( 'No events found.', 'theater-references' ),
-			'not_found_in_trash'    => __( 'No events found in Trash.', 'theater-references' ),
-		);
-
-		$args = array(
-			'labels'             => $labels,
-			'public'             => true,
-			'publicly_queryable' => true,
-			'show_ui'            => true,
-			'show_in_menu'       => true,
-			'query_var'          => true,
-			'rewrite'            => array( 'slug' => 'events' ),
-			'capability_type'    => 'post',
-			'has_archive'        => true,
-			'hierarchical'       => false,
-			'menu_position'      => 20,
-			'menu_icon'          => 'dashicons-calendar-alt',
-			'show_in_rest'       => true, // Required for block editor
-			'supports'           => array( 'title', 'editor', 'thumbnail' ),
-		);
-
-		register_post_type( 'events', $args );
-	}
-
-	/**
 	 * Register all taxonomies
 	 *
-	 * Orchestrates registration of all custom taxonomies:
+	 * Orchestrates registration of all custom taxonomies for GatherPress events:
 	 * - theater-productions: Hierarchical taxonomy for productions
 	 * - theater-venues: Flat taxonomy for venues and clients
 	 * - theater-festivals: Flat taxonomy for festival participations
 	 * - theater-awards: Flat taxonomy for awards received
+	 *
+	 * All taxonomies are non-public but queryable - they don't have frontend
+	 * archives or permalinks, but can be used in WP_Query.
 	 *
 	 * @since 0.1.0
 	 */
@@ -221,7 +167,9 @@ class Theater_References_Manager {
 	 * Register the 'theater-productions' taxonomy
 	 *
 	 * Hierarchical taxonomy (like categories) for theater productions.
-	 * Allows events to be grouped by production and enables filtering by production.
+	 * Allows GatherPress events to be grouped by production and enables filtering.
+	 *
+	 * Non-public but queryable - no frontend archives or permalinks.
 	 *
 	 * @since 0.1.0
 	 */
@@ -247,16 +195,18 @@ class Theater_References_Manager {
 
 		$args = array(
 			'labels'            => $labels,
-			'hierarchical'      => true, // Allows parent/child relationships
-			'public'            => true,
+			'hierarchical'      => true,
+			'public'            => false,
+			'publicly_queryable' => true,
 			'show_ui'           => true,
-			'show_admin_column' => true, // Shows in posts list table
+			'show_admin_column' => true,
 			'query_var'         => true,
-			'rewrite'           => array( 'slug' => 'production' ),
-			'show_in_rest'      => true, // Required for block editor
+			'rewrite'           => false,
+			'show_in_rest'      => true,
 		);
 
-		register_taxonomy( 'theater-productions', array( 'events' ), $args );
+		// Register for GatherPress event post type
+		register_taxonomy( 'theater-productions', array( 'gatherpress_event' ), $args );
 	}
 
 	/**
@@ -264,6 +214,8 @@ class Theater_References_Manager {
 	 *
 	 * Flat taxonomy (like tags) for guest performance venues and clients.
 	 * Non-hierarchical for quick tagging of venue relationships.
+	 *
+	 * Non-public but queryable - no frontend archives or permalinks.
 	 *
 	 * @since 0.1.0
 	 */
@@ -286,23 +238,26 @@ class Theater_References_Manager {
 
 		$args = array(
 			'labels'            => $labels,
-			'hierarchical'      => false, // Flat structure like tags
-			'public'            => true,
+			'hierarchical'      => false,
+			'public'            => false,
+			'publicly_queryable' => true,
 			'show_ui'           => true,
 			'show_admin_column' => true,
 			'query_var'         => true,
-			'rewrite'           => array( 'slug' => 'venue' ),
+			'rewrite'           => false,
 			'show_in_rest'      => true,
 		);
 
-		register_taxonomy( 'theater-venues', array( 'events' ), $args );
+		register_taxonomy( 'theater-venues', array( 'gatherpress_event' ), $args );
 	}
 
 	/**
 	 * Register the 'theater-festivals' taxonomy
 	 *
 	 * Flat taxonomy for festival participations.
-	 * Allows tracking of festival appearances across events.
+	 * Allows tracking of festival appearances across GatherPress events.
+	 *
+	 * Non-public but queryable - no frontend archives or permalinks.
 	 *
 	 * @since 0.1.0
 	 */
@@ -326,15 +281,16 @@ class Theater_References_Manager {
 		$args = array(
 			'labels'            => $labels,
 			'hierarchical'      => false,
-			'public'            => true,
+			'public'            => false,
+			'publicly_queryable' => true,
 			'show_ui'           => true,
 			'show_admin_column' => true,
 			'query_var'         => true,
-			'rewrite'           => array( 'slug' => 'festival' ),
+			'rewrite'           => false,
 			'show_in_rest'      => true,
 		);
 
-		register_taxonomy( 'theater-festivals', array( 'events' ), $args );
+		register_taxonomy( 'theater-festivals', array( 'gatherpress_event' ), $args );
 	}
 
 	/**
@@ -342,6 +298,8 @@ class Theater_References_Manager {
 	 *
 	 * Flat taxonomy for awards received.
 	 * Enables tracking and display of achievements.
+	 *
+	 * Non-public but queryable - no frontend archives or permalinks.
 	 *
 	 * @since 0.1.0
 	 */
@@ -365,15 +323,16 @@ class Theater_References_Manager {
 		$args = array(
 			'labels'            => $labels,
 			'hierarchical'      => false,
-			'public'            => true,
+			'public'            => false,
+			'publicly_queryable' => true,
 			'show_ui'           => true,
 			'show_admin_column' => true,
 			'query_var'         => true,
-			'rewrite'           => array( 'slug' => 'award' ),
+			'rewrite'           => false,
 			'show_in_rest'      => true,
 		);
 
-		register_taxonomy( 'theater-awards', array( 'events' ), $args );
+		register_taxonomy( 'theater-awards', array( 'gatherpress_event' ), $args );
 	}
 
 	/**
@@ -389,7 +348,7 @@ class Theater_References_Manager {
 	}
 
 	/**
-	 * Clear cache when an event post is saved
+	 * Clear cache when a GatherPress event is saved
 	 *
 	 * Hooked to 'save_post' action to invalidate cache when event content changes.
 	 *
@@ -397,14 +356,14 @@ class Theater_References_Manager {
 	 * @param int $post_id The post ID being saved
 	 */
 	public function clear_cache_on_post_save( int $post_id ): void {
-		// Only clear cache for 'events' post type
-		if ( get_post_type( $post_id ) === 'events' ) {
+		// Only clear cache for GatherPress events
+		if ( get_post_type( $post_id ) === 'gatherpress_event' ) {
 			$this->clear_all_caches();
 		}
 	}
 
 	/**
-	 * Clear cache when an event post is deleted
+	 * Clear cache when a GatherPress event is deleted
 	 *
 	 * Hooked to 'delete_post' action to invalidate cache when event is removed.
 	 *
@@ -412,7 +371,7 @@ class Theater_References_Manager {
 	 * @param int $post_id The post ID being deleted
 	 */
 	public function clear_cache_on_post_delete( int $post_id ): void {
-		if ( get_post_type( $post_id ) === 'events' ) {
+		if ( get_post_type( $post_id ) === 'gatherpress_event' ) {
 			$this->clear_all_caches();
 		}
 	}
@@ -440,12 +399,12 @@ class Theater_References_Manager {
 	/**
 	 * Clear all cached references
 	 *
-	 * Removes all transients with our cache prefix from the database.
+	 * Removes all transients with the "theater_refs_" cache prefix from the database.
 	 * Uses direct database queries for efficiency.
 	 *
 	 * @since 0.1.0
 	 */
-	private function clear_all_caches(): void {
+	public function clear_all_caches(): void {
 		global $wpdb;
 
 		// Delete transient values
@@ -468,13 +427,13 @@ class Theater_References_Manager {
 	/**
 	 * Add demo data submenu page
 	 *
-	 * Creates an admin page under Events menu for generating test data.
+	 * Creates an admin page under GatherPress Events menu for generating test data.
 	 *
 	 * @since 0.1.0
 	 */
 	public function add_demo_data_menu(): void {
 		add_submenu_page(
-			'edit.php?post_type=events',
+			'edit.php?post_type=gatherpress_event',
 			__( 'Generate Demo Data', 'theater-references' ),
 			__( 'Demo Data', 'theater-references' ),
 			'manage_options',
@@ -512,14 +471,14 @@ class Theater_References_Manager {
 		?>
 		<div class="wrap">
 			<h1><?php esc_html_e( 'Theater References Demo Data', 'theater-references' ); ?></h1>
-			<p><?php esc_html_e( 'Generate sample events, productions, and references for development and testing.', 'theater-references' ); ?></p>
+			<p><?php esc_html_e( 'Generate sample GatherPress events with theater productions and references for development and testing.', 'theater-references' ); ?></p>
 			
 			<div style="background: #fff; padding: 20px; margin: 20px 0; border: 1px solid #ccc;">
 				<h2><?php esc_html_e( 'Generate Demo Data', 'theater-references' ); ?></h2>
 				<p><?php esc_html_e( 'This will create:', 'theater-references' ); ?></p>
 				<ul style="list-style: disc; margin-left: 20px;">
 					<li><?php esc_html_e( '5 theater productions', 'theater-references' ); ?></li>
-					<li><?php esc_html_e( '20 event posts', 'theater-references' ); ?></li>
+					<li><?php esc_html_e( '20 GatherPress event posts', 'theater-references' ); ?></li>
 					<li><?php esc_html_e( '8 venue/client terms', 'theater-references' ); ?></li>
 					<li><?php esc_html_e( '6 festival terms', 'theater-references' ); ?></li>
 					<li><?php esc_html_e( '6 award terms', 'theater-references' ); ?></li>
@@ -534,7 +493,7 @@ class Theater_References_Manager {
 
 			<div style="background: #fff; padding: 20px; margin: 20px 0; border: 1px solid #ccc;">
 				<h2><?php esc_html_e( 'Delete Demo Data', 'theater-references' ); ?></h2>
-				<p><?php esc_html_e( 'This will remove all demo events and terms created by this tool.', 'theater-references' ); ?></p>
+				<p><?php esc_html_e( 'This will remove all demo GatherPress events and terms created by this tool.', 'theater-references' ); ?></p>
 				<form method="post" style="margin-top: 20px;">
 					<?php wp_nonce_field( 'theater_references_demo_data' ); ?>
 					<button type="submit" name="delete_demo_data" class="button button-secondary" onclick="return confirm('<?php esc_attr_e( 'Are you sure you want to delete all demo data?', 'theater-references' ); ?>')">
@@ -549,12 +508,12 @@ class Theater_References_Manager {
 	/**
 	 * Generate demo data
 	 *
-	 * Creates sample content for testing:
+	 * Creates sample GatherPress events and taxonomy terms for testing:
 	 * - 5 production terms
 	 * - 8 venue terms
 	 * - 6 festival terms
 	 * - 6 award terms
-	 * - 20 event posts with random term assignments
+	 * - 20 GatherPress event posts with random term assignments
 	 *
 	 * All demo items are marked with '_demo_data' meta for easy cleanup.
 	 *
@@ -624,7 +583,7 @@ class Theater_References_Manager {
 			}
 		}
 
-		// Generate 20 event posts with realistic data
+		// Generate 20 GatherPress event posts with realistic data
 		for ( $i = 0; $i < 20; $i++ ) {
 			// Generate random date between 2018-2024
 			$year = rand( 2018, 2024 );
@@ -635,21 +594,22 @@ class Theater_References_Manager {
 
 			$event_data = array(
 				'post_title'   => $production . ' - Event ' . ( $i + 1 ),
-				'post_content' => 'Demo event for ' . $production . '.',
+				'post_content' => 'Demo GatherPress event for ' . $production . '.',
 				'post_status'  => 'publish',
-				'post_type'    => 'events',
+				'post_type'    => 'gatherpress_event',
 				'post_date'    => $date . ' 19:00:00',
 			);
 
 			$post_id = wp_insert_post( $event_data );
 
-			if ( $post_id ) {
+			if ( $post_id && ! is_wp_error( $post_id ) ) {
 				// Mark as demo data
 				update_post_meta( $post_id, '_demo_data', '1' );
 
-				// Assign random production
+				// Assign production term by term_id, not as array
 				if ( ! empty( $production_ids ) ) {
-					wp_set_object_terms( $post_id, array( $production_ids[ array_rand( $production_ids ) ] ), 'theater-productions' );
+					$selected_production = $production_ids[ array_rand( $production_ids ) ];
+					wp_set_object_terms( $post_id, $selected_production, 'theater-productions', false );
 				}
 
 				// Use randomization to create varied reference patterns
@@ -657,20 +617,27 @@ class Theater_References_Manager {
 
 				// 60% chance of having venue references (1-2 venues)
 				if ( $rand < 60 && ! empty( $venue_ids ) ) {
-					$selected_venues = array_rand( array_flip( $venue_ids ), rand( 1, 2 ) );
-					wp_set_object_terms( $post_id, (array) $selected_venues, 'theater-venues' );
+					// Randomly select 1 or 2 venues
+					$num_venues = rand( 1, 2 );
+					$selected_venues = array();
+					for ( $v = 0; $v < $num_venues; $v++ ) {
+						$selected_venues[] = $venue_ids[ array_rand( $venue_ids ) ];
+					}
+					// Remove duplicates
+					$selected_venues = array_unique( $selected_venues );
+					wp_set_object_terms( $post_id, $selected_venues, 'theater-venues', false );
 				}
 
 				// 40% chance of festival participation (30-70 range)
 				if ( $rand > 30 && $rand < 70 && ! empty( $festival_ids ) ) {
-					$selected_festivals = array( $festival_ids[ array_rand( $festival_ids ) ] );
-					wp_set_object_terms( $post_id, $selected_festivals, 'theater-festivals' );
+					$selected_festival = $festival_ids[ array_rand( $festival_ids ) ];
+					wp_set_object_terms( $post_id, $selected_festival, 'theater-festivals', false );
 				}
 
 				// 40% chance of award (60-100 range)
 				if ( $rand > 60 && ! empty( $award_ids ) ) {
-					$selected_awards = array( $award_ids[ array_rand( $award_ids ) ] );
-					wp_set_object_terms( $post_id, $selected_awards, 'theater-awards' );
+					$selected_award = $award_ids[ array_rand( $award_ids ) ];
+					wp_set_object_terms( $post_id, $selected_award, 'theater-awards', false );
 				}
 			}
 		}
@@ -682,16 +649,16 @@ class Theater_References_Manager {
 	/**
 	 * Delete demo data
 	 *
-	 * Removes all posts and terms marked with '_demo_data' meta.
+	 * Removes all GatherPress events and terms marked with '_demo_data' meta.
 	 * Uses permanent deletion (bypass trash).
 	 *
 	 * @since 0.1.0
 	 */
 	private function delete_demo_data(): void {
-		// Find all demo event posts
+		// Find all demo GatherPress event posts
 		$demo_events = get_posts(
 			array(
-				'post_type'      => 'events',
+				'post_type'      => 'gatherpress_event',
 				'posts_per_page' => -1,
 				'meta_key'       => '_demo_data',
 				'meta_value'     => '1',
@@ -723,24 +690,39 @@ class Theater_References_Manager {
 		// Clear cache after cleanup
 		$this->clear_all_caches();
 	}
-
-	/**
-	 * Prevent cloning of singleton instance
-	 *
-	 * @since 0.1.0
-	 */
-	private function __clone() {}
-
-	/**
-	 * Prevent unserialization of singleton instance
-	 *
-	 * @since 0.1.0
-	 * @throws Exception Always throws exception
-	 */
-	public function __wakeup() {
-		throw new \Exception( 'Cannot unserialize singleton' );
-	}
 }
+
+
+/**
+ * Plugin activation hook
+ *
+ * Performs setup tasks when the plugin is activated:
+ * - ...
+ *
+ * @since 0.1.0
+ */
+function theater_references_activate(): void {
+	// Wait for instructions ....
+}
+register_activation_hook( __FILE__, 'theater_references_activate' );
+
+/**
+ * Plugin deactivation hook
+ *
+ * Performs cleanup tasks when the plugin is deactivated:
+ * - Clears all cached reference data
+ *
+ * Note: Does NOT delete taxonomies, terms, or post associations.
+ * Use the uninstall.php file for complete data removal.
+ *
+ * @since 0.1.0
+ */
+function theater_references_deactivate(): void {
+	// Clear all cached reference data
+	Theater_References_Manager::get_instance()->clear_all_caches()
+}
+register_deactivation_hook( __FILE__, 'theater_references_deactivate' );
+
 
 // Initialize the singleton instance
 Theater_References_Manager::get_instance();

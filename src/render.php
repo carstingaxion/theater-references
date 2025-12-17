@@ -2,8 +2,9 @@
 /**
  * Theater References Block - Frontend Renderer
  *
- * This file handles the server-side rendering of the Theater References block.
- * It queries events, organizes references by year and type, and outputs structured HTML.
+ * This file handles the server-side rendering of the Theater References block
+ * for GatherPress events. It queries GatherPress events, organizes references
+ * by year and type, and outputs structured HTML.
  *
  * @package TheaterReferences
  * @since 0.1.0
@@ -15,6 +16,7 @@ if ( ! class_exists( 'Theater_References_Renderer' ) ) {
 	 *
 	 * Handles data retrieval, caching, and organization for block rendering.
 	 * Optimized for performance with transient caching and efficient queries.
+	 * Works with GatherPress events (gatherpress_event post type).
 	 *
 	 * @since 0.1.0
 	 */
@@ -197,7 +199,7 @@ if ( ! class_exists( 'Theater_References_Renderer' ) ) {
 							<td style="padding: 8px; border: 1px solid #ddd;">Any/All</td>
 							<td style="padding: 8px; border: 1px solid #ddd;">All</td>
 							<td style="padding: 8px; border: 1px solid #ddd;">All</td>
-							<td style="padding: 8px; border: 1px solid #ddd;"><strong>Show all events, all types</strong> (no filters)</td>
+							<td style="padding: 8px; border: 1px solid #ddd;"><strong>Show all GatherPress events, all types</strong> (no filters)</td>
 						</tr>
 						<tr style="background: <?php echo ( $production_id > 0 && $type === 'all' && empty( $year ) ) ? '#e7f7ff' : 'white'; ?>">
 							<td style="padding: 8px; border: 1px solid #ddd;">2</td>
@@ -265,7 +267,7 @@ if ( ! class_exists( 'Theater_References_Renderer' ) ) {
 		/**
 		 * Get references organized by year and type
 		 *
-		 * Retrieves all matching events and organizes their taxonomy terms
+		 * Retrieves all matching GatherPress events and organizes their taxonomy terms
 		 * by year and reference type. Results are cached for performance.
 		 *
 		 * Example return structure:
@@ -285,7 +287,7 @@ if ( ! class_exists( 'Theater_References_Renderer' ) ) {
 		 * @return array Nested array of references organized by year and type.
 		 */
 		public function get_references( int $production_id = 0, string $year = '', string $type = 'all' ): array {
-			$this->debug( 'Starting get_references', array(
+			$this->debug( 'Starting get_references for GatherPress events', array(
 				'production_id' => $production_id,
 				'year' => $year,
 				'type' => $type,
@@ -301,10 +303,10 @@ if ( ! class_exists( 'Theater_References_Renderer' ) ) {
 				return $cached;
 			}
 
-			// Build WP_Query arguments for event posts
+			// Build WP_Query arguments for GatherPress event posts
 			$args = array(
-				'post_type'              => 'events',
-				'posts_per_page'         => -1, // Get all matching posts
+				'post_type'              => 'gatherpress_event',
+				'posts_per_page'         => -1,
 				'post_status'            => 'publish',
 				'orderby'                => 'date',
 				'order'                  => 'DESC', // Newest first
@@ -406,14 +408,10 @@ if ( ! class_exists( 'Theater_References_Renderer' ) ) {
 				if ( count( $tax_query ) > 1 ) {
 					$this->debug( 'Multiple tax_query items, adding AND relation' );
 					$tax_query = array_merge( array( 'relation' => 'AND' ), $tax_query );
-				} else {
-					$this->debug( 'Single tax_query item, no relation needed' );
 				}
 				
 				$args['tax_query'] = $tax_query;
 				$this->debug( 'Final tax_query applied to args', $tax_query );
-			} else {
-				$this->debug( 'No tax_query filters to apply' );
 			}
 
 			// STEP 4: Add year filter if specified
@@ -447,7 +445,7 @@ if ( ! class_exists( 'Theater_References_Renderer' ) ) {
 					'dates' => $post_dates,
 				) );
 				
-				// For display, always get all reference taxonomies
+				// Always get all reference taxonomies for display
 				$display_taxonomies = array( 'theater-venues', 'theater-festivals', 'theater-awards' );
 				
 				/**
@@ -493,7 +491,7 @@ if ( ! class_exists( 'Theater_References_Renderer' ) ) {
 					$post_year = $post_dates[ $post_id ]->year;
 					$terms = isset( $post_terms[ $post_id ] ) ? $post_terms[ $post_id ] : array();
 
-					$this->debug( "Processing post {$post_id}", array(
+					$this->debug( "Processing GatherPress event {$post_id}", array(
 						'year' => $post_year,
 						'has_venues' => isset( $terms['theater-venues'] ),
 						'has_festivals' => isset( $terms['theater-festivals'] ),
@@ -509,7 +507,7 @@ if ( ! class_exists( 'Theater_References_Renderer' ) ) {
 						);
 					}
 
-					// Add term names to appropriate arrays (deduplicated)
+					// Add term names (deduplicated)
 					foreach ( $display_taxonomies as $taxonomy ) {
 						if ( isset( $terms[ $taxonomy ] ) ) {
 							foreach ( $terms[ $taxonomy ] as $term ) {
@@ -523,7 +521,7 @@ if ( ! class_exists( 'Theater_References_Renderer' ) ) {
 					}
 				}
 			} else {
-				$this->debug( 'No posts found by query' );
+				$this->debug( 'No GatherPress events found by query' );
 			}
 
 			/**
@@ -752,17 +750,14 @@ echo $renderer->get_test_matrix( $production_id, $type, $year );
 <div <?php echo get_block_wrapper_attributes(); ?>>
 	<?php if ( ! empty( $references ) ) : ?>
 		<?php foreach ( $references as $ref_year => $types ) : ?>
-			<!-- Year heading -->
 			<h<?php echo esc_attr( $heading_level ); ?> class="references-year"><?php echo esc_html( $ref_year ); ?></h<?php echo esc_attr( $heading_level ); ?>>
 			
 			<?php foreach ( $types as $ref_type => $items ) : ?>
 				<?php if ( ! empty( $items ) ) : ?>
-					<!-- Type heading (only shown when displaying all types) -->
 					<?php if ( ! $is_specific_type ) : ?>
 						<h<?php echo esc_attr( $secondary_heading_level ); ?> class="references-type"><?php echo esc_html( $type_labels[ $ref_type ] ); ?></h<?php echo esc_attr( $secondary_heading_level ); ?>>
 					<?php endif; ?>
 					
-					<!-- Reference list -->
 					<ul class="references-list">
 						<?php foreach ( $items as $item ) : ?>
 							<li><?php echo esc_html( $item ); ?></li>
@@ -772,7 +767,6 @@ echo $renderer->get_test_matrix( $production_id, $type, $year );
 			<?php endforeach; ?>
 		<?php endforeach; ?>
 	<?php else : ?>
-		<!-- Empty state -->
 		<p class="no-references"><?php esc_html_e( 'No references found matching the selected criteria.', 'theater-references' ); ?></p>
 	<?php endif; ?>
 </div>
