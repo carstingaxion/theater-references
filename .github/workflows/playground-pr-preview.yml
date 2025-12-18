@@ -18,7 +18,7 @@ jobs:
           mode: "comment"
 
           #
-          blueprint-url: https://raw.githubusercontent.com/carstingaxion/gatherpress-statistics/refs/heads/main/.wordpress-org/blueprints/blueprint.json
+          blueprint-url: https://raw.githubusercontent.com/carstingaxion/gatherpress-references/refs/heads/main/.wordpress-org/blueprints/blueprint.json
 
           # Use "." if plugin is in repository root
           plugin-path: .
