@@ -115,11 +115,11 @@ if ( ! class_exists( 'GatherPress_References_Renderer' ) ) {
 				'posts_per_page'         => -1,
 				'post_status'            => 'publish',
 				'orderby'                => 'date',
-				'order'                  => 'DESC', // Newest first
-				'fields'                 => 'ids', // Only get IDs for performance
-				'no_found_rows'          => true, // Skip pagination count
-				'update_post_meta_cache' => false, // Don't cache meta (we don't use it)
-				'update_post_term_cache' => true, // Do cache terms (we need them)
+				'order'                  => 'DESC', // Newest first.
+				'fields'                 => 'ids', // Only get IDs for performance.
+				'no_found_rows'          => true, // Skip pagination count.
+				'update_post_meta_cache' => false, // Don't cache meta (we don't use it).
+				'update_post_term_cache' => true, // Do cache terms (we need them).
 			);
 
 			/**
@@ -158,13 +158,13 @@ if ( ! class_exists( 'GatherPress_References_Renderer' ) ) {
 			 */
 			$args = apply_filters( 'gatherpress_references_query_args', $args, $production_id, $year, $type );
 
-			// Get taxonomies to query based on type filter
+			// Get taxonomies to query based on type filter.
 			$taxonomies = $this->get_taxonomies_by_type( $type );
 			
-			// Build tax_query - START FRESH
+			// Build tax_query - START FRESH.
 			$tax_query = array();
 			
-			// STEP 1: Add production filter if specified
+			// STEP 1: Add production filter if specified.
 			if ( $production_id > 0 ) {
 				$tax_query[] = array(
 					'taxonomy' => 'gatherpress-productions',
@@ -173,18 +173,18 @@ if ( ! class_exists( 'GatherPress_References_Renderer' ) ) {
 				);
 			}
 			
-			// STEP 2: Add type filter ONLY if not 'all'
+			// STEP 2: Add type filter ONLY if not 'all'.
 			if ( $type !== 'all' && ! empty( $taxonomies ) ) {
 				
-				// When filtering by type, we want posts that have ANY of these taxonomies
+				// When filtering by type, we want posts that have ANY of these taxonomies.
 				if ( count( $taxonomies ) === 1 ) {
-					// Single taxonomy - simple EXISTS check
+					// Single taxonomy - simple EXISTS check.
 					$tax_query[] = array(
 						'taxonomy' => $taxonomies[0],
 						'operator' => 'EXISTS',
 					);
 				} else {
-					// Multiple taxonomies - use OR relation
+					// Multiple taxonomies - use OR relation.
 					$type_query = array( 'relation' => 'OR' );
 					foreach ( $taxonomies as $taxonomy ) {
 						$type_query[] = array(
@@ -196,10 +196,10 @@ if ( ! class_exists( 'GatherPress_References_Renderer' ) ) {
 				}
 			}
 			
-			// STEP 3: Apply tax_query to args ONLY if we have filters
+			// STEP 3: Apply tax_query to args ONLY if we have filters.
 			if ( ! empty( $tax_query ) ) {
 				
-				// Only add 'relation' if we have MORE than one top-level filter
+				// Only add 'relation' if we have MORE than one top-level filter.
 				if ( count( $tax_query ) > 1 ) {
 					$tax_query = array_merge( array( 'relation' => 'AND' ), $tax_query );
 				}
@@ -207,24 +207,24 @@ if ( ! class_exists( 'GatherPress_References_Renderer' ) ) {
 				$args['tax_query'] = $tax_query;
 			}
 
-			// STEP 4: Add year filter if specified
+			// STEP 4: Add year filter if specified.
 			if ( ! empty( $year ) ) {
 				$args['date_query'] = array(
 					array( 'year' => intval( $year ) ),
 				);
 			}
 
-			// Execute query
+			// Execute query.
 			$query = new WP_Query( $args );
 			$references = array();
 
 			if ( ! empty( $query->posts ) ) {
 				$post_ids = $query->posts;
 				
-				// Batch fetch post dates for efficiency
+				// Batch fetch post dates for efficiency.
 				$post_dates = $this->get_post_dates( $post_ids );
 
-				// Always get all reference taxonomies for display
+				// Always get all reference taxonomies for display.
 				$display_taxonomies = array( '_gatherpress-client', '_gatherpress-festival', '_gatherpress-award' );
 
 				/**
@@ -252,20 +252,20 @@ if ( ! class_exists( 'GatherPress_References_Renderer' ) ) {
 				 */
 				$display_taxonomies = apply_filters( 'gatherpress_references_display_taxonomies', $display_taxonomies );
 				
-				// Batch fetch all taxonomy terms
+				// Batch fetch all taxonomy terms.
 				$post_terms = $this->get_post_terms( $post_ids, $display_taxonomies );
 
-				// Organize data by year and type
+				// Organize data by year and type.
 				foreach ( $post_ids as $post_id ) {
 					if ( ! isset( $post_dates[ $post_id ] ) ) {
 						continue;
 					}
 
-					// Extract year from post date
+					// Extract year from post date.
 					$post_year = $post_dates[ $post_id ]->year;
 					$terms = isset( $post_terms[ $post_id ] ) ? $post_terms[ $post_id ] : array();
 
-					// Initialize year structure if not exists
+					// Initialize year structure if not exists.
 					if ( ! isset( $references[ $post_year ] ) ) {
 						$references[ $post_year ] = array(
 							'_gatherpress-client' => array(),
@@ -274,11 +274,11 @@ if ( ! class_exists( 'GatherPress_References_Renderer' ) ) {
 						);
 					}
 
-					// Add term names (deduplicated)
+					// Add term names (deduplicated).
 					foreach ( $display_taxonomies as $taxonomy ) {
 						if ( isset( $terms[ $taxonomy ] ) ) {
 							foreach ( $terms[ $taxonomy ] as $term ) {
-								// Only add if not already present (deduplication)
+								// Only add if not already present (deduplication).
 								if ( ! in_array( $term->name, $references[ $post_year ][ $taxonomy ], true ) ) {
 									$references[ $post_year ][ $taxonomy ][] = $term->name;
 								}
@@ -365,17 +365,17 @@ if ( ! class_exists( 'GatherPress_References_Renderer' ) ) {
 				return array();
 			}
 			
-			// Sanitize IDs for safe SQL
+			// Sanitize IDs for safe SQL.
 			$safe_ids = array_map( 'intval', $post_ids );
 			$placeholders = implode( ',', array_fill( 0, count( $safe_ids ), '%d' ) );
 			
-			// Execute optimized query to get year from post_date
+			// Execute optimized query to get year from post_date.
 			$results = $wpdb->get_results(
 				$wpdb->prepare(
 					"SELECT ID, YEAR(post_date) as year FROM {$wpdb->posts} WHERE ID IN ({$placeholders}) ORDER BY post_date DESC",
 					...$safe_ids
 				),
-				OBJECT_K // Use ID as array key
+				OBJECT_K // Use ID as array key.
 			);
 			
 			return $results;
@@ -407,7 +407,7 @@ if ( ! class_exists( 'GatherPress_References_Renderer' ) ) {
 
 			$organized_terms = array();
 			
-			// Fetch terms for each post and taxonomy
+			// Fetch terms for each post and taxonomy.
 			foreach ( $post_ids as $post_id ) {
 				$organized_terms[ $post_id ] = array();
 				
@@ -468,22 +468,22 @@ if ( ! class_exists( 'GatherPress_References_Renderer' ) ) {
 	}
 }
 
-// Initialize renderer
+// Initialize renderer.
 $renderer = new GatherPress_References_Renderer();
 
-// Extract and sanitize block attributes
+// Extract and sanitize block attributes.
 $production_id = isset( $attributes['productionId'] ) ? intval( $attributes['productionId'] ) : 0;
 $year = isset( $attributes['year'] ) ? sanitize_text_field( $attributes['year'] ) : '';
 $type = isset( $attributes['referenceType'] ) ? sanitize_text_field( $attributes['referenceType'] ) : 'all';
 $heading_level = isset( $attributes['headingLevel'] ) ? intval( $attributes['headingLevel'] ) : 2;
 
-// Ensure heading level is within valid range (H1-H6)
+// Ensure heading level is within valid range (H1-H6).
 $heading_level = max( 1, min( 6, $heading_level ) );
 
-// Calculate secondary heading level (type headings are one level smaller)
+// Calculate secondary heading level (type headings are one level smaller).
 $secondary_heading_level = min( $heading_level + 1, 6 );
 
-// Map legacy attribute values to taxonomy slugs
+// Map legacy attribute values to taxonomy slugs.
 if ( $type === 'ref_client' ) {
 	$type = '_gatherpress-client';
 } elseif ( $type === 'ref_festival' ) {
@@ -492,17 +492,17 @@ if ( $type === 'ref_client' ) {
 	$type = '_gatherpress-award';
 }
 
-// Auto-detect production from current taxonomy term if viewing a production archive
+// Auto-detect production from current taxonomy term if viewing a production archive.
 if ( $production_id === 0 && is_tax( 'gatherpress-productions' ) ) {
 	$term = get_queried_object();
 	$production_id = $term->term_id;
 }
 
-// Fetch organized reference data
+// Fetch organized reference data.
 $references = $renderer->get_references( $production_id, $year, $type );
 $type_labels = $renderer->get_type_labels();
 
-// Determine if we're showing a specific type (affects heading display)
+// Determine if we're showing a specific type (affects heading display).
 $is_specific_type = ( $type !== 'all' );
 
 ?>
