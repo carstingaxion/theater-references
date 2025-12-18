@@ -1,7 +1,7 @@
 <?php
 
 namespace GatherPress\References;
-
+use WP_Query;
 /**
  * GatherPress References Block - Frontend Renderer
  *
@@ -217,7 +217,7 @@ if ( ! class_exists( 'Renderer' ) ) {
 			}
 
 			// Execute query.
-			$query      = new WP_Query( $args );
+			$query      = new \WP_Query( $args );
 			$references = array();
 
 			if ( ! empty( $query->posts ) ) {
@@ -240,14 +240,14 @@ if ( ! class_exists( 'Renderer' ) ) {
 
 					// Extract year from post date.
 					$post_year = $post_dates[ $post_id ]->year;
-					$terms = isset( $post_terms[ $post_id ] ) ? $post_terms[ $post_id ] : array();
+					$terms     = isset( $post_terms[ $post_id ] ) ? $post_terms[ $post_id ] : array();
 
 					// Initialize year structure if not exists.
 					if ( ! isset( $references[ $post_year ] ) ) {
 						$references[ $post_year ] = array(
-							'_gatherpress-client' => array(),
+							'_gatherpress-client'   => array(),
 							'_gatherpress-festival' => array(),
-							'_gatherpress-award' => array(),
+							'_gatherpress-award'    => array(),
 						);
 					}
 
@@ -308,7 +308,7 @@ if ( ! class_exists( 'Renderer' ) ) {
 			}
 			
 			// Sanitize IDs for safe SQL.
-			$safe_ids = array_map( 'intval', $post_ids );
+			$safe_ids     = array_map( 'intval', $post_ids );
 			$placeholders = implode( ',', array_fill( 0, count( $safe_ids ), '%d' ) );
 			
 			// Execute optimized query to get year from post_date.
@@ -375,7 +375,7 @@ if ( ! class_exists( 'Renderer' ) ) {
 		 */
 		public function get_type_labels(): array {
 			$labels = array(
-				'_gatherpress-client'    => __( 'Clients', 'gatherpress-references' ),
+				'_gatherpress-client'   => __( 'Clients', 'gatherpress-references' ),
 				'_gatherpress-festival' => __( 'Festivals', 'gatherpress-references' ),
 				'_gatherpress-award'    => __( 'Awards', 'gatherpress-references' ),
 			);
@@ -415,8 +415,8 @@ $renderer = new Renderer();
 
 // Extract and sanitize block attributes.
 $production_id = isset( $attributes['productionId'] ) ? intval( $attributes['productionId'] ) : 0;
-$year = isset( $attributes['year'] ) ? sanitize_text_field( $attributes['year'] ) : '';
-$type = isset( $attributes['referenceType'] ) ? sanitize_text_field( $attributes['referenceType'] ) : 'all';
+$year          = isset( $attributes['year'] ) ? sanitize_text_field( $attributes['year'] ) : '';
+$type          = isset( $attributes['referenceType'] ) ? sanitize_text_field( $attributes['referenceType'] ) : 'all';
 $heading_level = isset( $attributes['headingLevel'] ) ? intval( $attributes['headingLevel'] ) : 2;
 
 // Ensure heading level is within valid range (H1-H6).
@@ -436,7 +436,7 @@ if ( $type === 'ref_client' ) {
 
 // Auto-detect production from current taxonomy term if viewing a production archive.
 if ( $production_id === 0 && is_tax( 'gatherpress-productions' ) ) {
-	$term = get_queried_object();
+	$term          = get_queried_object();
 	$production_id = $term->term_id;
 }
 

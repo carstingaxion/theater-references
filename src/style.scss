@@ -1,13 +1,13 @@
 /**
  * GatherPress References Block Styles
- * 
+ *
  * Comprehensive theme.json support with semantic color tokens,
  * typography scales, and spacing controls for granular styling.
- * 
+ *
  * Styling hierarchy:
  * 1. Block container (.wp-block-gatherpress-references)
  * 2. Year headings (.references-year) - h2 level
- * 3. Type headings (.references-type) - h3 level  
+ * 3. Type headings (.references-type) - h3 level
  * 4. Reference lists (.references-list) - ul element
  */
 
@@ -16,6 +16,7 @@
  * Main wrapper with comprehensive theme.json integration
  */
 .wp-block-gatherpress-references {
+
 	/* Spacing - block container */
 	margin-block-start: var(--wp--preset--spacing--50, 2em);
 	margin-block-end: var(--wp--preset--spacing--50, 2em);
@@ -46,6 +47,7 @@
 	 * Primary level headings with distinct styling
 	 */
 	.references-year {
+
 		/* Spacing - year headings */
 		margin-block-start: var(--wp--preset--spacing--60, 2.5em);
 		margin-block-end: var(--wp--preset--spacing--30, 0.75em);
@@ -84,6 +86,7 @@
 	 * Secondary level headings for reference categories
 	 */
 	.references-type {
+
 		/* Spacing - type headings */
 		margin-block-start: var(--wp--preset--spacing--40, 1.5em);
 		margin-block-end: var(--wp--preset--spacing--20, 0.5em);
@@ -117,6 +120,7 @@
 	 * Unordered lists with custom styling and bullets
 	 */
 	.references-list {
+
 		/* Reset default list styling */
 		list-style: none;
 
@@ -169,10 +173,10 @@
 				content: var(--wp--custom--list--bullet-content, "→");
 				position: absolute;
 				inset-inline-start: calc(var(--wp--preset--spacing--50, 2em) * -1);
-				
+
 				/* Colors - bullet */
 				color: var(--wp--preset--color--tertiary, var(--wp--preset--color--contrast-3, #666));
-				
+
 				/* Typography - bullet */
 				font-weight: var(--wp--custom--typography--font-weight--normal, 400);
 				font-size: var(--wp--custom--list--bullet-size, 1em);
@@ -192,6 +196,7 @@
 	 * Empty state styling
 	 */
 	.no-references {
+
 		/* Spacing */
 		padding-block: var(--wp--preset--spacing--40, 1.5em);
 		padding-inline: var(--wp--preset--spacing--40, 1.5em);
@@ -221,6 +226,7 @@
 	 * Mobile and tablet optimizations
 	 */
 	@media (max-width: 781px) {
+
 		/* Reduce block container spacing */
 		margin-block: var(--wp--preset--spacing--40, 1.5em);
 		padding-block: var(--wp--preset--spacing--30, 1em);
@@ -253,6 +259,7 @@
 	 * Enhanced borders for accessibility
 	 */
 	@media (prefers-contrast: high) {
+
 		.references-year {
 			border-bottom-width: 3px;
 		}
@@ -290,6 +297,7 @@
 	 * Respect user preferences for animations
 	 */
 	@media (prefers-reduced-motion: reduce) {
+
 		.references-list li:hover {
 			transition: none;
 		}

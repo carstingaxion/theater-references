@@ -99,17 +99,17 @@ class Plugin {
 	 * @since 0.1.0
 	 */
 	private function init_hooks(): void {
-		// Core registration hooks
+		// Core registration hooks.
 		add_action( 'init', array( $this, 'register_taxonomies' ) );
 		add_action( 'init', array( $this, 'register_block' ) );
 
-		// Cache invalidation hooks
+		// Cache invalidation hooks.
 		add_action( 'save_post', array( $this, 'clear_cache_on_post_save' ) );
 		add_action( 'delete_post', array( $this, 'clear_cache_on_post_delete' ) );
 		add_action( 'edited_term', array( $this, 'clear_cache_on_term_change' ), 10, 3 );
 		add_action( 'delete_term', array( $this, 'clear_cache_on_term_change' ), 10, 3 );
 
-		// Admin interface hooks
+		// Admin interface hooks.
 		add_action( 'admin_menu', array( $this, 'add_demo_data_menu' ) );
 	}
 
@@ -191,18 +191,18 @@ class Plugin {
 		);
 
 		$args = array(
-			'labels'            => $labels,
-			'hierarchical'      => true,
-			'public'            => false,
+			'labels'             => $labels,
+			'hierarchical'       => true,
+			'public'             => false,
 			'publicly_queryable' => true,
-			'show_ui'           => true,
-			'show_admin_column' => true,
-			'query_var'         => true,
-			'rewrite'           => false,
-			'show_in_rest'      => true,
+			'show_ui'            => true,
+			'show_admin_column'  => true,
+			'query_var'          => true,
+			'rewrite'            => false,
+			'show_in_rest'       => true,
 		);
 
-		// Register for GatherPress event post type
+		// Register for GatherPress event post type.
 		register_taxonomy( 'gatherpress-productions', array( 'gatherpress_event' ), $args );
 	}
 
@@ -218,27 +218,27 @@ class Plugin {
 	 */
 	private function register_clients_taxonomy(): void {
 		$labels = array(
-			'name'              => __( 'Clients', 'gatherpress-references' ),
-			'singular_name'     => __( 'Client', 'gatherpress-references' ),
-			'search_items'      => __( 'Search Clients', 'gatherpress-references' ),
-			'all_items'         => __( 'All Clients', 'gatherpress-references' ),
-			'edit_item'         => __( 'Edit Client', 'gatherpress-references' ),
-			'update_item'       => __( 'Update Client', 'gatherpress-references' ),
-			'add_new_item'      => __( 'Add New Client', 'gatherpress-references' ),
-			'new_item_name'     => __( 'New Client Name', 'gatherpress-references' ),
-			'menu_name'         => __( 'Clients', 'gatherpress-references' ),
+			'name'          => __( 'Clients', 'gatherpress-references' ),
+			'singular_name' => __( 'Client', 'gatherpress-references' ),
+			'search_items'  => __( 'Search Clients', 'gatherpress-references' ),
+			'all_items'     => __( 'All Clients', 'gatherpress-references' ),
+			'edit_item'     => __( 'Edit Client', 'gatherpress-references' ),
+			'update_item'   => __( 'Update Client', 'gatherpress-references' ),
+			'add_new_item'  => __( 'Add New Client', 'gatherpress-references' ),
+			'new_item_name' => __( 'New Client Name', 'gatherpress-references' ),
+			'menu_name'     => __( 'Clients', 'gatherpress-references' ),
 		);
 
 		$args = array(
-			'labels'            => $labels,
-			'hierarchical'      => false,
-			'public'            => false,
+			'labels'             => $labels,
+			'hierarchical'       => false,
+			'public'             => false,
 			'publicly_queryable' => true,
-			'show_ui'           => true,
-			'show_admin_column' => true,
-			'query_var'         => true,
-			'rewrite'           => false,
-			'show_in_rest'      => true,
+			'show_ui'            => true,
+			'show_admin_column'  => true,
+			'query_var'          => true,
+			'rewrite'            => false,
+			'show_in_rest'       => true,
 		);
 
 		register_taxonomy( '_gatherpress-client', array( 'gatherpress_event' ), $args );
@@ -256,27 +256,27 @@ class Plugin {
 	 */
 	private function register_festivals_taxonomy(): void {
 		$labels = array(
-			'name'              => __( 'Festivals', 'gatherpress-references' ),
-			'singular_name'     => __( 'Festival', 'gatherpress-references' ),
-			'search_items'      => __( 'Search Festivals', 'gatherpress-references' ),
-			'all_items'         => __( 'All Festivals', 'gatherpress-references' ),
-			'edit_item'         => __( 'Edit Festival', 'gatherpress-references' ),
-			'update_item'       => __( 'Update Festival', 'gatherpress-references' ),
-			'add_new_item'      => __( 'Add New Festival', 'gatherpress-references' ),
-			'new_item_name'     => __( 'New Festival Name', 'gatherpress-references' ),
-			'menu_name'         => __( 'Festivals', 'gatherpress-references' ),
+			'name'          => __( 'Festivals', 'gatherpress-references' ),
+			'singular_name' => __( 'Festival', 'gatherpress-references' ),
+			'search_items'  => __( 'Search Festivals', 'gatherpress-references' ),
+			'all_items'     => __( 'All Festivals', 'gatherpress-references' ),
+			'edit_item'     => __( 'Edit Festival', 'gatherpress-references' ),
+			'update_item'   => __( 'Update Festival', 'gatherpress-references' ),
+			'add_new_item'  => __( 'Add New Festival', 'gatherpress-references' ),
+			'new_item_name' => __( 'New Festival Name', 'gatherpress-references' ),
+			'menu_name'     => __( 'Festivals', 'gatherpress-references' ),
 		);
 
 		$args = array(
-			'labels'            => $labels,
-			'hierarchical'      => false,
-			'public'            => false,
+			'labels'             => $labels,
+			'hierarchical'       => false,
+			'public'             => false,
 			'publicly_queryable' => true,
-			'show_ui'           => true,
-			'show_admin_column' => true,
-			'query_var'         => true,
-			'rewrite'           => false,
-			'show_in_rest'      => true,
+			'show_ui'            => true,
+			'show_admin_column'  => true,
+			'query_var'          => true,
+			'rewrite'            => false,
+			'show_in_rest'       => true,
 		);
 
 		register_taxonomy( '_gatherpress-festival', array( 'gatherpress_event' ), $args );
@@ -294,27 +294,27 @@ class Plugin {
 	 */
 	private function register_awards_taxonomy(): void {
 		$labels = array(
-			'name'              => __( 'Awards', 'gatherpress-references' ),
-			'singular_name'     => __( 'Award', 'gatherpress-references' ),
-			'search_items'      => __( 'Search Awards', 'gatherpress-references' ),
-			'all_items'         => __( 'All Awards', 'gatherpress-references' ),
-			'edit_item'         => __( 'Edit Award', 'gatherpress-references' ),
-			'update_item'       => __( 'Update Award', 'gatherpress-references' ),
-			'add_new_item'      => __( 'Add New Award', 'gatherpress-references' ),
-			'new_item_name'     => __( 'New Award Name', 'gatherpress-references' ),
-			'menu_name'         => __( 'Awards', 'gatherpress-references' ),
+			'name'          => __( 'Awards', 'gatherpress-references' ),
+			'singular_name' => __( 'Award', 'gatherpress-references' ),
+			'search_items'  => __( 'Search Awards', 'gatherpress-references' ),
+			'all_items'     => __( 'All Awards', 'gatherpress-references' ),
+			'edit_item'     => __( 'Edit Award', 'gatherpress-references' ),
+			'update_item'   => __( 'Update Award', 'gatherpress-references' ),
+			'add_new_item'  => __( 'Add New Award', 'gatherpress-references' ),
+			'new_item_name' => __( 'New Award Name', 'gatherpress-references' ),
+			'menu_name'     => __( 'Awards', 'gatherpress-references' ),
 		);
 
 		$args = array(
-			'labels'            => $labels,
-			'hierarchical'      => false,
-			'public'            => false,
+			'labels'             => $labels,
+			'hierarchical'       => false,
+			'public'             => false,
 			'publicly_queryable' => true,
-			'show_ui'           => true,
-			'show_admin_column' => true,
-			'query_var'         => true,
-			'rewrite'           => false,
-			'show_in_rest'      => true,
+			'show_ui'            => true,
+			'show_admin_column'  => true,
+			'query_var'          => true,
+			'rewrite'            => false,
+			'show_in_rest'       => true,
 		);
 
 		register_taxonomy( '_gatherpress-award', array( 'gatherpress_event' ), $args );
@@ -338,10 +338,10 @@ class Plugin {
 	 * Hooked to 'save_post' action to invalidate cache when event content changes.
 	 *
 	 * @since 0.1.0
-	 * @param int $post_id The post ID being saved
+	 * @param int $post_id The post ID being saved.
 	 */
 	public function clear_cache_on_post_save( int $post_id ): void {
-		// Only clear cache for GatherPress events
+		// Only clear cache for GatherPress events.
 		if ( get_post_type( $post_id ) === 'gatherpress_event' ) {
 			$this->clear_all_caches();
 		}
@@ -353,7 +353,7 @@ class Plugin {
 	 * Hooked to 'delete_post' action to invalidate cache when event is removed.
 	 *
 	 * @since 0.1.0
-	 * @param int $post_id The post ID being deleted
+	 * @param int $post_id The post ID being deleted.
 	 */
 	public function clear_cache_on_post_delete( int $post_id ): void {
 		if ( get_post_type( $post_id ) === 'gatherpress_event' ) {
@@ -368,12 +368,12 @@ class Plugin {
 	 * Only clears cache for our custom taxonomies.
 	 *
 	 * @since 0.1.0
-	 * @param int    $term_id  The term ID
-	 * @param int    $tt_id    The term taxonomy ID
-	 * @param string $taxonomy The taxonomy slug
+	 * @param int    $term_id  The term ID.
+	 * @param int    $tt_id    The term taxonomy ID.
+	 * @param string $taxonomy The taxonomy slug.
 	 */
 	public function clear_cache_on_term_change( int $term_id, int $tt_id, string $taxonomy ): void {
-		// List of taxonomies that require cache invalidation
+		// List of taxonomies that require cache invalidation.
 		$ref_taxonomies = array( 'gatherpress-productions', '_gatherpress-client', '_gatherpress-festival', '_gatherpress-award' );
 		
 		if ( in_array( $taxonomy, $ref_taxonomies, true ) ) {
@@ -388,26 +388,37 @@ class Plugin {
 	 * Uses direct database queries for efficiency.
 	 *
 	 * @since 0.1.0
-	 * @global \wpdb $wpdb WordPress database abstraction object.
 	 */
 	public function clear_all_caches(): void {
 		global $wpdb;
 
-		// Delete transient values
-		$wpdb->query(
-			$wpdb->prepare(
-				"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
-				$wpdb->esc_like( '_transient_' . $this->cache_prefix ) . '%'
-			)
+		if ( ! $wpdb instanceof \wpdb ) {
+			return;
+		}
+
+		// Prepare the LIKE patterns for deletion.
+		$transient_pattern = $wpdb->esc_like( '_transient_' . $this->cache_prefix ) . '%';
+		$timeout_pattern = $wpdb->esc_like( '_transient_timeout_' . $this->cache_prefix ) . '%';
+
+		// Delete transient values.
+		$delete_query = $wpdb->prepare(
+			"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
+			$transient_pattern
 		);
 
-		// Delete transient timeout entries
-		$wpdb->query(
-			$wpdb->prepare(
-				"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
-				$wpdb->esc_like( '_transient_timeout_' . $this->cache_prefix ) . '%'
-			)
+		if ( is_string( $delete_query ) ) {
+			$wpdb->query( $delete_query );
+		}
+
+		// Delete transient timeout entries.
+		$timeout_query = $wpdb->prepare(
+			"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
+			$timeout_pattern
 		);
+
+		if ( is_string( $timeout_query ) ) {
+			$wpdb->query( $timeout_query );
+		}
 	}
 
 	/**
@@ -437,18 +448,18 @@ class Plugin {
 	 * @since 0.1.0
 	 */
 	public function render_demo_data_page(): void {
-		// Security check
+		// Security check.
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
 
-		// Handle demo data generation
+		// Handle demo data generation.
 		if ( isset( $_POST['generate_demo_data'] ) && check_admin_referer( 'gatherpress_references_demo_data' ) ) {
 			$this->generate_demo_data();
 			echo '<div class="notice notice-success"><p>' . esc_html__( 'Demo data generated successfully!', 'gatherpress-references' ) . '</p></div>';
 		}
 
-		// Handle demo data deletion
+		// Handle demo data deletion.
 		if ( isset( $_POST['delete_demo_data'] ) && check_admin_referer( 'gatherpress_references_demo_data' ) ) {
 			$this->delete_demo_data();
 			echo '<div class="notice notice-success"><p>' . esc_html__( 'Demo data deleted successfully!', 'gatherpress-references' ) . '</p></div>';
@@ -506,40 +517,53 @@ class Plugin {
 	 * @since 0.1.0
 	 */
 	private function generate_demo_data(): void {
-		// Sample production names
+		// Sample production names.
 		$productions = array( 'Hamlet', 'Romeo and Juliet', 'A Midsummer Night\'s Dream', 'Macbeth', 'The Tempest' );
 		
-		// Sample client names from major theater cities
+		// Sample client names from major theater cities.
 		$clients = array(
-			'Royal Theater London', 'Berlin Staatstheater', 'Paris National Opera',
-			'Vienna Burgtheater', 'Moscow Art Theatre', 'Sydney Opera House',
-			'New York Broadway Theater', 'Madrid Teatro Real'
+			'Royal Theater London',
+			'Berlin Staatstheater',
+			'Paris National Opera',
+			'Vienna Burgtheater',
+			'Moscow Art Theatre',
+			'Sydney Opera House',
+			'New York Broadway Theater',
+			'Madrid Teatro Real',
 		);
 		
-		// Sample festival names from renowned international festivals
+		// Sample festival names from renowned international festivals.
 		$festivals = array(
-			'Edinburgh International Festival', 'Avignon Festival', 'Salzburg Festival',
-			'Venice Biennale Teatro', 'Festival d\'Automne à Paris', 'Berlin Theatertreffen'
+			'Edinburgh International Festival',
+			'Avignon Festival',
+			'Salzburg Festival',
+			'Venice Biennale Teatro',
+			'Festival d\'Automne à Paris',
+			'Berlin Theatertreffen',
 		);
 		
-		// Sample award names
+		// Sample award names.
 		$awards = array(
-			'Best Director Award', 'Outstanding Production', 'Best Ensemble Performance',
-			'Critics\' Choice Award', 'Theatre Excellence Prize', 'Innovation in Theatre Award'
+			'Best Director Award',
+			'Outstanding Production',
+			'Best Ensemble Performance',
+			'Critics\' Choice Award',
+			'Theatre Excellence Prize',
+			'Innovation in Theatre Award',
 		);
 
-		// Create production terms and store IDs
+		// Create production terms and store IDs.
 		$production_ids = array();
 		foreach ( $productions as $production ) {
 			$term = wp_insert_term( $production, 'gatherpress-productions' );
 			if ( ! is_wp_error( $term ) ) {
 				$production_ids[] = $term['term_id'];
-				// Mark as demo data for cleanup
+				// Mark as demo data for cleanup.
 				update_term_meta( $term['term_id'], '_demo_data', '1' );
 			}
 		}
 
-		// Create client terms
+		// Create client terms.
 		$client_ids = array();
 		foreach ( $clients as $client ) {
 			$term = wp_insert_term( $client, '_gatherpress-client' );
@@ -549,7 +573,7 @@ class Plugin {
 			}
 		}
 
-		// Create festival terms
+		// Create festival terms.
 		$festival_ids = array();
 		foreach ( $festivals as $festival ) {
 			$term = wp_insert_term( $festival, '_gatherpress-festival' );
@@ -559,7 +583,7 @@ class Plugin {
 			}
 		}
 
-		// Create award terms
+		// Create award terms.
 		$award_ids = array();
 		foreach ( $awards as $award ) {
 			$term = wp_insert_term( $award, '_gatherpress-award' );
@@ -569,13 +593,13 @@ class Plugin {
 			}
 		}
 
-		// Generate 20 GatherPress event posts with realistic data
+		// Generate 20 GatherPress event posts with realistic data.
 		for ( $i = 0; $i < 20; $i++ ) {
-			// Generate random date between 2018-2024
-			$year = rand( 2018, 2024 );
-			$month = rand( 1, 12 );
-			$day = rand( 1, 28 );
-			$date = sprintf( '%04d-%02d-%02d', $year, $month, $day );
+			// Generate random date between 2018-2024.
+			$year       = wp_rand( 2018, 2024 );
+			$month      = wp_rand( 1, 12 );
+			$day        = wp_rand( 1, 28 );
+			$date       = sprintf( '%04d-%02d-%02d', $year, $month, $day );
 			$production = $productions[ array_rand( $productions ) ];
 
 			$event_data = array(
@@ -588,39 +612,39 @@ class Plugin {
 
 			$post_id = wp_insert_post( $event_data );
 
-			if ( $post_id && ! is_wp_error( $post_id ) ) {
-				// Mark as demo data
+			if ( ! is_wp_error( $post_id ) ) {
+				// Mark as demo data.
 				update_post_meta( $post_id, '_demo_data', '1' );
 
-				// Assign production term by term_id, not as array
+				// Assign production term by term_id, not as array.
 				if ( ! empty( $production_ids ) ) {
 					$selected_production = $production_ids[ array_rand( $production_ids ) ];
 					wp_set_object_terms( $post_id, $selected_production, 'gatherpress-productions', false );
 				}
 
-				// Use randomization to create varied reference patterns
-				$rand = rand( 1, 100 );
+				// Use randomization to create varied reference patterns.
+				$rand = wp_rand( 1, 100 );
 
-				// 60% chance of having client references (1-2 clients)
+				// 60% chance of having client references (1-2 clients).
 				if ( $rand < 60 && ! empty( $client_ids ) ) {
-					// Randomly select 1 or 2 clients
-					$num_clients = rand( 1, 2 );
+					// Randomly select 1 or 2 clients.
+					$num_clients      = wp_rand( 1, 2 );
 					$selected_clients = array();
 					for ( $v = 0; $v < $num_clients; $v++ ) {
 						$selected_clients[] = $client_ids[ array_rand( $client_ids ) ];
 					}
-					// Remove duplicates
+					// Remove duplicates.
 					$selected_clients = array_unique( $selected_clients );
 					wp_set_object_terms( $post_id, $selected_clients, '_gatherpress-client', false );
 				}
 
-				// 40% chance of festival participation (30-70 range)
+				// 40% chance of festival participation (30-70 range).
 				if ( $rand > 30 && $rand < 70 && ! empty( $festival_ids ) ) {
 					$selected_festival = $festival_ids[ array_rand( $festival_ids ) ];
 					wp_set_object_terms( $post_id, $selected_festival, '_gatherpress-festival', false );
 				}
 
-				// 40% chance of award (60-100 range)
+				// 40% chance of award (60-100 range).
 				if ( $rand > 60 && ! empty( $award_ids ) ) {
 					$selected_award = $award_ids[ array_rand( $award_ids ) ];
 					wp_set_object_terms( $post_id, $selected_award, '_gatherpress-award', false );
@@ -628,7 +652,7 @@ class Plugin {
 			}
 		}
 
-		// Clear cache after generating demo data
+		// Clear cache after generating demo data.
 		$this->clear_all_caches();
 	}
 
@@ -641,7 +665,7 @@ class Plugin {
 	 * @since 0.1.0
 	 */
 	private function delete_demo_data(): void {
-		// Find all demo GatherPress event posts
+		// Find all demo GatherPress event posts.
 		$demo_events = get_posts(
 			array(
 				'post_type'      => 'gatherpress_event',
@@ -651,12 +675,12 @@ class Plugin {
 			)
 		);
 
-		// Permanently delete demo events
+		// Permanently delete demo events.
 		foreach ( $demo_events as $event ) {
 			wp_delete_post( $event->ID, true );
 		}
 
-		// Delete demo terms from all taxonomies
+		// Delete demo terms from all taxonomies.
 		$taxonomies = array( 'gatherpress-productions', '_gatherpress-client', '_gatherpress-festival', '_gatherpress-award' );
 		foreach ( $taxonomies as $taxonomy ) {
 			$demo_terms = get_terms(
@@ -668,12 +692,16 @@ class Plugin {
 				)
 			);
 
-			foreach ( $demo_terms as $term ) {
-				wp_delete_term( $term->term_id, $taxonomy );
+			if ( ! is_wp_error( $demo_terms ) ) {
+				foreach ( $demo_terms as $term ) {
+					if ( $term instanceof \WP_Term ) {
+						wp_delete_term( $term->term_id, $taxonomy );
+					}
+				}
 			}
 		}
 
-		// Clear cache after cleanup
+		// Clear cache after cleanup.
 		$this->clear_all_caches();
 	}
 }

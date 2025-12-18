@@ -1,16 +1,18 @@
 /**
  * GatherPress References Block - Editor Styles
- * 
+ *
  * Editor-specific styles with theme.json integration for accurate
  * WYSIWYG preview in the block editor. Supports dynamic heading levels.
  */
 
 .wp-block-gatherpress-references {
+
 	/* No custom placeholder needed - block now shows actual preview */
-	
+
 	/* Ensure headings in editor match frontend styling */
 	.references-year,
 	.references-type {
+
 		/* All heading level styles inherited from style.scss */
 	}
 
@@ -22,6 +24,7 @@
 
 	/* Dark mode support in editor */
 	.is-dark-theme & {
+
 		.no-references {
 			background: var(--wp--preset--color--contrast-2, rgba(255, 255, 255, 0.05));
 			border-color: var(--wp--preset--color--contrast-3, rgba(255, 255, 255, 0.1));
@@ -31,6 +34,7 @@
 
 	/* Reduced motion support */
 	@media (prefers-reduced-motion: reduce) {
+
 		&.is-selected {
 			transition: none;
 		}
