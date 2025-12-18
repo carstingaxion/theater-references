@@ -14,12 +14,14 @@
  * @package GatherPress_References
  */
 
+namespace GatherPress\References;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
 /**
- * GatherPress References Manager
+ * GatherPress References Plugin
  *
  * Core singleton class that manages the GatherPress References block functionality.
  * Handles taxonomy management for GatherPress events, caching, and demo data generation.
@@ -32,13 +34,13 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * @since 0.1.0
  */
-class GatherPress_References_Manager {
+class Plugin {
 	/**
 	 * Singleton instance
 	 *
-	 * @var GatherPress_References_Manager|null
+	 * @var Plugin|null
 	 */
-	private static ?GatherPress_References_Manager $instance = null;
+	private static ?Plugin $instance = null;
 
 	/**
 	 * Cache key prefix for transients
@@ -76,9 +78,9 @@ class GatherPress_References_Manager {
 	 * Creates instance on first call, returns existing instance on subsequent calls.
 	 *
 	 * @since 0.1.0
-	 * @return GatherPress_References_Manager The singleton instance
+	 * @return Plugin The singleton instance
 	 */
-	public static function get_instance(): GatherPress_References_Manager {
+	public static function get_instance(): Plugin {
 		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
@@ -688,7 +690,7 @@ class GatherPress_References_Manager {
 function gatherpress_references_activate(): void {
 	// Wait for instructions ....
 }
-register_activation_hook( __FILE__, 'gatherpress_references_activate' );
+register_activation_hook( __FILE__, __NAMESPACE__ . '\gatherpress_references_activate' );
 
 /**
  * Plugin deactivation hook
@@ -702,11 +704,11 @@ register_activation_hook( __FILE__, 'gatherpress_references_activate' );
  * @since 0.1.0
  */
 function gatherpress_references_deactivate(): void {
-	// Clear all cached reference data
-	GatherPress_References_Manager::get_instance()->clear_all_caches();
+	// Clear all cached reference data.
+	Plugin::get_instance()->clear_all_caches();
 }
-register_deactivation_hook( __FILE__, 'gatherpress_references_deactivate' );
+register_deactivation_hook( __FILE__, __NAMESPACE__ . '\gatherpress_references_deactivate' );
 
 
-// Initialize the singleton instance
-GatherPress_References_Manager::get_instance();
+// Initialize the singleton instance.
+Plugin::get_instance();

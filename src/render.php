@@ -1,4 +1,7 @@
 <?php
+
+namespace GatherPress\References;
+
 /**
  * GatherPress References Block - Frontend Renderer
  *
@@ -9,8 +12,7 @@
  * @package GatherPress_References
  * @since 0.1.0
  */
-
-if ( ! class_exists( 'GatherPress_References_Renderer' ) ) {
+if ( ! class_exists( 'Renderer' ) ) {
 	/**
 	 * GatherPress References Renderer
 	 *
@@ -20,7 +22,7 @@ if ( ! class_exists( 'GatherPress_References_Renderer' ) ) {
 	 *
 	 * @since 0.1.0
 	 */
-	class GatherPress_References_Renderer {
+	class Renderer {
 		/**
 		 * Cache key prefix
 		 *
@@ -409,7 +411,7 @@ if ( ! class_exists( 'GatherPress_References_Renderer' ) ) {
 }
 
 // Initialize renderer.
-$renderer = new GatherPress_References_Renderer();
+$renderer = new Renderer();
 
 // Extract and sanitize block attributes.
 $production_id = isset( $attributes['productionId'] ) ? intval( $attributes['productionId'] ) : 0;
