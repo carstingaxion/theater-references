@@ -1,7 +1,4 @@
 <?php
-
-namespace GatherPress\References;
-use WP_Query;
 /**
  * GatherPress References Block - Frontend Renderer
  *
@@ -12,7 +9,16 @@ use WP_Query;
  * @package GatherPress_References
  * @since 0.1.0
  */
-if ( ! class_exists( 'Renderer' ) ) {
+
+namespace GatherPress\References;
+use WP_Query;
+
+// Prevent direct access.
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 	/**
 	 * GatherPress References Renderer
 	 *
@@ -23,6 +29,13 @@ if ( ! class_exists( 'Renderer' ) ) {
 	 * @since 0.1.0
 	 */
 	class Renderer {
+		/**
+		 * Singleton instance
+		 *
+		 * @var Renderer|null
+		 */
+		private static ?Renderer $instance = null;
+		
 		/**
 		 * Cache key prefix
 		 *
@@ -49,11 +62,27 @@ if ( ! class_exists( 'Renderer' ) ) {
 		}
 
 		/**
+		 * Get singleton instance
+		 *
+		 * Creates instance on first call, returns existing instance on subsequent calls.
+		 *
+		 * @since 0.1.0
+		 * @return Renderer The singleton instance.
+		 */
+		public static function get_instance(): Renderer {
+			if ( null === self::$instance ) {
+				self::$instance = new self();
+			}
+			return self::$instance;
+		}
+
+		/**
 		 * Apply filterable properties
 		 *
 		 * Allows developers to modify class properties via filters.
 		 *
 		 * @since 0.1.0
+		 * @return void
 		 */
 		private function apply_filters(): void {
 			/**
@@ -99,7 +128,7 @@ if ( ! class_exists( 'Renderer' ) ) {
 		 * @param int    $production_id Optional. Filter by production term ID. Default 0 (all).
 		 * @param string $year          Optional. Filter by specific year (e.g., '2024'). Default '' (all).
 		 * @param string $type          Optional. Filter by reference type or 'all'. Default 'all'.
-		 * @return array Nested array of references organized by year and type.
+		 * @return array<string, array<string, array<int, string>>> Nested array of references organized by year and type.
 		 */
 		public function get_references( int $production_id = 0, string $year = '', string $type = 'all' ): array {
 			// Generate unique cache key based on parameters.
@@ -133,10 +162,10 @@ if ( ! class_exists( 'Renderer' ) ) {
 			 *
 			 * @since 0.1.0
 			 *
-			 * @param array  $args          WP_Query arguments array.
-			 * @param int    $production_id Production term ID filter.
-			 * @param string $year          Year filter.
-			 * @param string $type          Reference type filter.
+			 * @param array<string, mixed> $args          WP_Query arguments array.
+			 * @param int                  $production_id Production term ID filter.
+			 * @param string               $year          Year filter.
+			 * @param string               $type          Reference type filter.
 			 *
 			 * @example
 			 * // Limit query to 50 posts
@@ -277,7 +306,7 @@ if ( ! class_exists( 'Renderer' ) ) {
 		 *
 		 * @since 0.1.0
 		 * @param string $type Reference type from block attributes.
-		 * @return array Array of taxonomy slugs to query.
+		 * @return array<int, string> Array of taxonomy slugs to query.
 		 */
 		private function get_taxonomies_by_type( string $type ): array {
 			if ( $type === '_gatherpress-client' ) {
@@ -297,8 +326,8 @@ if ( ! class_exists( 'Renderer' ) ) {
 		 * Uses direct database query for efficiency when fetching many post dates.
 		 *
 		 * @since 0.1.0
-		 * @param array $post_ids Array of post IDs.
-		 * @return array Associative array of post_id => year data.
+		 * @param array<int, int> $post_ids Array of post IDs.
+		 * @return array<int, object{ID: string, year: string}> Associative array of post_id => year data.
 		 */
 		private function get_post_dates( array $post_ids ): array {
 			global $wpdb;
@@ -338,9 +367,9 @@ if ( ! class_exists( 'Renderer' ) ) {
 		 * )
 		 *
 		 * @since 0.1.0
-		 * @param array $post_ids   Array of post IDs.
-		 * @param array $taxonomies Array of taxonomy slugs to fetch.
-		 * @return array Nested array of post_id => taxonomy => terms.
+		 * @param array<int, int>    $post_ids   Array of post IDs.
+		 * @param array<int, string> $taxonomies Array of taxonomy slugs to fetch.
+		 * @return array<int, array<string, array<int, \WP_Term>>> Nested array of post_id => taxonomy => terms.
 		 */
 		private function get_post_terms( array $post_ids, array $taxonomies ): array {
 			if ( empty( $post_ids ) || empty( $taxonomies ) ) {
@@ -371,7 +400,7 @@ if ( ! class_exists( 'Renderer' ) ) {
 		 * Maps taxonomy slugs to translatable display labels.
 		 *
 		 * @since 0.1.0
-		 * @return array Associative array of taxonomy => label.
+		 * @return array<string, string> Associative array of taxonomy => label.
 		 */
 		public function get_type_labels(): array {
 			$labels = array(
@@ -389,7 +418,7 @@ if ( ! class_exists( 'Renderer' ) ) {
 			 *
 			 * @since 0.1.0
 			 *
-			 * @param array $labels Array of taxonomy slug => label pairs.
+			 * @param array<string, string> $labels Array of taxonomy slug => label pairs.
 			 *
 			 * @example
 			 * // Add custom taxonomy label
@@ -410,8 +439,8 @@ if ( ! class_exists( 'Renderer' ) ) {
 	}
 }
 
-// Initialize renderer.
-$renderer = new Renderer();
+// Initialize the singleton instance.
+$renderer = Renderer::get_instance();
 
 // Extract and sanitize block attributes.
 $production_id = isset( $attributes['productionId'] ) ? intval( $attributes['productionId'] ) : 0;
@@ -436,8 +465,10 @@ if ( $type === 'ref_client' ) {
 
 // Auto-detect production from current taxonomy term if viewing a production archive.
 if ( $production_id === 0 && is_tax( 'gatherpress-productions' ) ) {
-	$term          = get_queried_object();
-	$production_id = $term->term_id;
+	$term = get_queried_object();
+	if ( $term && isset( $term->term_id ) ) {
+		$production_id = $term->term_id;
+	}
 }
 
 // Fetch organized reference data.
@@ -454,14 +485,14 @@ $is_specific_type = ( $type !== 'all' );
 			<h<?php echo esc_attr( $heading_level ); ?> class="references-year"><?php echo esc_html( $ref_year ); ?></h<?php echo esc_attr( $heading_level ); ?>>
 			
 			<?php foreach ( $types as $ref_type => $items ) : ?>
-				<?php if ( ! empty( $items ) ) : ?>
+				<?php if ( is_string( $ref_type) && ( $type === $ref_type || ! $is_specific_type ) && is_array( $items ) && ! empty( $items ) ) : ?>
 					<?php if ( ! $is_specific_type ) : ?>
-						<h<?php echo esc_attr( $secondary_heading_level ); ?> class="references-type"><?php echo esc_html( $type_labels[ $ref_type ] ); ?></h<?php echo esc_attr( $secondary_heading_level ); ?>>
+						<h<?php echo esc_attr( (string) $secondary_heading_level ); ?> class="references-type"><?php echo esc_html( $type_labels[ $ref_type ] ); ?></h<?php echo esc_attr( (string) $secondary_heading_level ); ?>>
 					<?php endif; ?>
 					
 					<ul class="references-list">
 						<?php foreach ( $items as $item ) : ?>
-							<li><?php echo esc_html( $item ); ?></li>
+							<li><?php is_string( $item ) && print esc_html( $item ); ?></li>
 						<?php endforeach; ?>
 					</ul>
 				<?php endif; ?>

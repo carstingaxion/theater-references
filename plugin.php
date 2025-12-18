@@ -78,7 +78,7 @@ class Plugin {
 	 * Creates instance on first call, returns existing instance on subsequent calls.
 	 *
 	 * @since 0.1.0
-	 * @return Plugin The singleton instance
+	 * @return Plugin The singleton instance.
 	 */
 	public static function get_instance(): Plugin {
 		if ( null === self::$instance ) {
@@ -97,6 +97,7 @@ class Plugin {
 	 * - Admin menu for demo data generator
 	 *
 	 * @since 0.1.0
+	 * @return void
 	 */
 	private function init_hooks(): void {
 		// Core registration hooks.
@@ -119,6 +120,7 @@ class Plugin {
 	 * Allows developers to modify class properties via filters.
 	 *
 	 * @since 0.1.0
+	 * @return void
 	 */
 	private function apply_filters(): void {
 		/**
@@ -157,6 +159,7 @@ class Plugin {
 	 * archives or permalinks, but can be used in WP_Query.
 	 *
 	 * @since 0.1.0
+	 * @return void
 	 */
 	public function register_taxonomies(): void {
 		$this->register_productions_taxonomy();
@@ -174,6 +177,7 @@ class Plugin {
 	 * Non-public but queryable - no frontend archives or permalinks.
 	 *
 	 * @since 0.1.0
+	 * @return void
 	 */
 	private function register_productions_taxonomy(): void {
 		$labels = array(
@@ -215,6 +219,7 @@ class Plugin {
 	 * Non-public but queryable - no frontend archives or permalinks.
 	 *
 	 * @since 0.1.0
+	 * @return void
 	 */
 	private function register_clients_taxonomy(): void {
 		$labels = array(
@@ -253,6 +258,7 @@ class Plugin {
 	 * Non-public but queryable - no frontend archives or permalinks.
 	 *
 	 * @since 0.1.0
+	 * @return void
 	 */
 	private function register_festivals_taxonomy(): void {
 		$labels = array(
@@ -291,6 +297,7 @@ class Plugin {
 	 * Non-public but queryable - no frontend archives or permalinks.
 	 *
 	 * @since 0.1.0
+	 * @return void
 	 */
 	private function register_awards_taxonomy(): void {
 		$labels = array(
@@ -327,6 +334,7 @@ class Plugin {
 	 * Uses block.json for metadata (requires WordPress 5.8+).
 	 *
 	 * @since 0.1.0
+	 * @return void
 	 */
 	public function register_block(): void {
 		register_block_type( __DIR__ . '/build/' );
@@ -339,6 +347,7 @@ class Plugin {
 	 *
 	 * @since 0.1.0
 	 * @param int $post_id The post ID being saved.
+	 * @return void
 	 */
 	public function clear_cache_on_post_save( int $post_id ): void {
 		// Only clear cache for GatherPress events.
@@ -354,6 +363,7 @@ class Plugin {
 	 *
 	 * @since 0.1.0
 	 * @param int $post_id The post ID being deleted.
+	 * @return void
 	 */
 	public function clear_cache_on_post_delete( int $post_id ): void {
 		if ( get_post_type( $post_id ) === 'gatherpress_event' ) {
@@ -371,6 +381,7 @@ class Plugin {
 	 * @param int    $term_id  The term ID.
 	 * @param int    $tt_id    The term taxonomy ID.
 	 * @param string $taxonomy The taxonomy slug.
+	 * @return void
 	 */
 	public function clear_cache_on_term_change( int $term_id, int $tt_id, string $taxonomy ): void {
 		// List of taxonomies that require cache invalidation.
@@ -388,6 +399,7 @@ class Plugin {
 	 * Uses direct database queries for efficiency.
 	 *
 	 * @since 0.1.0
+	 * @return void
 	 */
 	public function clear_all_caches(): void {
 		global $wpdb;
@@ -427,6 +439,7 @@ class Plugin {
 	 * Creates an admin page under GatherPress Events menu for generating test data.
 	 *
 	 * @since 0.1.0
+	 * @return void
 	 */
 	public function add_demo_data_menu(): void {
 		add_submenu_page(
@@ -446,6 +459,7 @@ class Plugin {
 	 * Includes nonce verification for security.
 	 *
 	 * @since 0.1.0
+	 * @return void
 	 */
 	public function render_demo_data_page(): void {
 		// Security check.
@@ -515,6 +529,7 @@ class Plugin {
 	 * All demo items are marked with '_demo_data' meta for easy cleanup.
 	 *
 	 * @since 0.1.0
+	 * @return void
 	 */
 	private function generate_demo_data(): void {
 		// Sample production names.
@@ -663,6 +678,7 @@ class Plugin {
 	 * Uses permanent deletion (bypass trash).
 	 *
 	 * @since 0.1.0
+	 * @return void
 	 */
 	private function delete_demo_data(): void {
 		// Find all demo GatherPress event posts.
@@ -710,10 +726,10 @@ class Plugin {
 /**
  * Plugin activation hook
  *
- * Performs setup tasks when the plugin is activated:
- * - ...
+ * Performs setup tasks when the plugin is activated.
  *
  * @since 0.1.0
+ * @return void
  */
 function gatherpress_references_activate(): void {
 	// Wait for instructions ....
@@ -730,6 +746,7 @@ register_activation_hook( __FILE__, __NAMESPACE__ . '\gatherpress_references_act
  * Use the uninstall.php file for complete data removal.
  *
  * @since 0.1.0
+ * @return void
  */
 function gatherpress_references_deactivate(): void {
 	// Clear all cached reference data.

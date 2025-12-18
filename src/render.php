@@ -67,7 +67,7 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 * Creates instance on first call, returns existing instance on subsequent calls.
 		 *
 		 * @since 0.1.0
-		 * @return Renderer The singleton instance
+		 * @return Renderer The singleton instance.
 		 */
 		public static function get_instance(): Renderer {
 			if ( null === self::$instance ) {
@@ -82,6 +82,7 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 * Allows developers to modify class properties via filters.
 		 *
 		 * @since 0.1.0
+		 * @return void
 		 */
 		private function apply_filters(): void {
 			/**
@@ -127,7 +128,7 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 * @param int    $production_id Optional. Filter by production term ID. Default 0 (all).
 		 * @param string $year          Optional. Filter by specific year (e.g., '2024'). Default '' (all).
 		 * @param string $type          Optional. Filter by reference type or 'all'. Default 'all'.
-		 * @return array Nested array of references organized by year and type.
+		 * @return array<string, array<string, array<int, string>>> Nested array of references organized by year and type.
 		 */
 		public function get_references( int $production_id = 0, string $year = '', string $type = 'all' ): array {
 			// Generate unique cache key based on parameters.
@@ -161,10 +162,10 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 			 *
 			 * @since 0.1.0
 			 *
-			 * @param array  $args          WP_Query arguments array.
-			 * @param int    $production_id Production term ID filter.
-			 * @param string $year          Year filter.
-			 * @param string $type          Reference type filter.
+			 * @param array<string, mixed> $args          WP_Query arguments array.
+			 * @param int                  $production_id Production term ID filter.
+			 * @param string               $year          Year filter.
+			 * @param string               $type          Reference type filter.
 			 *
 			 * @example
 			 * // Limit query to 50 posts
@@ -305,7 +306,7 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 *
 		 * @since 0.1.0
 		 * @param string $type Reference type from block attributes.
-		 * @return array Array of taxonomy slugs to query.
+		 * @return array<int, string> Array of taxonomy slugs to query.
 		 */
 		private function get_taxonomies_by_type( string $type ): array {
 			if ( $type === '_gatherpress-client' ) {
@@ -325,8 +326,8 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 * Uses direct database query for efficiency when fetching many post dates.
 		 *
 		 * @since 0.1.0
-		 * @param array $post_ids Array of post IDs.
-		 * @return array Associative array of post_id => year data.
+		 * @param array<int, int> $post_ids Array of post IDs.
+		 * @return array<int, object{ID: string, year: string}> Associative array of post_id => year data.
 		 */
 		private function get_post_dates( array $post_ids ): array {
 			global $wpdb;
@@ -366,9 +367,9 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 * )
 		 *
 		 * @since 0.1.0
-		 * @param array $post_ids   Array of post IDs.
-		 * @param array $taxonomies Array of taxonomy slugs to fetch.
-		 * @return array Nested array of post_id => taxonomy => terms.
+		 * @param array<int, int>    $post_ids   Array of post IDs.
+		 * @param array<int, string> $taxonomies Array of taxonomy slugs to fetch.
+		 * @return array<int, array<string, array<int, \WP_Term>>> Nested array of post_id => taxonomy => terms.
 		 */
 		private function get_post_terms( array $post_ids, array $taxonomies ): array {
 			if ( empty( $post_ids ) || empty( $taxonomies ) ) {
@@ -399,7 +400,7 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 * Maps taxonomy slugs to translatable display labels.
 		 *
 		 * @since 0.1.0
-		 * @return array <string, string> Associative array of taxonomy => label.
+		 * @return array<string, string> Associative array of taxonomy => label.
 		 */
 		public function get_type_labels(): array {
 			$labels = array(
@@ -417,7 +418,7 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 			 *
 			 * @since 0.1.0
 			 *
-			 * @param array $labels Array of taxonomy slug => label pairs.
+			 * @param array<string, string> $labels Array of taxonomy slug => label pairs.
 			 *
 			 * @example
 			 * // Add custom taxonomy label
@@ -437,9 +438,6 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		}
 	}
 }
-
-// Initialize renderer.
-// $renderer = new Renderer();
 
 // Initialize the singleton instance.
 $renderer = Renderer::get_instance();
