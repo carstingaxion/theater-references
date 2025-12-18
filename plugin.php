@@ -386,6 +386,7 @@ class GatherPress_References_Manager {
 	 * Uses direct database queries for efficiency.
 	 *
 	 * @since 0.1.0
+	 * @global \wpdb $wpdb WordPress database abstraction object.
 	 */
 	public function clear_all_caches(): void {
 		global $wpdb;
