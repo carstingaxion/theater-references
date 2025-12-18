@@ -389,43 +389,6 @@ add_filter( 'gatherpress_references_query_args', function( $args, $production_id
 
 ---
 
-#### `gatherpress_references_display_taxonomies`
-
-**Description:** Modify which taxonomies are displayed in the output.
-
-**Default:** `array( '_gatherpress-client', '_gatherpress-festival', '_gatherpress-award' )`
-
-**Parameters:**
-- `$display_taxonomies` (array) - Array of taxonomy slugs to display
-
-**Example - Add custom taxonomy:**
-```php
-add_filter( 'gatherpress_references_display_taxonomies', function( $taxonomies ) {
-    $taxonomies[] = 'gatherpress-custom';
-    return $taxonomies;
-} );
-```
-
-**Example - Show only clients:**
-```php
-add_filter( 'gatherpress_references_display_taxonomies', function( $taxonomies ) {
-    return array( '_gatherpress-client' );
-} );
-```
-
-**Example - Reorder taxonomies:**
-```php
-add_filter( 'gatherpress_references_display_taxonomies', function( $taxonomies ) {
-    // Display awards first, then festivals, then clients
-    return array(
-        '_gatherpress-award',
-        '_gatherpress-festival',
-        '_gatherpress-client'
-    );
-} );
-```
-
----
 
 #### `gatherpress_references_data`
 

@@ -215,7 +215,7 @@ if ( ! class_exists( 'GatherPress_References_Renderer' ) ) {
 			}
 
 			// Execute query.
-			$query = new WP_Query( $args );
+			$query      = new WP_Query( $args );
 			$references = array();
 
 			if ( ! empty( $query->posts ) ) {
@@ -227,31 +227,6 @@ if ( ! class_exists( 'GatherPress_References_Renderer' ) ) {
 				// Always get all reference taxonomies for display.
 				$display_taxonomies = array( '_gatherpress-client', '_gatherpress-festival', '_gatherpress-award' );
 
-				/**
-				 * Filter the taxonomies displayed in the output.
-				 *
-				 * Allows adding or removing taxonomies from the final output.
-				 * Useful when registering custom reference taxonomies.
-				 *
-				 * @since 0.1.0
-				 *
-				 * @param array $display_taxonomies Array of taxonomy slugs to display.
-				 *
-				 * @example
-				 * // Add custom taxonomy
-				 * add_filter( 'gatherpress_references_display_taxonomies', function( $taxonomies ) {
-				 *     $taxonomies[] = 'gatherpress-custom';
-				 *     return $taxonomies;
-				 * } );
-				 *
-				 * @example
-				 * // Show only clients
-				 * add_filter( 'gatherpress_references_display_taxonomies', function( $taxonomies ) {
-				 *     return array( '_gatherpress-client' );
-				 * } );
-				 */
-				$display_taxonomies = apply_filters( 'gatherpress_references_display_taxonomies', $display_taxonomies );
-				
 				// Batch fetch all taxonomy terms.
 				$post_terms = $this->get_post_terms( $post_ids, $display_taxonomies );
 
