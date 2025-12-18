@@ -58,6 +58,7 @@ export default function Edit( { attributes, setAttributes } ) {
 		return terms || [];
 	}, [] );
 
+	
 	/**
 	 * Update block metadata with dynamic label
 	 *
@@ -65,6 +66,7 @@ export default function Edit( { attributes, setAttributes } ) {
 	 * It updates the block's metadata attribute so the label appears in the list view.
 	 */
 	useEffect( () => {
+
 		/**
 		 * Generate dynamic block label based on attributes
 		 *
@@ -124,7 +126,6 @@ export default function Edit( { attributes, setAttributes } ) {
 			},
 		} );
 	}, [
-		attributes.metadata,
 		setAttributes,
 		productionId,
 		year,

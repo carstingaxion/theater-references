@@ -1,7 +1,4 @@
 <?php
-
-namespace GatherPress\References;
-use WP_Query;
 /**
  * GatherPress References Block - Frontend Renderer
  *
@@ -12,7 +9,16 @@ use WP_Query;
  * @package GatherPress_References
  * @since 0.1.0
  */
-if ( ! class_exists( 'Renderer' ) ) {
+
+namespace GatherPress\References;
+use WP_Query;
+
+// Prevent direct access.
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 	/**
 	 * GatherPress References Renderer
 	 *
@@ -23,6 +29,13 @@ if ( ! class_exists( 'Renderer' ) ) {
 	 * @since 0.1.0
 	 */
 	class Renderer {
+		/**
+		 * Singleton instance
+		 *
+		 * @var Renderer|null
+		 */
+		private static ?Renderer $instance = null;
+		
 		/**
 		 * Cache key prefix
 		 *
@@ -46,6 +59,21 @@ if ( ! class_exists( 'Renderer' ) ) {
 		 */
 		public function __construct() {
 			$this->apply_filters();
+		}
+
+		/**
+		 * Get singleton instance
+		 *
+		 * Creates instance on first call, returns existing instance on subsequent calls.
+		 *
+		 * @since 0.1.0
+		 * @return Renderer The singleton instance
+		 */
+		public static function get_instance(): Renderer {
+			if ( null === self::$instance ) {
+				self::$instance = new self();
+			}
+			return self::$instance;
 		}
 
 		/**
@@ -371,7 +399,7 @@ if ( ! class_exists( 'Renderer' ) ) {
 		 * Maps taxonomy slugs to translatable display labels.
 		 *
 		 * @since 0.1.0
-		 * @return array Associative array of taxonomy => label.
+		 * @return array <string, string> Associative array of taxonomy => label.
 		 */
 		public function get_type_labels(): array {
 			$labels = array(
@@ -411,7 +439,10 @@ if ( ! class_exists( 'Renderer' ) ) {
 }
 
 // Initialize renderer.
-$renderer = new Renderer();
+// $renderer = new Renderer();
+
+// Initialize the singleton instance.
+$renderer = Renderer::get_instance();
 
 // Extract and sanitize block attributes.
 $production_id = isset( $attributes['productionId'] ) ? intval( $attributes['productionId'] ) : 0;
@@ -436,8 +467,10 @@ if ( $type === 'ref_client' ) {
 
 // Auto-detect production from current taxonomy term if viewing a production archive.
 if ( $production_id === 0 && is_tax( 'gatherpress-productions' ) ) {
-	$term          = get_queried_object();
-	$production_id = $term->term_id;
+	$term = get_queried_object();
+	if ( $term && isset( $term->term_id ) ) {
+		$production_id = $term->term_id;
+	}
 }
 
 // Fetch organized reference data.
@@ -454,14 +487,14 @@ $is_specific_type = ( $type !== 'all' );
 			<h<?php echo esc_attr( $heading_level ); ?> class="references-year"><?php echo esc_html( $ref_year ); ?></h<?php echo esc_attr( $heading_level ); ?>>
 			
 			<?php foreach ( $types as $ref_type => $items ) : ?>
-				<?php if ( ! empty( $items ) ) : ?>
+				<?php if ( is_string( $ref_type) && ( $type === $ref_type || ! $is_specific_type ) && is_array( $items ) && ! empty( $items ) ) : ?>
 					<?php if ( ! $is_specific_type ) : ?>
-						<h<?php echo esc_attr( $secondary_heading_level ); ?> class="references-type"><?php echo esc_html( $type_labels[ $ref_type ] ); ?></h<?php echo esc_attr( $secondary_heading_level ); ?>>
+						<h<?php echo esc_attr( (string) $secondary_heading_level ); ?> class="references-type"><?php echo esc_html( $type_labels[ $ref_type ] ); ?></h<?php echo esc_attr( (string) $secondary_heading_level ); ?>>
 					<?php endif; ?>
 					
 					<ul class="references-list">
 						<?php foreach ( $items as $item ) : ?>
-							<li><?php echo esc_html( $item ); ?></li>
+							<li><?php is_string( $item ) && print esc_html( $item ); ?></li>
 						<?php endforeach; ?>
 					</ul>
 				<?php endif; ?>
