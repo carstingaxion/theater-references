@@ -6,7 +6,7 @@
  * for GatherPress events. It queries GatherPress events, organizes references
  * by year and type, and outputs structured HTML.
  *
- * @package GatherPressReferences
+ * @package GatherPress_References
  * @since 0.1.0
  */
 

@@ -8,13 +8,13 @@
 **License:** GPLv2 or later  
 **License URI:** https://www.gnu.org/licenses/gpl-2.0.html  
 
-Display production references including guest performances, festivals, and awards in a structured, chronological format.
+Display production references including clients, festivals, and awards in a structured, chronological format.
 
 ![](assets/screenshot-1.png)
 
 ## Description
 
-The **GatherPress References** block displays a curated list of references from past events. It automatically organizes references by year and type (guest performances/clients, festivals, awards).
+The **GatherPress References** block displays a generated list of references from past events. It automatically organizes references by year and type (clients, festivals, awards).
 
 This plugin requires the GatherPress plugin to be installed and activated. It works with GatherPress events (`gatherpress_event` post type) to provide specialized reference management for e.g. theater productions.
 

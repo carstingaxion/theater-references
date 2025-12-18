@@ -11,7 +11,7 @@
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       gatherpress-references
  *
- * @package GatherPressReferences
+ * @package GatherPress_References
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
