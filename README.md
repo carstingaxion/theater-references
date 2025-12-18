@@ -390,39 +390,6 @@ add_filter( 'gatherpress_references_query_args', function( $args, $production_id
 ---
 
 
-#### `gatherpress_references_data`
-
-**Description:** Modify the final organized references data before caching and output.
-
-**Parameters:**
-- `$references` (array) - Nested array of year => type => references
-- `$production_id` (int) - Production term ID filter
-- `$year` (string) - Year filter
-- `$type` (string) - Reference type filter
-
-**Example - Sort references alphabetically:**
-```php
-add_filter( 'gatherpress_references_data', function( $references ) {
-    foreach ( $references as $year => $types ) {
-        foreach ( $types as $type => $items ) {
-            sort( $references[ $year ][ $type ] );
-        }
-    }
-    return $references;
-} );
-```
-
-**Example - Filter out years older than 2020:**
-```php
-add_filter( 'gatherpress_references_data', function( $references ) {
-    return array_filter( $references, function( $year ) {
-        return intval( $year ) >= 2020;
-    }, ARRAY_FILTER_USE_KEY );
-} );
-```
-
----
-
 #### `gatherpress_references_type_labels`
 
 **Description:** Customize the human-readable labels for each reference type displayed in headings.

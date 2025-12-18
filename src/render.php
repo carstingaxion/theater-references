@@ -263,42 +263,7 @@ if ( ! class_exists( 'GatherPress_References_Renderer' ) ) {
 				}
 			}
 
-			/**
-			 * Filter the final organized references data.
-			 *
-			 * Allows modification of the references structure before it's
-			 * cached and returned. Useful for sorting, filtering, or
-			 * reorganizing the data.
-			 *
-			 * @since 0.1.0
-			 *
-			 * @param array  $references    Nested array of year => type => references.
-			 * @param int    $production_id Production term ID filter.
-			 * @param string $year          Year filter.
-			 * @param string $type          Reference type filter.
-			 *
-			 * @example
-			 * // Sort references alphabetically within each type
-			 * add_filter( 'gatherpress_references_data', function( $references ) {
-			 *     foreach ( $references as $year => $types ) {
-			 *         foreach ( $types as $type => $items ) {
-			 *             sort( $references[ $year ][ $type ] );
-			 *         }
-			 *     }
-			 *     return $references;
-			 * } );
-			 *
-			 * @example
-			 * // Filter out years older than 2020
-			 * add_filter( 'gatherpress_references_data', function( $references ) {
-			 *     return array_filter( $references, function( $year ) {
-			 *         return intval( $year ) >= 2020;
-			 *     }, ARRAY_FILTER_USE_KEY );
-			 * } );
-			 */
-			$references = apply_filters( 'gatherpress_references_data', $references, $production_id, $year, $type );
-
-			// Cache results
+			// Cache results.
 			set_transient( $cache_key, $references, $this->cache_expiration );
 			return $references;
 		}
