@@ -172,33 +172,65 @@ export default function Edit( { attributes, setAttributes } ) {
 	 *   }
 	 * }
 	 */
-	const placeholderData = {
-		2024: {
-			ref_client: [
-				__( 'Royal Theater London', 'gatherpress-references' ),
-				__( 'Vienna Burgtheater', 'gatherpress-references' ),
-			],
-			ref_festival: [
-				__(
-					'Edinburgh International Festival',
-					'gatherpress-references'
-				),
-			],
-			ref_award: [
-				__( 'Best Director Award', 'gatherpress-references' ),
-			],
-		},
-		2023: {
-			ref_client: [
-				__( 'Berlin Staatstheater', 'gatherpress-references' ),
-			],
-			ref_festival: [
-				__( 'Avignon Festival', 'gatherpress-references' ),
-				__( 'Salzburg Festival', 'gatherpress-references' ),
-			],
-			ref_award: [],
-		},
+	const getPlaceholderData = () => {
+		// Determine which year(s) to show in preview
+		const currentYear = new Date().getFullYear();
+		const displayYear = year ? parseInt( year ) : currentYear;
+		
+		// If year is specified, show only that year
+		if ( year ) {
+			return {
+				[ displayYear ]: {
+					ref_client: [
+						__( 'Royal Theater London', 'gatherpress-references' ),
+						__( 'Vienna Burgtheater', 'gatherpress-references' ),
+					],
+					ref_festival: [
+						__(
+							'Edinburgh International Festival',
+							'gatherpress-references'
+						),
+					],
+					ref_award: [
+						__( 'Best Director Award', 'gatherpress-references' ),
+					],
+				},
+			};
+		}
+		
+		// If no year specified, show two years of data
+		return {
+			// Cast as string to prevent a default ordering by integer keys.
+			[ currentYear + ' ' ]: {
+				ref_client: [
+					__( 'Royal Theater London', 'gatherpress-references' ),
+					__( 'Vienna Burgtheater', 'gatherpress-references' ),
+				],
+				ref_festival: [
+					__(
+						'Edinburgh International Festival',
+						'gatherpress-references'
+					),
+				],
+				ref_award: [
+					__( 'Best Director Award', 'gatherpress-references' ),
+				],
+			},
+			// Cast as string to prevent a default ordering by integer keys.
+			[ currentYear - 1 + ' ' ]: {
+				ref_client: [
+					__( 'Berlin Staatstheater', 'gatherpress-references' ),
+				],
+				ref_festival: [
+					__( 'Avignon Festival', 'gatherpress-references' ),
+					__( 'Salzburg Festival', 'gatherpress-references' ),
+				],
+				ref_award: [],
+			},
+		};
 	};
+
+	const placeholderData = getPlaceholderData();
 
 	/**
 	 * Filter placeholder data based on reference type

@@ -18,6 +18,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+if (
+	! isset( $attributes ) ||
+	! is_array( $attributes ) ||
+	empty( $attributes ) ||
+	! is_int( $attributes['productionId'] ) ||
+	! is_string( $attributes['year'] ) ||
+	! is_string( $attributes['referenceType'] ) ||
+	! is_int( $attributes['headingLevel'] )
+) {
+	return;
+}
+
 if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 	/**
 	 * GatherPress References Renderer
@@ -136,7 +148,7 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 			
 			// Try cache first.
 			$cached = get_transient( $cache_key );
-			if ( false !== $cached ) {
+			if ( false !== $cached && is_array( $cached ) ) {
 				return $cached;
 			}
 
@@ -466,7 +478,7 @@ if ( $type === 'ref_client' ) {
 // Auto-detect production from current taxonomy term if viewing a production archive.
 if ( $production_id === 0 && is_tax( 'gatherpress-productions' ) ) {
 	$term = get_queried_object();
-	if ( $term && isset( $term->term_id ) ) {
+	if ( $term instanceof \WP_Term ) {
 		$production_id = $term->term_id;
 	}
 }
@@ -482,17 +494,19 @@ $is_specific_type = ( $type !== 'all' );
 <div <?php echo get_block_wrapper_attributes(); ?>>
 	<?php if ( ! empty( $references ) ) : ?>
 		<?php foreach ( $references as $ref_year => $types ) : ?>
-			<h<?php echo esc_attr( $heading_level ); ?> class="references-year"><?php echo esc_html( $ref_year ); ?></h<?php echo esc_attr( $heading_level ); ?>>
+			<h<?php echo esc_attr( (string) $heading_level ); ?> class="references-year"><?php echo esc_html( $ref_year ); ?></h<?php echo esc_attr( (string) $heading_level ); ?>>
 			
 			<?php foreach ( $types as $ref_type => $items ) : ?>
-				<?php if ( is_string( $ref_type) && ( $type === $ref_type || ! $is_specific_type ) && is_array( $items ) && ! empty( $items ) ) : ?>
+
+				<?php # entry point for further investigation on not needed types queried (!) and rendered 
+					if ( ( $type === $ref_type || ! $is_specific_type ) && ! empty( $items ) ) : ?>
 					<?php if ( ! $is_specific_type ) : ?>
 						<h<?php echo esc_attr( (string) $secondary_heading_level ); ?> class="references-type"><?php echo esc_html( $type_labels[ $ref_type ] ); ?></h<?php echo esc_attr( (string) $secondary_heading_level ); ?>>
 					<?php endif; ?>
 					
 					<ul class="references-list">
 						<?php foreach ( $items as $item ) : ?>
-							<li><?php is_string( $item ) && print esc_html( $item ); ?></li>
+							<li><?php echo esc_html( $item ); ?></li>
 						<?php endforeach; ?>
 					</ul>
 				<?php endif; ?>
