@@ -412,22 +412,25 @@ class Plugin {
 		$transient_pattern = $wpdb->esc_like( '_transient_' . $this->cache_prefix ) . '%';
 		$timeout_pattern = $wpdb->esc_like( '_transient_timeout_' . $this->cache_prefix ) . '%';
 
+		// Prepare SQL statement.
+		$table = $wpdb->options;
+		/** @var literal-string $sql */
+		$sql = "DELETE FROM {$table} WHERE option_name LIKE %s";
+
 		// Delete transient values.
 		$delete_query = $wpdb->prepare(
-			"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
+			$sql,
 			$transient_pattern
 		);
-
 		if ( is_string( $delete_query ) ) {
 			$wpdb->query( $delete_query );
 		}
 
 		// Delete transient timeout entries.
 		$timeout_query = $wpdb->prepare(
-			"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
+			$sql,
 			$timeout_pattern
 		);
-
 		if ( is_string( $timeout_query ) ) {
 			$wpdb->query( $timeout_query );
 		}
@@ -625,7 +628,7 @@ class Plugin {
 				'post_date'    => $date . ' 19:00:00',
 			);
 
-			$post_id = wp_insert_post( $event_data );
+			$post_id = wp_insert_post( $event_data, true );
 
 			if ( ! is_wp_error( $post_id ) ) {
 				// Mark as demo data.
@@ -703,16 +706,15 @@ class Plugin {
 				array(
 					'taxonomy'   => $taxonomy,
 					'hide_empty' => false,
+					'fields'     => 'ids', // The return type of get_terms() varies depending on the value passed to $args['fields']. See WP_Term_Query::get_terms() for details.
 					'meta_key'   => '_demo_data',
 					'meta_value' => '1',
 				)
 			);
 
 			if ( ! is_wp_error( $demo_terms ) ) {
-				foreach ( $demo_terms as $term ) {
-					if ( $term instanceof \WP_Term ) {
-						wp_delete_term( $term->term_id, $taxonomy );
-					}
+				foreach ( $demo_terms as $term_id ) {
+					wp_delete_term( $term_id, $taxonomy );
 				}
 			}
 		}

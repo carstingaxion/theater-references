@@ -136,7 +136,8 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 			
 			// Try cache first.
 			$cached = get_transient( $cache_key );
-			if ( false !== $cached ) {
+			if ( false !== $cached && is_array( $cached ) && ! empty( $cached ) ) {
+				/** @var array<string, array<string, array<int, string>>> $cached */
 				return $cached;
 			}
 
@@ -250,6 +251,7 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 			$references = array();
 
 			if ( ! empty( $query->posts ) ) {
+				 /** @var array<int, int> $post_ids */
 				$post_ids = $query->posts;
 				
 				// Batch fetch post dates for efficiency.
@@ -323,13 +325,24 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		/**
 		 * Batch fetch post dates
 		 *
-		 * Uses direct database query for efficiency when fetching many post dates.
+		 * This method efficiently retrieves post dates for multiple posts using a single database query.
+		 *
+		 * This method is called internally by `get_references()` to batch-fetch years
+		 * for all matching events in a single query, avoiding N+1 query problems.
+		 * The returned data structure allows O(1) lookup of any post's year by post ID.
+		 *
+		 * Example return:
+		 * array(
+		 *    123 => (object) { ID: '123', year: '2024' },
+		 *    456 => (object) { ID: '456', year: '2023' },
+		 * )
 		 *
 		 * @since 0.1.0
-		 * @param array<int, int> $post_ids Array of post IDs.
+		 * @param array<int, int> $post_ids Array of post IDs to fetch dates for
 		 * @return array<int, object{ID: string, year: string}> Associative array of post_id => year data.
 		 */
 		private function get_post_dates( array $post_ids ): array {
+			/** @var \wpdb $wpdb */
 			global $wpdb;
 			
 			if ( empty( $post_ids ) ) {
@@ -339,16 +352,21 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 			// Sanitize IDs for safe SQL.
 			$safe_ids     = array_map( 'intval', $post_ids );
 			$placeholders = implode( ',', array_fill( 0, count( $safe_ids ), '%d' ) );
+			$table = $wpdb->posts;
 			
 			// Execute optimized query to get year from post_date.
+			/** @var literal-string $sql */
+			$sql = "SELECT ID, YEAR(post_date) AS year
+					FROM {$table}
+					WHERE ID IN ({$placeholders})
+					ORDER BY post_date DESC";
+
 			$results = $wpdb->get_results(
-				$wpdb->prepare(
-					"SELECT ID, YEAR(post_date) as year FROM {$wpdb->posts} WHERE ID IN ({$placeholders}) ORDER BY post_date DESC",
-					...$safe_ids
-				),
-				OBJECT_K // Use ID as array key.
+				$wpdb->prepare($sql, ...$safe_ids),
+				OBJECT_K
 			);
-			
+
+			/** @var array<int, object{ID: string, year: string}> $results */
 			return $results;
 		}
 
@@ -369,7 +387,7 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 * @since 0.1.0
 		 * @param array<int, int>    $post_ids   Array of post IDs.
 		 * @param array<int, string> $taxonomies Array of taxonomy slugs to fetch.
-		 * @return array<int, array<string, array<int, \WP_Term>>> Nested array of post_id => taxonomy => terms.
+		 * @return array<int, ?array<string, array<\WP_Term>>> Nested array of post_id => taxonomy => terms.
 		 */
 		private function get_post_terms( array $post_ids, array $taxonomies ): array {
 			if ( empty( $post_ids ) || empty( $taxonomies ) ) {
@@ -442,7 +460,16 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 // Initialize the singleton instance.
 $renderer = Renderer::get_instance();
 
-// Extract and sanitize block attributes.
+/**
+ * Extract and sanitize block attributes.
+ *
+ * @var array{
+ *   productionId?: int,
+ *   year?: string,
+ *   referenceType?: string,
+ *   headingLevel?: int
+ * } $attributes
+ */
 $production_id = isset( $attributes['productionId'] ) ? intval( $attributes['productionId'] ) : 0;
 $year          = isset( $attributes['year'] ) ? sanitize_text_field( $attributes['year'] ) : '';
 $type          = isset( $attributes['referenceType'] ) ? sanitize_text_field( $attributes['referenceType'] ) : 'all';
@@ -466,7 +493,7 @@ if ( $type === 'ref_client' ) {
 // Auto-detect production from current taxonomy term if viewing a production archive.
 if ( $production_id === 0 && is_tax( 'gatherpress-productions' ) ) {
 	$term = get_queried_object();
-	if ( $term && isset( $term->term_id ) ) {
+	if ( $term instanceof \WP_Term ) {
 		$production_id = $term->term_id;
 	}
 }
@@ -482,17 +509,19 @@ $is_specific_type = ( $type !== 'all' );
 <div <?php echo get_block_wrapper_attributes(); ?>>
 	<?php if ( ! empty( $references ) ) : ?>
 		<?php foreach ( $references as $ref_year => $types ) : ?>
-			<h<?php echo esc_attr( $heading_level ); ?> class="references-year"><?php echo esc_html( $ref_year ); ?></h<?php echo esc_attr( $heading_level ); ?>>
+			<h<?php echo esc_attr( (string) $heading_level ); ?> class="references-year"><?php echo esc_html( $ref_year ); ?></h<?php echo esc_attr( (string) $heading_level ); ?>>
 			
 			<?php foreach ( $types as $ref_type => $items ) : ?>
-				<?php if ( is_string( $ref_type) && ( $type === $ref_type || ! $is_specific_type ) && is_array( $items ) && ! empty( $items ) ) : ?>
+
+				<?php # entry point for further investigation on not needed types queried (!) and rendered 
+					if ( ( $type === $ref_type || ! $is_specific_type ) && ! empty( $items ) ) : ?>
 					<?php if ( ! $is_specific_type ) : ?>
 						<h<?php echo esc_attr( (string) $secondary_heading_level ); ?> class="references-type"><?php echo esc_html( $type_labels[ $ref_type ] ); ?></h<?php echo esc_attr( (string) $secondary_heading_level ); ?>>
 					<?php endif; ?>
 					
 					<ul class="references-list">
 						<?php foreach ( $items as $item ) : ?>
-							<li><?php is_string( $item ) && print esc_html( $item ); ?></li>
+							<li><?php echo esc_html( $item ); ?></li>
 						<?php endforeach; ?>
 					</ul>
 				<?php endif; ?>

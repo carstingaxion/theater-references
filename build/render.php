@@ -18,18 +18,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-if (
-	! isset( $attributes ) ||
-	! is_array( $attributes ) ||
-	empty( $attributes ) ||
-	! is_int( $attributes['productionId'] ) ||
-	! is_string( $attributes['year'] ) ||
-	! is_string( $attributes['referenceType'] ) ||
-	! is_int( $attributes['headingLevel'] )
-) {
-	return;
-}
-
 if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 	/**
 	 * GatherPress References Renderer
@@ -148,7 +136,8 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 			
 			// Try cache first.
 			$cached = get_transient( $cache_key );
-			if ( false !== $cached && is_array( $cached ) ) {
+			if ( false !== $cached && is_array( $cached ) && ! empty( $cached ) ) {
+				/** @var array<string, array<string, array<int, string>>> $cached */
 				return $cached;
 			}
 
@@ -262,6 +251,7 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 			$references = array();
 
 			if ( ! empty( $query->posts ) ) {
+				 /** @var array<int, int> $post_ids */
 				$post_ids = $query->posts;
 				
 				// Batch fetch post dates for efficiency.
@@ -335,13 +325,24 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		/**
 		 * Batch fetch post dates
 		 *
-		 * Uses direct database query for efficiency when fetching many post dates.
+		 * This method efficiently retrieves post dates for multiple posts using a single database query.
+		 *
+		 * This method is called internally by `get_references()` to batch-fetch years
+		 * for all matching events in a single query, avoiding N+1 query problems.
+		 * The returned data structure allows O(1) lookup of any post's year by post ID.
+		 *
+		 * Example return:
+		 * array(
+		 *    123 => (object) { ID: '123', year: '2024' },
+		 *    456 => (object) { ID: '456', year: '2023' },
+		 * )
 		 *
 		 * @since 0.1.0
-		 * @param array<int, int> $post_ids Array of post IDs.
+		 * @param array<int, int> $post_ids Array of post IDs to fetch dates for
 		 * @return array<int, object{ID: string, year: string}> Associative array of post_id => year data.
 		 */
 		private function get_post_dates( array $post_ids ): array {
+			/** @var \wpdb $wpdb */
 			global $wpdb;
 			
 			if ( empty( $post_ids ) ) {
@@ -351,16 +352,21 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 			// Sanitize IDs for safe SQL.
 			$safe_ids     = array_map( 'intval', $post_ids );
 			$placeholders = implode( ',', array_fill( 0, count( $safe_ids ), '%d' ) );
+			$table = $wpdb->posts;
 			
 			// Execute optimized query to get year from post_date.
+			/** @var literal-string $sql */
+			$sql = "SELECT ID, YEAR(post_date) AS year
+					FROM {$table}
+					WHERE ID IN ({$placeholders})
+					ORDER BY post_date DESC";
+
 			$results = $wpdb->get_results(
-				$wpdb->prepare(
-					"SELECT ID, YEAR(post_date) as year FROM {$wpdb->posts} WHERE ID IN ({$placeholders}) ORDER BY post_date DESC",
-					...$safe_ids
-				),
-				OBJECT_K // Use ID as array key.
+				$wpdb->prepare($sql, ...$safe_ids),
+				OBJECT_K
 			);
-			
+
+			/** @var array<int, object{ID: string, year: string}> $results */
 			return $results;
 		}
 
@@ -381,7 +387,7 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 * @since 0.1.0
 		 * @param array<int, int>    $post_ids   Array of post IDs.
 		 * @param array<int, string> $taxonomies Array of taxonomy slugs to fetch.
-		 * @return array<int, array<string, array<int, \WP_Term>>> Nested array of post_id => taxonomy => terms.
+		 * @return array<int, ?array<string, array<\WP_Term>>> Nested array of post_id => taxonomy => terms.
 		 */
 		private function get_post_terms( array $post_ids, array $taxonomies ): array {
 			if ( empty( $post_ids ) || empty( $taxonomies ) ) {
@@ -454,7 +460,16 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 // Initialize the singleton instance.
 $renderer = Renderer::get_instance();
 
-// Extract and sanitize block attributes.
+/**
+ * Extract and sanitize block attributes.
+ *
+ * @var array{
+ *   productionId?: int,
+ *   year?: string,
+ *   referenceType?: string,
+ *   headingLevel?: int
+ * } $attributes
+ */
 $production_id = isset( $attributes['productionId'] ) ? intval( $attributes['productionId'] ) : 0;
 $year          = isset( $attributes['year'] ) ? sanitize_text_field( $attributes['year'] ) : '';
 $type          = isset( $attributes['referenceType'] ) ? sanitize_text_field( $attributes['referenceType'] ) : 'all';
