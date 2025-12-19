@@ -7,7 +7,7 @@
 
 	<exclude-pattern>*/build/*</exclude-pattern>
 	<exclude-pattern>*/vendor/*</exclude-pattern>
-	
+
 	<!-- Rules: figuren.theater Coding Standards -->
 	<rule ref="figurentheater" />
 
@@ -29,5 +29,10 @@
 
 		</properties>
 	</rule> 
-
+	<rule ref="WordPress">
+		<exclude name="WordPress.Files.FileName.InvalidClassFileName" />
+		<exclude name="Universal.PHP.RequireExitDieParentheses.Missing" />
+		<exclude name="Universal.Classes.RequireFinalClass.NonFinalClassFound" />
+		<exclude name="Universal.Files.SeparateFunctionsFromOO.Mixed" />
+	</rule>
 </ruleset>

@@ -58,7 +58,6 @@ export default function Edit( { attributes, setAttributes } ) {
 		return terms || [];
 	}, [] );
 
-	
 	/**
 	 * Update block metadata with dynamic label
 	 *
@@ -66,7 +65,6 @@ export default function Edit( { attributes, setAttributes } ) {
 	 * It updates the block's metadata attribute so the label appears in the list view.
 	 */
 	useEffect( () => {
-
 		/**
 		 * Generate dynamic block label based on attributes
 		 *
@@ -176,7 +174,7 @@ export default function Edit( { attributes, setAttributes } ) {
 		// Determine which year(s) to show in preview
 		const currentYear = new Date().getFullYear();
 		const displayYear = year ? parseInt( year ) : currentYear;
-		
+
 		// If year is specified, show only that year
 		if ( year ) {
 			return {
@@ -197,7 +195,7 @@ export default function Edit( { attributes, setAttributes } ) {
 				},
 			};
 		}
-		
+
 		// If no year specified, show two years of data
 		return {
 			// Cast as string to prevent a default ordering by integer keys.

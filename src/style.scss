@@ -1,286 +1,149 @@
 /**
  * GatherPress References Block Styles
- *
- * Comprehensive theme.json support with semantic color tokens,
- * typography scales, and spacing controls for granular styling.
- *
- * Styling hierarchy:
- * 1. Block container (.wp-block-gatherpress-references)
- * 2. Year headings (.references-year) - h2 level
- * 3. Type headings (.references-type) - h3 level
- * 4. Reference lists (.references-list) - ul element
+ * 
+ * Minimal defaults with CSS custom properties for easy theming.
+ * Designed for maximum flexibility with minimal opinionated styling.
+ * 
+ * CSS Custom Properties (Read-only, set by block):
+ * --wp--custom--gatherpress-references--year-heading-level
+ * --wp--custom--gatherpress-references--type-heading-level
+ * --wp--custom--gatherpress-references--production-id
+ * --wp--custom--gatherpress-references--year
+ * --wp--custom--gatherpress-references--type
+ * 
+ * CSS Custom Properties (Customizable by theme):
+ * --wp--custom--gatherpress-references--year-font-size
+ * --wp--custom--gatherpress-references--year-margin-top
+ * --wp--custom--gatherpress-references--year-border-opacity
+ * 
+ * --wp--custom--gatherpress-references--type-font-size
+ * --wp--custom--gatherpress-references--type-margin-top
+ * --wp--custom--gatherpress-references--type-border-opacity
+ * 
+ * --wp--custom--gatherpress-references--list-padding-left
+ * --wp--custom--gatherpress-references--list-bullet-opacity
+ * 
+ * --wp--custom--gatherpress-references--empty-opacity
  */
 
-/**
- * BLOCK CONTAINER
- * Main wrapper with comprehensive theme.json integration
- */
 .wp-block-gatherpress-references {
+	/* Block Container */
+	margin-block: var(--wp--preset--spacing--50, 1.5em);
+	margin-inline: 0;
 
-	/* Spacing - block container */
-	margin-block-start: var(--wp--preset--spacing--50, 2em);
-	margin-block-end: var(--wp--preset--spacing--50, 2em);
-	margin-inline-start: var(--wp--preset--spacing--20, 0.5em);
-	margin-inline-end: var(--wp--preset--spacing--20, 0.5em);
-	padding-block: var(--wp--preset--spacing--40, 1.5em);
-	padding-inline: var(--wp--preset--spacing--40, 1.5em);
-
-	/* Colors - block container */
-	background-color: var(--wp--preset--color--base, transparent);
-	color: var(--wp--preset--color--contrast, inherit);
-
-	/* Typography - block container */
-	font-family: var(--wp--preset--font-family--body, inherit);
-	font-size: var(--wp--preset--font-size--medium, 1rem);
-	font-weight: var(--wp--custom--typography--font-weight--normal, 400);
-	line-height: var(--wp--custom--typography--line-height--body, 1.6);
-	letter-spacing: var(--wp--custom--typography--letter-spacing--normal, 0);
-
-	/* Border - block container */
-	border-width: var(--wp--custom--border--width--thin, 1px);
-	border-style: var(--wp--custom--border--style--default, solid);
-	border-color: var(--wp--preset--color--contrast-2, transparent);
-	border-radius: var(--wp--custom--border-radius--default, 0);
+	/* Inherit theme defaults */
+	background-color: transparent;
+	color: inherit;
+	font-family: inherit;
+	font-size: inherit;
+	line-height: inherit;
 
 	/**
-	 * YEAR HEADINGS (H2)
-	 * Primary level headings with distinct styling
+	 * Year Headings
 	 */
 	.references-year {
-
-		/* Spacing - year headings */
-		margin-block-start: var(--wp--preset--spacing--60, 2.5em);
+		margin-block-start: var(
+			--wp--custom--gatherpress-references--year-margin-top,
+			var(--wp--preset--spacing--50, 1.5em)
+		);
 		margin-block-end: var(--wp--preset--spacing--30, 0.75em);
-		margin-inline-start: 0;
-		margin-inline-end: 0;
-		padding-block-start: 0;
-		padding-block-end: var(--wp--preset--spacing--20, 0.5em);
-		padding-inline-start: 0;
-		padding-inline-end: 0;
+		margin-inline: 0;
+		padding: 0;
 
-		/* Colors - year headings */
-		color: var(--wp--preset--color--contrast-2, var(--wp--preset--color--contrast, currentColor));
-		border-bottom-color: var(--wp--preset--color--primary, currentColor);
+		font-size: var(
+			--wp--custom--gatherpress-references--year-font-size,
+			var(--wp--preset--font-size--large, 1.5em)
+		);
+		font-weight: 700;
 
-		/* Typography - year headings */
-		font-family: var(--wp--preset--font-family--heading, inherit);
-		font-size: var(--wp--preset--font-size--x-large, 1.75rem);
-		font-weight: var(--wp--custom--typography--font-weight--bold, 700);
-		font-style: var(--wp--custom--typography--font-style--normal, normal);
-		line-height: var(--wp--custom--typography--line-height--heading, 1.2);
-		letter-spacing: var(--wp--custom--typography--letter-spacing--heading, -0.02em);
-		text-transform: var(--wp--custom--typography--text-transform--none, none);
+		border-block-end: 1px solid currentColor;
+		opacity: var(
+			--wp--custom--gatherpress-references--year-border-opacity,
+			0.7
+		);
 
-		/* Border - year headings */
-		border-bottom-width: var(--wp--custom--border--width--thick, 2px);
-		border-bottom-style: solid;
-
-		/* First year heading has no top margin */
 		&:first-child {
 			margin-block-start: 0;
 		}
 	}
 
 	/**
-	 * TYPE HEADINGS (H3)
-	 * Secondary level headings for reference categories
+	 * Type Headings
 	 */
 	.references-type {
-
-		/* Spacing - type headings */
-		margin-block-start: var(--wp--preset--spacing--40, 1.5em);
+		margin-block-start: var(
+			--wp--custom--gatherpress-references--type-margin-top,
+			var(--wp--preset--spacing--40, 1em)
+		);
 		margin-block-end: var(--wp--preset--spacing--20, 0.5em);
-		margin-inline-start: 0;
-		margin-inline-end: 0;
-		padding-block-start: 0;
-		padding-block-end: 0;
-		padding-inline-start: var(--wp--preset--spacing--30, 0.75em);
-		padding-inline-end: 0;
+		margin-inline: 0;
+		padding-inline-start: var(--wp--preset--spacing--20, 0.5em);
 
-		/* Colors - type headings */
-		color: var(--wp--preset--color--contrast-3, var(--wp--preset--color--contrast, currentColor));
-		border-inline-start-color: var(--wp--preset--color--secondary, var(--wp--preset--color--primary, currentColor));
+		font-size: var(
+			--wp--custom--gatherpress-references--type-font-size,
+			var(--wp--preset--font-size--medium, 1.125em)
+		);
+		font-weight: 600;
 
-		/* Typography - type headings */
-		font-family: var(--wp--preset--font-family--heading, inherit);
-		font-size: var(--wp--preset--font-size--large, 1.25rem);
-		font-weight: var(--wp--custom--typography--font-weight--semibold, 600);
-		font-style: var(--wp--custom--typography--font-style--normal, normal);
-		line-height: var(--wp--custom--typography--line-height--heading, 1.3);
-		letter-spacing: var(--wp--custom--typography--letter-spacing--normal, 0);
-		text-transform: var(--wp--custom--typography--text-transform--none, none);
-
-		/* Border - type headings */
-		border-inline-start-width: var(--wp--custom--border--width--medium, 3px);
-		border-inline-start-style: solid;
+		border-inline-start: 2px solid currentColor;
+		opacity: var(
+			--wp--custom--gatherpress-references--type-border-opacity,
+			0.8
+		);
 	}
 
 	/**
-	 * REFERENCE LISTS (UL)
-	 * Unordered lists with custom styling and bullets
+	 * Reference Lists
 	 */
 	.references-list {
-
-		/* Reset default list styling */
 		list-style: none;
+		margin-block: var(--wp--preset--spacing--20, 0.5em) var(--wp--preset--spacing--30, 1em);
+		margin-inline: 0;
+		padding-inline-start: var(
+			--wp--custom--gatherpress-references--list-padding-left,
+			var(--wp--preset--spacing--40, 1.5em)
+		);
 
-		/* Spacing - list container */
-		margin-block-start: var(--wp--preset--spacing--20, 0.5em);
-		margin-block-end: var(--wp--preset--spacing--40, 1.5em);
-		margin-inline-start: 0;
-		margin-inline-end: 0;
-		padding-block-start: 0;
-		padding-block-end: 0;
-		padding-inline-start: var(--wp--preset--spacing--50, 2em);
-		padding-inline-end: 0;
-
-		/* Colors - list container */
-		color: var(--wp--preset--color--contrast, currentColor);
-
-		/**
-		 * LIST ITEMS (LI)
-		 * Individual reference entries
-		 */
 		li {
 			position: relative;
+			padding-block: var(--wp--preset--spacing--10, 0.25em);
 
-			/* Spacing - list items */
-			margin-block-start: 0;
-			margin-block-end: 0;
-			margin-inline-start: 0;
-			margin-inline-end: 0;
-			padding-block-start: var(--wp--preset--spacing--10, 0.25em);
-			padding-block-end: var(--wp--preset--spacing--10, 0.25em);
-			padding-inline-start: 0;
-			padding-inline-end: 0;
-
-			/* Colors - list items */
-			color: inherit;
-
-			/* Typography - list items */
-			font-family: inherit;
-			font-size: var(--wp--preset--font-size--medium, 1rem);
-			font-weight: var(--wp--custom--typography--font-weight--normal, 400);
-			font-style: var(--wp--custom--typography--font-style--normal, normal);
-			line-height: var(--wp--custom--typography--line-height--body, 1.6);
-			letter-spacing: var(--wp--custom--typography--letter-spacing--normal, 0);
-
-			/**
-			 * CUSTOM BULLET
-			 * Pseudo-element for customizable list markers
-			 */
 			&::before {
-				content: var(--wp--custom--list--bullet-content, "→");
+				content: "•";
 				position: absolute;
-				inset-inline-start: calc(var(--wp--preset--spacing--50, 2em) * -1);
-
-				/* Colors - bullet */
-				color: var(--wp--preset--color--tertiary, var(--wp--preset--color--contrast-3, #666));
-
-				/* Typography - bullet */
-				font-weight: var(--wp--custom--typography--font-weight--normal, 400);
-				font-size: var(--wp--custom--list--bullet-size, 1em);
-				line-height: inherit;
-			}
-
-			/* Hover state for interactive feel */
-			&:hover {
-				color: var(--wp--preset--color--primary, currentColor);
-				transition: color 0.2s ease;
+				inset-inline-start: calc(
+					var(
+						--wp--custom--gatherpress-references--list-padding-left,
+						var(--wp--preset--spacing--40, 1.5em)
+					) * -1
+				);
+				color: currentColor;
+				opacity: var(
+					--wp--custom--gatherpress-references--list-bullet-opacity,
+					0.3
+				);
 			}
 		}
 	}
 
 	/**
-	 * NO REFERENCES MESSAGE
-	 * Empty state styling
-	 */
-	.no-references {
-
-		/* Spacing */
-		padding-block: var(--wp--preset--spacing--40, 1.5em);
-		padding-inline: var(--wp--preset--spacing--40, 1.5em);
-		margin-block-start: var(--wp--preset--spacing--30, 1em);
-		margin-block-end: var(--wp--preset--spacing--30, 1em);
-		margin-inline-start: 0;
-		margin-inline-end: 0;
-
-		/* Colors */
-		background-color: var(--wp--preset--color--contrast-2, #f0f0f0);
-		color: var(--wp--preset--color--contrast-3, #666);
-		border-inline-start-color: var(--wp--preset--color--tertiary, #999);
-
-		/* Typography */
-		font-size: var(--wp--preset--font-size--small, 0.875rem);
-		font-style: italic;
-		line-height: var(--wp--custom--typography--line-height--body, 1.6);
-
-		/* Border */
-		border-inline-start-width: var(--wp--custom--border--width--thick, 4px);
-		border-inline-start-style: solid;
-		border-radius: var(--wp--custom--border-radius--small, 4px);
-	}
-
-	/**
-	 * RESPONSIVE ADJUSTMENTS
-	 * Mobile and tablet optimizations
+	 * Responsive
 	 */
 	@media (max-width: 781px) {
-
-		/* Reduce block container spacing */
-		margin-block: var(--wp--preset--spacing--40, 1.5em);
-		padding-block: var(--wp--preset--spacing--30, 1em);
-		padding-inline: var(--wp--preset--spacing--30, 1em);
-
-		/* Adjust year heading size and spacing */
 		.references-year {
-			font-size: var(--wp--preset--font-size--large, 1.5rem);
-			margin-block-start: var(--wp--preset--spacing--50, 2em);
+			font-size: var(--wp--preset--font-size--medium, 1.25em);
 		}
 
-		/* Adjust type heading size and spacing */
-		.references-type {
-			font-size: var(--wp--preset--font-size--medium, 1.125rem);
-			padding-inline-start: var(--wp--preset--spacing--20, 0.5em);
-		}
-
-		/* Adjust list spacing and item size */
 		.references-list {
-			padding-inline-start: var(--wp--preset--spacing--40, 1.5em);
-
-			li {
-				font-size: var(--wp--preset--font-size--small, 0.9375rem);
-			}
+			padding-inline-start: var(--wp--preset--spacing--30, 1em);
 		}
 	}
 
 	/**
-	 * HIGH CONTRAST MODE
-	 * Enhanced borders for accessibility
-	 */
-	@media (prefers-contrast: high) {
-
-		.references-year {
-			border-bottom-width: 3px;
-		}
-
-		.references-type {
-			border-inline-start-width: 4px;
-		}
-
-		.no-references {
-			border-inline-start-width: 5px;
-		}
-	}
-
-	/**
-	 * PRINT STYLES
-	 * Optimized for printed output
+	 * Print
 	 */
 	@media print {
-		padding: 0;
 		margin-block: 1em;
-		margin-inline: 0;
 
 		.references-year,
 		.references-type {
@@ -289,17 +152,6 @@
 
 		.references-list li {
 			page-break-inside: avoid;
-		}
-	}
-
-	/**
-	 * REDUCED MOTION
-	 * Respect user preferences for animations
-	 */
-	@media (prefers-reduced-motion: reduce) {
-
-		.references-list li:hover {
-			transition: none;
 		}
 	}
 }

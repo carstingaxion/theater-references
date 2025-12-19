@@ -410,30 +410,17 @@ class Plugin {
 
 		// Prepare the LIKE patterns for deletion.
 		$transient_pattern = $wpdb->esc_like( '_transient_' . $this->cache_prefix ) . '%';
-		$timeout_pattern = $wpdb->esc_like( '_transient_timeout_' . $this->cache_prefix ) . '%';
+		$timeout_pattern   = $wpdb->esc_like( '_transient_timeout_' . $this->cache_prefix ) . '%';
 
 		// Prepare SQL statement.
 		$table = $wpdb->options;
-		/** @var literal-string $sql */
-		$sql = "DELETE FROM {$table} WHERE option_name LIKE %s";
-
-		// Delete transient values.
-		$delete_query = $wpdb->prepare(
-			$sql,
-			$transient_pattern
+		$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->prepare(
+				"DELETE FROM {$table} WHERE option_name LIKE %s OR option_name LIKE %s",
+				$transient_pattern,
+				$timeout_pattern
+			)
 		);
-		if ( is_string( $delete_query ) ) {
-			$wpdb->query( $delete_query );
-		}
-
-		// Delete transient timeout entries.
-		$timeout_query = $wpdb->prepare(
-			$sql,
-			$timeout_pattern
-		);
-		if ( is_string( $timeout_query ) ) {
-			$wpdb->query( $timeout_query );
-		}
 	}
 
 	/**
@@ -689,8 +676,8 @@ class Plugin {
 			array(
 				'post_type'      => 'gatherpress_event',
 				'posts_per_page' => -1,
-				'meta_key'       => '_demo_data',
-				'meta_value'     => '1',
+				'meta_key'       => '_demo_data', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+				'meta_value'     => '1', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
 			)
 		);
 
@@ -707,8 +694,8 @@ class Plugin {
 					'taxonomy'   => $taxonomy,
 					'hide_empty' => false,
 					'fields'     => 'ids', // The return type of get_terms() varies depending on the value passed to $args['fields']. See WP_Term_Query::get_terms() for details.
-					'meta_key'   => '_demo_data',
-					'meta_value' => '1',
+					'meta_key'   => '_demo_data', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+					'meta_value' => '1', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
 				)
 			);
 

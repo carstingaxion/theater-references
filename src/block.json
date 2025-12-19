@@ -79,7 +79,7 @@
 			}
 		}
 	},
-	"style": "wp-block-gatherpress-references",
+	"style": "file:./style-index.css",
 	"textdomain": "gatherpress-references",
 	"editorScript": "file:./index.js",
 	"editorStyle": "file:./index.css",

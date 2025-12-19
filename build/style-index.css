@@ -1,1 +1,127 @@
-.wp-block-gatherpress-references{background-color:var(--wp--preset--color--base,transparent);border-color:var(--wp--preset--color--contrast-2,transparent);border-radius:var(--wp--custom--border-radius--default,0);border-style:var(--wp--custom--border--style--default,solid);border-width:var(--wp--custom--border--width--thin,1px);color:var(--wp--preset--color--contrast,inherit);font-family:var(--wp--preset--font-family--body,inherit);font-size:var(--wp--preset--font-size--medium,1rem);font-weight:var(--wp--custom--typography--font-weight--normal,400);letter-spacing:var(--wp--custom--typography--letter-spacing--normal,0);line-height:var(--wp--custom--typography--line-height--body,1.6);margin-block-end:var(--wp--preset--spacing--50,2em);margin-block-start:var(--wp--preset--spacing--50,2em);margin-inline-end:var(--wp--preset--spacing--20,.5em);margin-inline-start:var(--wp--preset--spacing--20,.5em);padding-block:var(--wp--preset--spacing--40,1.5em);padding-inline:var(--wp--preset--spacing--40,1.5em)}.wp-block-gatherpress-references .references-year{border-bottom:var(--wp--custom--border--width--thick,2px) solid var(--wp--preset--color--primary,currentColor);color:var(--wp--preset--color--contrast-2,var(--wp--preset--color--contrast,currentColor));font-family:var(--wp--preset--font-family--heading,inherit);font-size:var(--wp--preset--font-size--x-large,1.75rem);font-style:var(--wp--custom--typography--font-style--normal,normal);font-weight:var(--wp--custom--typography--font-weight--bold,700);letter-spacing:var(--wp--custom--typography--letter-spacing--heading,-.02em);line-height:var(--wp--custom--typography--line-height--heading,1.2);margin-block-end:var(--wp--preset--spacing--30,.75em);margin-block-start:var(--wp--preset--spacing--60,2.5em);margin-inline-end:0;margin-inline-start:0;padding-block-end:var(--wp--preset--spacing--20,.5em);padding-block-start:0;padding-inline-end:0;padding-inline-start:0;text-transform:var(--wp--custom--typography--text-transform--none,none)}.wp-block-gatherpress-references .references-year:first-child{margin-block-start:0}.wp-block-gatherpress-references .references-type{border-inline-start-color:var(--wp--preset--color--secondary,var(--wp--preset--color--primary,currentColor));border-inline-start-style:solid;border-inline-start-width:var(--wp--custom--border--width--medium,3px);color:var(--wp--preset--color--contrast-3,var(--wp--preset--color--contrast,currentColor));font-family:var(--wp--preset--font-family--heading,inherit);font-size:var(--wp--preset--font-size--large,1.25rem);font-style:var(--wp--custom--typography--font-style--normal,normal);font-weight:var(--wp--custom--typography--font-weight--semibold,600);letter-spacing:var(--wp--custom--typography--letter-spacing--normal,0);line-height:var(--wp--custom--typography--line-height--heading,1.3);margin-block-end:var(--wp--preset--spacing--20,.5em);margin-block-start:var(--wp--preset--spacing--40,1.5em);padding-inline-start:var(--wp--preset--spacing--30,.75em);text-transform:var(--wp--custom--typography--text-transform--none,none)}.wp-block-gatherpress-references .references-list,.wp-block-gatherpress-references .references-type{margin-inline-end:0;margin-inline-start:0;padding-block-end:0;padding-block-start:0;padding-inline-end:0}.wp-block-gatherpress-references .references-list{color:var(--wp--preset--color--contrast,currentColor);list-style:none;margin-block-end:var(--wp--preset--spacing--40,1.5em);margin-block-start:var(--wp--preset--spacing--20,.5em);padding-inline-start:var(--wp--preset--spacing--50,2em)}.wp-block-gatherpress-references .references-list li{color:inherit;font-family:inherit;font-size:var(--wp--preset--font-size--medium,1rem);font-style:var(--wp--custom--typography--font-style--normal,normal);font-weight:var(--wp--custom--typography--font-weight--normal,400);letter-spacing:var(--wp--custom--typography--letter-spacing--normal,0);line-height:var(--wp--custom--typography--line-height--body,1.6);margin-block-end:0;margin-block-start:0;margin-inline-end:0;margin-inline-start:0;padding-block-end:var(--wp--preset--spacing--10,.25em);padding-block-start:var(--wp--preset--spacing--10,.25em);padding-inline-end:0;padding-inline-start:0;position:relative}.wp-block-gatherpress-references .references-list li:before{color:var(--wp--preset--color--tertiary,var(--wp--preset--color--contrast-3,#666));content:var(--wp--custom--list--bullet-content,"→");font-size:var(--wp--custom--list--bullet-size,1em);font-weight:var(--wp--custom--typography--font-weight--normal,400);inset-inline-start:calc(var(--wp--preset--spacing--50, 2em)*-1);line-height:inherit;position:absolute}.wp-block-gatherpress-references .references-list li:hover{color:var(--wp--preset--color--primary,currentColor);transition:color .2s ease}.wp-block-gatherpress-references .no-references{background-color:var(--wp--preset--color--contrast-2,#f0f0f0);border-inline-start-color:var(--wp--preset--color--tertiary,#999);border-inline-start-style:solid;border-inline-start-width:var(--wp--custom--border--width--thick,4px);border-radius:var(--wp--custom--border-radius--small,4px);color:var(--wp--preset--color--contrast-3,#666);font-size:var(--wp--preset--font-size--small,.875rem);font-style:italic;line-height:var(--wp--custom--typography--line-height--body,1.6);margin-block-end:var(--wp--preset--spacing--30,1em);margin-block-start:var(--wp--preset--spacing--30,1em);margin-inline-end:0;margin-inline-start:0;padding-block:var(--wp--preset--spacing--40,1.5em);padding-inline:var(--wp--preset--spacing--40,1.5em)}@media(max-width:781px){.wp-block-gatherpress-references{margin-block:var(--wp--preset--spacing--40,1.5em);padding-block:var(--wp--preset--spacing--30,1em);padding-inline:var(--wp--preset--spacing--30,1em)}.wp-block-gatherpress-references .references-year{font-size:var(--wp--preset--font-size--large,1.5rem);margin-block-start:var(--wp--preset--spacing--50,2em)}.wp-block-gatherpress-references .references-type{font-size:var(--wp--preset--font-size--medium,1.125rem);padding-inline-start:var(--wp--preset--spacing--20,.5em)}.wp-block-gatherpress-references .references-list{padding-inline-start:var(--wp--preset--spacing--40,1.5em)}.wp-block-gatherpress-references .references-list li{font-size:var(--wp--preset--font-size--small,.9375rem)}}@media(prefers-contrast:high){.wp-block-gatherpress-references .references-year{border-bottom-width:3px}.wp-block-gatherpress-references .references-type{border-inline-start-width:4px}.wp-block-gatherpress-references .no-references{border-inline-start-width:5px}}@media print{.wp-block-gatherpress-references{margin-block:1em;margin-inline:0;padding:0}.wp-block-gatherpress-references .references-type,.wp-block-gatherpress-references .references-year{page-break-after:avoid}.wp-block-gatherpress-references .references-list li{page-break-inside:avoid}}@media(prefers-reduced-motion:reduce){.wp-block-gatherpress-references .references-list li:hover{transition:none}}
+/*!***************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[4].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[4].use[2]!./node_modules/sass-loader/dist/cjs.js??ruleSet[1].rules[4].use[3]!./src/style.scss ***!
+  \***************************************************************************************************************************************************************************************************************************************/
+@charset "UTF-8";
+/**
+ * GatherPress References Block Styles
+ * 
+ * Minimal defaults with CSS custom properties for easy theming.
+ * Designed for maximum flexibility with minimal opinionated styling.
+ * 
+ * CSS Custom Properties (Read-only, set by block):
+ * --wp--custom--gatherpress-references--year-heading-level
+ * --wp--custom--gatherpress-references--type-heading-level
+ * --wp--custom--gatherpress-references--production-id
+ * --wp--custom--gatherpress-references--year
+ * --wp--custom--gatherpress-references--type
+ * 
+ * CSS Custom Properties (Customizable by theme):
+ * --wp--custom--gatherpress-references--year-font-size
+ * --wp--custom--gatherpress-references--year-margin-top
+ * --wp--custom--gatherpress-references--year-border-opacity
+ * 
+ * --wp--custom--gatherpress-references--type-font-size
+ * --wp--custom--gatherpress-references--type-margin-top
+ * --wp--custom--gatherpress-references--type-border-opacity
+ * 
+ * --wp--custom--gatherpress-references--list-padding-left
+ * --wp--custom--gatherpress-references--list-bullet-opacity
+ * 
+ * --wp--custom--gatherpress-references--empty-opacity
+ */
+.wp-block-gatherpress-references {
+  /* Block Container */
+  margin-block: var(--wp--preset--spacing--50, 1.5em);
+  margin-inline: 0;
+  /* Inherit theme defaults */
+  background-color: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  /**
+   * Year Headings
+   */
+}
+.wp-block-gatherpress-references .references-year {
+  margin-block-start: var(--wp--custom--gatherpress-references--year-margin-top, var(--wp--preset--spacing--50, 1.5em));
+  margin-block-end: var(--wp--preset--spacing--30, 0.75em);
+  margin-inline: 0;
+  padding: 0;
+  font-size: var(--wp--custom--gatherpress-references--year-font-size, var(--wp--preset--font-size--large, 1.5em));
+  font-weight: 700;
+  border-block-end: 1px solid currentColor;
+  opacity: var(--wp--custom--gatherpress-references--year-border-opacity, 0.7);
+}
+.wp-block-gatherpress-references .references-year:first-child {
+  margin-block-start: 0;
+}
+.wp-block-gatherpress-references {
+  /**
+   * Type Headings
+   */
+}
+.wp-block-gatherpress-references .references-type {
+  margin-block-start: var(--wp--custom--gatherpress-references--type-margin-top, var(--wp--preset--spacing--40, 1em));
+  margin-block-end: var(--wp--preset--spacing--20, 0.5em);
+  margin-inline: 0;
+  padding-inline-start: var(--wp--preset--spacing--20, 0.5em);
+  font-size: var(--wp--custom--gatherpress-references--type-font-size, var(--wp--preset--font-size--medium, 1.125em));
+  font-weight: 600;
+  border-inline-start: 2px solid currentColor;
+  opacity: var(--wp--custom--gatherpress-references--type-border-opacity, 0.8);
+}
+.wp-block-gatherpress-references {
+  /**
+   * Reference Lists
+   */
+}
+.wp-block-gatherpress-references .references-list {
+  list-style: none;
+  margin-block: var(--wp--preset--spacing--20, 0.5em) var(--wp--preset--spacing--30, 1em);
+  margin-inline: 0;
+  padding-inline-start: var(--wp--custom--gatherpress-references--list-padding-left, var(--wp--preset--spacing--40, 1.5em));
+}
+.wp-block-gatherpress-references .references-list li {
+  position: relative;
+  padding-block: var(--wp--preset--spacing--10, 0.25em);
+}
+.wp-block-gatherpress-references .references-list li::before {
+  content: "•";
+  position: absolute;
+  inset-inline-start: calc(var(--wp--custom--gatherpress-references--list-padding-left, var(--wp--preset--spacing--40, 1.5em)) * -1);
+  color: currentColor;
+  opacity: var(--wp--custom--gatherpress-references--list-bullet-opacity, 0.3);
+}
+.wp-block-gatherpress-references {
+  /**
+   * Responsive
+   */
+}
+@media (max-width: 781px) {
+  .wp-block-gatherpress-references .references-year {
+    font-size: var(--wp--preset--font-size--medium, 1.25em);
+  }
+  .wp-block-gatherpress-references .references-list {
+    padding-inline-start: var(--wp--preset--spacing--30, 1em);
+  }
+}
+.wp-block-gatherpress-references {
+  /**
+   * Print
+   */
+}
+@media print {
+  .wp-block-gatherpress-references {
+    margin-block: 1em;
+  }
+  .wp-block-gatherpress-references .references-year,
+  .wp-block-gatherpress-references .references-type {
+    page-break-after: avoid;
+  }
+  .wp-block-gatherpress-references .references-list li {
+    page-break-inside: avoid;
+  }
+}
+
+/*# sourceMappingURL=style-index.css.map*/

@@ -11,6 +11,7 @@
  */
 
 namespace GatherPress\References;
+
 use WP_Query;
 
 // Prevent direct access.
@@ -131,52 +132,105 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 * @return array<string, array<string, array<int, string>>> Nested array of references organized by year and type.
 		 */
 		public function get_references( int $production_id = 0, string $year = '', string $type = 'all' ): array {
-			// Generate unique cache key based on parameters.
-			$cache_key = $this->cache_prefix . md5( serialize( array( $production_id, $year, $type ) ) );
+			// Try to get cached data first.
+			$cached = $this->get_cached_references( $production_id, $year, $type );
+			if ( false !== $cached ) {
+				return $cached;
+			}
+
+			// Build and execute query.
+			$args  = $this->build_query_args( $production_id, $year, $type );
+			$query = new \WP_Query( $args );
 			
-			// Try cache first.
-			$cached = get_transient( $cache_key );
+			// Organize results.
+			$references = $this->organize_query_results( $query, $type );
+
+			// Cache and return only if we have actual data.
+			if ( ! empty( $references ) ) {
+				$this->cache_references( $references, $production_id, $year, $type );
+			}
+			
+			return $references;
+		}
+
+		/**
+		 * Get cached references if available
+		 *
+		 * @since 0.1.0
+		 * @param int    $production_id Production term ID.
+		 * @param string $year          Year filter.
+		 * @param string $type          Reference type filter.
+		 * @return array<string, array<string, array<int, string>>>|false Cached data or false if not found.
+		 */
+		private function get_cached_references( int $production_id, string $year, string $type ) {
+			$cache_key = $this->cache_prefix . md5( maybe_serialize( array( $production_id, $year, $type ) ) );
+			$cached    = get_transient( $cache_key );
+			
 			if ( false !== $cached && is_array( $cached ) && ! empty( $cached ) ) {
 				/** @var array<string, array<string, array<int, string>>> $cached */
 				return $cached;
 			}
+			
+			return false;
+		}
 
-			// Build WP_Query arguments for GatherPress event posts.
-			$args = array(
-				'post_type'              => 'gatherpress_event',
-				'posts_per_page'         => -1,
-				'post_status'            => 'publish',
-				'orderby'                => 'date',
-				'order'                  => 'DESC', // Newest first.
-				'fields'                 => 'ids', // Only get IDs for performance.
-				'no_found_rows'          => true, // Skip pagination count.
-				'update_post_meta_cache' => false, // Don't cache meta (we don't use it).
-				'update_post_term_cache' => true, // Do cache terms (we need them).
-			);
+		/**
+		 * Cache references data
+		 *
+		 * @since 0.1.0
+		 * @param array<string, array<string, array<int, string>>> $references    References data to cache.
+		 * @param int                                              $production_id Production term ID.
+		 * @param string                                           $year          Year filter.
+		 * @param string                                           $type          Reference type filter.
+		 * @return void
+		 */
+		private function cache_references( array $references, int $production_id, string $year, string $type ): void {
+			$cache_key = $this->cache_prefix . md5( maybe_serialize( array( $production_id, $year, $type ) ) );
+			set_transient( $cache_key, $references, $this->cache_expiration );
+		}
+
+		/**
+		 * Build WP_Query arguments
+		 *
+		 * Constructs the base query arguments and applies all filters.
+		 *
+		 * @since 0.1.0
+		 * @param int    $production_id Production term ID.
+		 * @param string $year          Year filter.
+		 * @param string $type          Reference type filter.
+		 * @return array<string, mixed> WP_Query arguments.
+		 */
+		private function build_query_args( int $production_id, string $year, string $type ): array {
+			// Start with base arguments.
+			$args = $this->get_base_query_args();
+
+			// Apply taxonomy filters.
+			$tax_query = $this->build_tax_query( $production_id, $type );
+			if ( ! empty( $tax_query ) ) {
+				$args['tax_query'] = $tax_query;
+			}
+
+			// Apply year filter.
+			if ( ! empty( $year ) ) {
+				$args['date_query'] = array(
+					array( 'year' => intval( $year ) ),
+				);
+			}
 
 			/**
-			 * Filter the base query arguments before filters are applied.
+			 * Filter the query arguments before execution.
 			 *
 			 * Allows modification of the WP_Query arguments before production,
 			 * year, and type filters are added. Useful for adding custom
 			 * meta queries or other query modifications.
 			 *
-			 * @since 0.1.0
-			 *
-			 * @param array<string, mixed> $args          WP_Query arguments array.
-			 * @param int                  $production_id Production term ID filter.
-			 * @param string               $year          Year filter.
-			 * @param string               $type          Reference type filter.
-			 *
-			 * @example
-			 * // Limit query to 50 posts
+			 * @example Limit query to 50 posts
 			 * add_filter( 'gatherpress_references_query_args', function( $args ) {
 			 *     $args['posts_per_page'] = 50;
 			 *     return $args;
 			 * } );
 			 *
-			 * @example
-			 * // Add custom meta query
+			 * @example Add custom meta query
 			 * add_filter( 'gatherpress_references_query_args', function( $args ) {
 			 *     $args['meta_query'] = array(
 			 *         array(
@@ -187,16 +241,53 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 			 *     );
 			 *     return $args;
 			 * } );
+			 *
+			 * @since 0.1.0
+			 *
+			 * @param array<string, mixed> $args          WP_Query arguments array.
+			 * @param int                  $production_id Production term ID filter.
+			 * @param string               $year          Year filter.
+			 * @param string               $type          Reference type filter.
 			 */
-			$args = apply_filters( 'gatherpress_references_query_args', $args, $production_id, $year, $type );
+			return apply_filters( 'gatherpress_references_query_args', $args, $production_id, $year, $type );
+		}
 
-			// Get taxonomies to query based on type filter.
-			$taxonomies = $this->get_taxonomies_by_type( $type );
-			
-			// Build tax_query - START FRESH.
+		/**
+		 * Get base query arguments
+		 *
+		 * Returns the default WP_Query arguments for GatherPress events.
+		 *
+		 * @since 0.1.0
+		 * @return array<string, mixed> Base query arguments.
+		 */
+		private function get_base_query_args(): array {
+			return array(
+				'post_type'              => 'gatherpress_event',
+				'posts_per_page'         => -1,
+				'post_status'            => 'publish',
+				'orderby'                => 'date',
+				'order'                  => 'DESC', // Newest first.
+				'fields'                 => 'ids',  // Only get IDs for performance.
+				'no_found_rows'          => true,   // Skip pagination count.
+				'update_post_meta_cache' => false,  // Don't cache meta (we don't use it).
+				'update_post_term_cache' => true,   // Do cache terms (we need them).
+			);
+		}
+
+		/**
+		 * Build taxonomy query
+		 *
+		 * Constructs the tax_query array based on production and type filters.
+		 *
+		 * @since 0.1.0
+		 * @param int    $production_id Production term ID.
+		 * @param string $type          Reference type filter.
+		 * @return array<string|int, mixed> Tax query array.
+		 */
+		private function build_tax_query( int $production_id, string $type ): array {
 			$tax_query = array();
-			
-			// STEP 1: Add production filter if specified.
+
+			// Add production filter if specified.
 			if ( $production_id > 0 ) {
 				$tax_query[] = array(
 					'taxonomy' => 'gatherpress-productions',
@@ -204,101 +295,198 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 					'terms'    => $production_id,
 				);
 			}
-			
-			// STEP 2: Add type filter ONLY if not 'all'.
-			if ( $type !== 'all' && ! empty( $taxonomies ) ) {
-				
-				// When filtering by type, we want posts that have ANY of these taxonomies.
-				if ( count( $taxonomies ) === 1 ) {
-					// Single taxonomy - simple EXISTS check.
-					$tax_query[] = array(
-						'taxonomy' => $taxonomies[0],
-						'operator' => 'EXISTS',
-					);
-				} else {
-					// Multiple taxonomies - use OR relation.
-					$type_query = array( 'relation' => 'OR' );
-					foreach ( $taxonomies as $taxonomy ) {
-						$type_query[] = array(
-							'taxonomy' => $taxonomy,
-							'operator' => 'EXISTS',
-						);
-					}
+
+			// Add type filter if not 'all'.
+			if ( $type !== 'all' ) {
+				$type_query = $this->build_type_query( $type );
+				if ( ! empty( $type_query ) ) {
 					$tax_query[] = $type_query;
 				}
 			}
-			
-			// STEP 3: Apply tax_query to args ONLY if we have filters.
-			if ( ! empty( $tax_query ) ) {
-				
-				// Only add 'relation' if we have MORE than one top-level filter.
-				if ( count( $tax_query ) > 1 ) {
-					$tax_query = array_merge( array( 'relation' => 'AND' ), $tax_query );
-				}
-				
-				$args['tax_query'] = $tax_query;
+
+			// Add relation if we have multiple filters.
+			if ( count( $tax_query ) > 1 ) {
+				$tax_query = array_merge( array( 'relation' => 'AND' ), $tax_query );
 			}
 
-			// STEP 4: Add year filter if specified.
-			if ( ! empty( $year ) ) {
-				$args['date_query'] = array(
-					array( 'year' => intval( $year ) ),
+			return $tax_query;
+		}
+
+		/**
+		 * Build type-specific query
+		 *
+		 * Creates the taxonomy query for a specific reference type.
+		 *
+		 * @since 0.1.0
+		 * @param string $type Reference type filter.
+		 * @return array<string|int, mixed> Type query array.
+		 */
+		private function build_type_query( string $type ): array {
+			$taxonomies = $this->get_taxonomies_by_type( $type );
+			
+			if ( empty( $taxonomies ) ) {
+				return array();
+			}
+
+			// Single taxonomy - simple EXISTS check.
+			if ( count( $taxonomies ) === 1 ) {
+				return array(
+					'taxonomy' => $taxonomies[0],
+					'operator' => 'EXISTS',
 				);
 			}
 
-			// Execute query.
-			$query      = new \WP_Query( $args );
+			// Multiple taxonomies - use OR relation.
+			$type_query = array( 'relation' => 'OR' );
+			foreach ( $taxonomies as $taxonomy ) {
+				$type_query[] = array(
+					'taxonomy' => $taxonomy,
+					'operator' => 'EXISTS',
+				);
+			}
+
+			return $type_query;
+		}
+
+		/**
+		 * Organize query results
+		 *
+		 * Processes WP_Query results and organizes them by year and type.
+		 *
+		 * @since 0.1.0
+		 * @param \WP_Query $query Query object with results.
+		 * @param string    $type  Reference type filter.
+		 * @return array<string, array<string, array<int, string>>> Organized references.
+		 */
+		private function organize_query_results( \WP_Query $query, string $type ): array {
+			if ( empty( $query->posts ) ) {
+				return array();
+			}
+
+			/** @var array<int, int> $post_ids */
+			$post_ids = $query->posts;
+
+			// Batch fetch data.
+			$post_dates         = $this->get_post_dates( $post_ids );
+			$display_taxonomies = array( '_gatherpress-client', '_gatherpress-festival', '_gatherpress-award' );
+			$post_terms         = $this->get_post_terms( $post_ids, $display_taxonomies );
+
+			// Organize by year and type.
+			return $this->group_terms_by_year( $post_ids, $post_dates, $post_terms, $display_taxonomies );
+		}
+
+		/**
+		 * Group terms by year
+		 *
+		 * Organizes post terms into a nested structure by year and taxonomy.
+		 * Filters out empty arrays to ensure clean data structure.
+		 *
+		 * @since 0.1.0
+		 * @param array<int, int>                              $post_ids           Array of post IDs.
+		 * @param array<int, object{ID: string, year: string}> $post_dates         Post date data.
+		 * @param array<int, ?array<string, array<\WP_Term>>>  $post_terms         Post terms organized by taxonomy.
+		 * @param array<int, string>                           $display_taxonomies Taxonomies to display.
+		 * @return array<string, array<string, array<int, string>>> Organized references.
+		 */
+		private function group_terms_by_year( array $post_ids, array $post_dates, array $post_terms, array $display_taxonomies ): array {
 			$references = array();
 
-			if ( ! empty( $query->posts ) ) {
-				 /** @var array<int, int> $post_ids */
-				$post_ids = $query->posts;
-				
-				// Batch fetch post dates for efficiency.
-				$post_dates = $this->get_post_dates( $post_ids );
+			foreach ( $post_ids as $post_id ) {
+				if ( ! isset( $post_dates[ $post_id ] ) ) {
+					continue;
+				}
 
-				// Always get all reference taxonomies for display.
-				$display_taxonomies = array( '_gatherpress-client', '_gatherpress-festival', '_gatherpress-award' );
+				$post_year = $post_dates[ $post_id ]->year;
+				$terms     = isset( $post_terms[ $post_id ] ) ? $post_terms[ $post_id ] : array();
 
-				// Batch fetch all taxonomy terms.
-				$post_terms = $this->get_post_terms( $post_ids, $display_taxonomies );
+				// Initialize year structure if not exists.
+				if ( ! isset( $references[ $post_year ] ) ) {
+					$references[ $post_year ] = $this->initialize_year_structure();
+				}
 
-				// Organize data by year and type.
-				foreach ( $post_ids as $post_id ) {
-					if ( ! isset( $post_dates[ $post_id ] ) ) {
-						continue;
+				// Add terms to year structure.
+				$this->add_terms_to_year( $references[ $post_year ], $terms, $display_taxonomies );
+			}
+
+			// Clean up empty arrays.
+			$references = $this->remove_empty_arrays( $references );
+
+			return $references;
+		}
+
+		/**
+		 * Remove empty arrays from references structure
+		 *
+		 * Filters out:
+		 * 1. Empty taxonomy arrays within a year
+		 * 2. Years that have no taxonomy data after cleanup
+		 *
+		 * @since 0.1.0
+		 * @param array<string, array<string, array<int, string>>> $references Reference data to clean.
+		 * @return array<string, array<string, array<int, string>>> Cleaned reference data.
+		 */
+		private function remove_empty_arrays( array $references ): array {
+			foreach ( $references as $year => $year_data ) {
+				// Remove empty taxonomy arrays.
+				foreach ( $year_data as $taxonomy => $items ) {
+					if ( empty( $items ) ) {
+						unset( $references[ $year ][ $taxonomy ] );
 					}
+				}
 
-					// Extract year from post date.
-					$post_year = $post_dates[ $post_id ]->year;
-					$terms     = isset( $post_terms[ $post_id ] ) ? $post_terms[ $post_id ] : array();
-
-					// Initialize year structure if not exists.
-					if ( ! isset( $references[ $post_year ] ) ) {
-						$references[ $post_year ] = array(
-							'_gatherpress-client'   => array(),
-							'_gatherpress-festival' => array(),
-							'_gatherpress-award'    => array(),
-						);
-					}
-
-					// Add term names (deduplicated).
-					foreach ( $display_taxonomies as $taxonomy ) {
-						if ( isset( $terms[ $taxonomy ] ) ) {
-							foreach ( $terms[ $taxonomy ] as $term ) {
-								// Only add if not already present (deduplication).
-								if ( ! in_array( $term->name, $references[ $post_year ][ $taxonomy ], true ) ) {
-									$references[ $post_year ][ $taxonomy ][] = $term->name;
-								}
-							}
-						}
-					}
+				// If all taxonomies are empty for this year, remove the year.
+				if ( empty( $references[ $year ] ) ) {
+					unset( $references[ $year ] );
 				}
 			}
 
-			// Cache results.
-			set_transient( $cache_key, $references, $this->cache_expiration );
 			return $references;
+		}
+
+		/**
+		 * Initialize year structure
+		 *
+		 * Creates the default structure for a year's references.
+		 *
+		 * @since 0.1.0
+		 * @return array<string, array<int, string>> Empty reference structure.
+		 */
+		private function initialize_year_structure(): array {
+			return array(
+				'_gatherpress-client'   => array(),
+				'_gatherpress-festival' => array(),
+				'_gatherpress-award'    => array(),
+			);
+		}
+
+		/**
+		 * Add terms to year structure
+		 *
+		 * Adds taxonomy terms to a year's reference structure with deduplication.
+		 *
+		 * @since 0.1.0
+		 * @param array<string, array<int, string>> $year_data          Year structure to add to (passed by reference).
+		 * @param ?array<string, array<\WP_Term>>   $terms              Post terms organized by taxonomy.
+		 * @param array<int, string>                $display_taxonomies Taxonomies to process.
+		 * @return void
+		 */
+		private function add_terms_to_year( array &$year_data, ?array $terms, array $display_taxonomies ): void {
+			if ( empty( $terms ) ) {
+				return;
+			}
+
+			foreach ( $display_taxonomies as $taxonomy ) {
+				if ( ! isset( $terms[ $taxonomy ] ) ) {
+					continue;
+				}
+
+				foreach ( $terms[ $taxonomy ] as $term ) {
+					// Deduplicate - only add if not already present.
+					if ( ! in_array( $term->name, $year_data[ $taxonomy ], true ) ) {
+						$year_data[ $taxonomy ][] = $term->name;
+					}
+				}
+			}
 		}
 
 		/**
@@ -352,7 +540,7 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 			// Sanitize IDs for safe SQL.
 			$safe_ids     = array_map( 'intval', $post_ids );
 			$placeholders = implode( ',', array_fill( 0, count( $safe_ids ), '%d' ) );
-			$table = $wpdb->posts;
+			$table        = $wpdb->posts;
 			
 			// Execute optimized query to get year from post_date.
 			/** @var literal-string $sql */
@@ -362,7 +550,7 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 					ORDER BY post_date DESC";
 
 			$results = $wpdb->get_results(
-				$wpdb->prepare($sql, ...$safe_ids),
+				$wpdb->prepare( $sql, ...$safe_ids ),
 				OBJECT_K
 			);
 
@@ -499,35 +687,36 @@ if ( $production_id === 0 && is_tax( 'gatherpress-productions' ) ) {
 }
 
 // Fetch organized reference data.
-$references = $renderer->get_references( $production_id, $year, $type );
+$references  = $renderer->get_references( $production_id, $year, $type );
 $type_labels = $renderer->get_type_labels();
 
 // Determine if we're showing a specific type (affects heading display).
 $is_specific_type = ( $type !== 'all' );
 
 ?>
-<div <?php echo get_block_wrapper_attributes(); ?>>
-	<?php if ( ! empty( $references ) ) : ?>
-		<?php foreach ( $references as $ref_year => $types ) : ?>
-			<h<?php echo esc_attr( (string) $heading_level ); ?> class="references-year"><?php echo esc_html( $ref_year ); ?></h<?php echo esc_attr( (string) $heading_level ); ?>>
-			
-			<?php foreach ( $types as $ref_type => $items ) : ?>
+<?php if ( ! empty( $references ) ) { ?>
 
-				<?php # entry point for further investigation on not needed types queried (!) and rendered 
-					if ( ( $type === $ref_type || ! $is_specific_type ) && ! empty( $items ) ) : ?>
-					<?php if ( ! $is_specific_type ) : ?>
-						<h<?php echo esc_attr( (string) $secondary_heading_level ); ?> class="references-type"><?php echo esc_html( $type_labels[ $ref_type ] ); ?></h<?php echo esc_attr( (string) $secondary_heading_level ); ?>>
-					<?php endif; ?>
-					
-					<ul class="references-list">
-						<?php foreach ( $items as $item ) : ?>
-							<li><?php echo esc_html( $item ); ?></li>
-						<?php endforeach; ?>
-					</ul>
-				<?php endif; ?>
-			<?php endforeach; ?>
-		<?php endforeach; ?>
-	<?php else : ?>
-		<p class="no-references"><?php esc_html_e( 'No references found matching the selected criteria.', 'gatherpress-references' ); ?></p>
-	<?php endif; ?>
+<div <?php echo get_block_wrapper_attributes(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- get_block_wrapper_attributes() is escaped internally. ?>>
+	<?php foreach ( $references as $ref_year => $types ) { ?>
+		<h<?php echo esc_attr( (string) $heading_level ); ?> class="references-year"><?php echo esc_html( $ref_year ); ?></h<?php echo esc_attr( (string) $heading_level ); ?>>
+		
+		<?php foreach ( $types as $ref_type => $items ) { ?>
+
+			<?php
+			// Entry point for further investigation on not needed types queried (!) and rendered.
+			if ( ( $type === $ref_type || ! $is_specific_type ) && ! empty( $items ) ) {
+				?>
+				<?php if ( ! $is_specific_type ) { ?>
+					<h<?php echo esc_attr( (string) $secondary_heading_level ); ?> class="references-type"><?php echo esc_html( $type_labels[ $ref_type ] ); ?></h<?php echo esc_attr( (string) $secondary_heading_level ); ?>>
+				<?php } ?>
+				
+				<ul class="references-list">
+					<?php foreach ( $items as $item ) { ?>
+						<li><?php echo esc_html( $item ); ?></li>
+					<?php } ?>
+				</ul>
+			<?php } ?>
+		<?php } ?>
+	<?php } ?>
 </div>
+<?php } ?>
