@@ -521,7 +521,7 @@ class Plugin {
 	 * @since 0.1.0
 	 * @return void
 	 */
-	private function generate_demo_data(): void {
+	public function generate_demo_data(): void {
 		// Sample production names.
 		$productions = array( 'Hamlet', 'Romeo and Juliet', 'A Midsummer Night\'s Dream', 'Macbeth', 'The Tempest' );
 		

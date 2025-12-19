@@ -139,8 +139,8 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 			}
 
 			// Build and execute query.
-			$args     = $this->build_query_args( $production_id, $year, $type );
-			$query    = new \WP_Query( $args );
+			$args  = $this->build_query_args( $production_id, $year, $type );
+			$query = new \WP_Query( $args );
 			
 			// Organize results.
 			$references = $this->organize_query_results( $query, $type );
@@ -163,7 +163,7 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 * @return array<string, array<string, array<int, string>>>|false Cached data or false if not found.
 		 */
 		private function get_cached_references( int $production_id, string $year, string $type ) {
-			$cache_key = $this->cache_prefix . md5( serialize( array( $production_id, $year, $type ) ) );
+			$cache_key = $this->cache_prefix . md5( maybe_serialize( array( $production_id, $year, $type ) ) );
 			$cached    = get_transient( $cache_key );
 			
 			if ( false !== $cached && is_array( $cached ) && ! empty( $cached ) ) {
@@ -179,13 +179,13 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 *
 		 * @since 0.1.0
 		 * @param array<string, array<string, array<int, string>>> $references    References data to cache.
-		 * @param int                                               $production_id Production term ID.
-		 * @param string                                            $year          Year filter.
-		 * @param string                                            $type          Reference type filter.
+		 * @param int                                              $production_id Production term ID.
+		 * @param string                                           $year          Year filter.
+		 * @param string                                           $type          Reference type filter.
 		 * @return void
 		 */
 		private function cache_references( array $references, int $production_id, string $year, string $type ): void {
-			$cache_key = $this->cache_prefix . md5( serialize( array( $production_id, $year, $type ) ) );
+			$cache_key = $this->cache_prefix . md5( maybe_serialize( array( $production_id, $year, $type ) ) );
 			set_transient( $cache_key, $references, $this->cache_expiration );
 		}
 
@@ -382,10 +382,10 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 * Filters out empty arrays to ensure clean data structure.
 		 *
 		 * @since 0.1.0
-		 * @param array<int, int>                                       $post_ids           Array of post IDs.
-		 * @param array<int, object{ID: string, year: string}>         $post_dates         Post date data.
-		 * @param array<int, ?array<string, array<\WP_Term>>>          $post_terms         Post terms organized by taxonomy.
-		 * @param array<int, string>                                    $display_taxonomies Taxonomies to display.
+		 * @param array<int, int>                              $post_ids           Array of post IDs.
+		 * @param array<int, object{ID: string, year: string}> $post_dates         Post date data.
+		 * @param array<int, ?array<string, array<\WP_Term>>>  $post_terms         Post terms organized by taxonomy.
+		 * @param array<int, string>                           $display_taxonomies Taxonomies to display.
 		 * @return array<string, array<string, array<int, string>>> Organized references.
 		 */
 		private function group_terms_by_year( array $post_ids, array $post_dates, array $post_terms, array $display_taxonomies ): array {
@@ -465,9 +465,9 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 * Adds taxonomy terms to a year's reference structure with deduplication.
 		 *
 		 * @since 0.1.0
-		 * @param array<string, array<int, string>>            $year_data          Year structure to add to (passed by reference).
-		 * @param ?array<string, array<\WP_Term>>              $terms              Post terms organized by taxonomy.
-		 * @param array<int, string>                           $display_taxonomies Taxonomies to process.
+		 * @param array<string, array<int, string>> $year_data          Year structure to add to (passed by reference).
+		 * @param ?array<string, array<\WP_Term>>   $terms              Post terms organized by taxonomy.
+		 * @param array<int, string>                $display_taxonomies Taxonomies to process.
 		 * @return void
 		 */
 		private function add_terms_to_year( array &$year_data, ?array $terms, array $display_taxonomies ): void {
@@ -695,9 +695,10 @@ $is_specific_type = ( $type !== 'all' );
 
 ?>
 <?php if ( ! empty( $references ) ) { ?>
-<div <?php echo get_block_wrapper_attributes(); ?>>
+
+<div <?php echo get_block_wrapper_attributes(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- get_block_wrapper_attributes() is escaped internally. ?>>
 	<?php foreach ( $references as $ref_year => $types ) { ?>
-		<h<?php echo esc_attr( (string) $heading_level ); ?> class="references-year"><?php echo esc_html( $ref_year ); ?></h<?php echo esc_attr( (string) $heading_level ); ?>>
+		<h<?php echo esc_attr( (string) $heading_level ); ?> class="wp-block-heading references-year"><?php echo esc_html( $ref_year ); ?></h<?php echo esc_attr( (string) $heading_level ); ?>>
 		
 		<?php foreach ( $types as $ref_type => $items ) { ?>
 
@@ -706,10 +707,10 @@ $is_specific_type = ( $type !== 'all' );
 			if ( ( $type === $ref_type || ! $is_specific_type ) && ! empty( $items ) ) {
 				?>
 				<?php if ( ! $is_specific_type ) { ?>
-					<h<?php echo esc_attr( (string) $secondary_heading_level ); ?> class="references-type"><?php echo esc_html( $type_labels[ $ref_type ] ); ?></h<?php echo esc_attr( (string) $secondary_heading_level ); ?>>
+					<h<?php echo esc_attr( (string) $secondary_heading_level ); ?> class="wp-block-heading references-type"><?php echo esc_html( $type_labels[ $ref_type ] ); ?></h<?php echo esc_attr( (string) $secondary_heading_level ); ?>>
 				<?php } ?>
 				
-				<ul class="references-list">
+				<ul class="references-list wp-block-list">
 					<?php foreach ( $items as $item ) { ?>
 						<li><?php echo esc_html( $item ); ?></li>
 					<?php } ?>

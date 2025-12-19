@@ -64,6 +64,10 @@
       }
     },
     {
+      "step": "runPHP",
+      "code": "<?php require '/wordpress/wp-load.php'; \\GatherPress\\References\\generate_demo_data();"
+    },
+    {
       "step": "importWxr",
       "file": {
         "resource": "url",

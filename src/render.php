@@ -698,7 +698,7 @@ $is_specific_type = ( $type !== 'all' );
 
 <div <?php echo get_block_wrapper_attributes(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- get_block_wrapper_attributes() is escaped internally. ?>>
 	<?php foreach ( $references as $ref_year => $types ) { ?>
-		<h<?php echo esc_attr( (string) $heading_level ); ?> class="references-year"><?php echo esc_html( $ref_year ); ?></h<?php echo esc_attr( (string) $heading_level ); ?>>
+		<h<?php echo esc_attr( (string) $heading_level ); ?> class="wp-block-heading references-year"><?php echo esc_html( $ref_year ); ?></h<?php echo esc_attr( (string) $heading_level ); ?>>
 		
 		<?php foreach ( $types as $ref_type => $items ) { ?>
 
@@ -707,10 +707,10 @@ $is_specific_type = ( $type !== 'all' );
 			if ( ( $type === $ref_type || ! $is_specific_type ) && ! empty( $items ) ) {
 				?>
 				<?php if ( ! $is_specific_type ) { ?>
-					<h<?php echo esc_attr( (string) $secondary_heading_level ); ?> class="references-type"><?php echo esc_html( $type_labels[ $ref_type ] ); ?></h<?php echo esc_attr( (string) $secondary_heading_level ); ?>>
+					<h<?php echo esc_attr( (string) $secondary_heading_level ); ?> class="wp-block-heading references-type"><?php echo esc_html( $type_labels[ $ref_type ] ); ?></h<?php echo esc_attr( (string) $secondary_heading_level ); ?>>
 				<?php } ?>
 				
-				<ul class="references-list">
+				<ul class="references-list wp-block-list">
 					<?php foreach ( $items as $item ) { ?>
 						<li><?php echo esc_html( $item ); ?></li>
 					<?php } ?>
