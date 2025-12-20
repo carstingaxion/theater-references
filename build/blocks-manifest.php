@@ -36,6 +36,14 @@ return array(
 				'type' => 'number',
 				'default' => 2
 			),
+			'yearSortOrder' => array(
+				'type' => 'string',
+				'default' => 'desc',
+				'enum' => array(
+					'asc',
+					'desc'
+				)
+			),
 			'metadata' => array(
 				'type' => 'object',
 				'default' => array(

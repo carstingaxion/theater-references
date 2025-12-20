@@ -17,6 +17,7 @@ import {
 	SelectControl,
 	TextControl,
 	RangeControl,
+	ToggleControl,
 } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { useEffect } from '@wordpress/element';
@@ -39,7 +40,8 @@ import './editor.scss';
  */
 export default function Edit( { attributes, setAttributes } ) {
 	// Destructure attributes for easier access
-	const { productionId, year, referenceType, headingLevel } = attributes;
+	const { productionId, year, referenceType, headingLevel, yearSortOrder } =
+		attributes;
 
 	/**
 	 * Fetch productions from WordPress data store
@@ -263,6 +265,39 @@ export default function Edit( { attributes, setAttributes } ) {
 
 	const filteredData = getFilteredPlaceholderData();
 
+	/**
+	 * Sort years based on yearSortOrder
+	 *
+	 * Only sorts when no specific year is selected.
+	 * Preserves child arrays order (taxonomy data).
+	 *
+	 * @return {Array} Sorted array of year keys
+	 */
+	const getSortedYears = () => {
+		const years = Object.keys( filteredData );
+
+		// Don't sort if a specific year is selected
+		if ( year ) {
+			return years;
+		}
+
+		// Sort based on yearSortOrder attribute
+		return years.sort( ( a, b ) => {
+			const yearA = parseInt( a );
+			const yearB = parseInt( b );
+
+			if ( yearSortOrder === 'asc' ) {
+				return yearA - yearB; // Oldest first
+			}
+			return yearB - yearA; // Newest first (default)
+		} );
+	};
+
+	const sortedYears = getSortedYears();
+
+	// Determine if year sort control should be shown
+	const showYearSortControl = ! year; // Only show when no specific year selected
+
 	return (
 		<>
 			{ /* Inspector Controls - Sidebar settings panel */ }
@@ -314,6 +349,26 @@ export default function Edit( { attributes, setAttributes } ) {
 						) }
 						type="number"
 					/>
+
+					{ /* Year sort order toggle (only when no specific year) */ }
+					{ showYearSortControl && (
+						<ToggleControl
+							label={ __(
+								'Sort Years Oldest First',
+								'gatherpress-references'
+							) }
+							checked={ yearSortOrder === 'asc' }
+							onChange={ ( value ) =>
+								setAttributes( {
+									yearSortOrder: value ? 'asc' : 'desc',
+								} )
+							}
+							help={ __(
+								'Toggle to sort years from oldest to newest. Default is newest first.',
+								'gatherpress-references'
+							) }
+						/>
+					) }
 
 					{ /* Reference type filter dropdown */ }
 					<SelectControl
@@ -382,8 +437,8 @@ export default function Edit( { attributes, setAttributes } ) {
 			<div { ...useBlockProps() }>
 				{ Object.keys( filteredData ).length > 0 && (
 					<>
-						{ /* Loop through years in placeholder data */ }
-						{ Object.keys( filteredData ).map( ( yearKey ) => {
+						{ /* Loop through sorted years */ }
+						{ sortedYears.map( ( yearKey ) => {
 							const yearData = filteredData[ yearKey ];
 							return (
 								<div key={ yearKey }>

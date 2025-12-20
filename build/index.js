@@ -8,7 +8,7 @@
   \************************/
 (module) {
 
-module.exports = /*#__PURE__*/JSON.parse('{"$schema":"https://schemas.wp.org/trunk/block.json","apiVersion":3,"name":"gatherpress/references","version":"0.1.0","title":"GatherPress References","category":"widgets","icon":"awards","description":"Display event references including clients, festivals, and awards.","example":{},"attributes":{"productionId":{"type":"number","default":0},"year":{"type":"string","default":""},"referenceType":{"type":"string","default":"all","enum":["all","ref_client","ref_festival","ref_award"]},"headingLevel":{"type":"number","default":2},"metadata":{"type":"object","default":{"name":"GatherPress References"}}},"supports":{"html":false,"color":{"background":true,"text":true,"link":true,"gradients":true,"__experimentalDefaultControls":{"background":true,"text":true}},"spacing":{"margin":true,"padding":true,"blockGap":true,"__experimentalDefaultControls":{"margin":true,"padding":true,"blockGap":true}},"typography":{"fontSize":true,"lineHeight":true,"fontFamily":true,"fontWeight":true,"fontStyle":true,"textTransform":true,"letterSpacing":true,"__experimentalDefaultControls":{"fontSize":true,"fontFamily":true}},"__experimentalBorder":{"color":true,"radius":true,"style":true,"width":true,"__experimentalDefaultControls":{"color":true,"radius":true}}},"style":"file:./style-index.css","textdomain":"gatherpress-references","editorScript":"file:./index.js","editorStyle":"file:./index.css","render":"file:./render.php"}');
+module.exports = /*#__PURE__*/JSON.parse('{"$schema":"https://schemas.wp.org/trunk/block.json","apiVersion":3,"name":"gatherpress/references","version":"0.1.0","title":"GatherPress References","category":"widgets","icon":"awards","description":"Display event references including clients, festivals, and awards.","example":{},"attributes":{"productionId":{"type":"number","default":0},"year":{"type":"string","default":""},"referenceType":{"type":"string","default":"all","enum":["all","ref_client","ref_festival","ref_award"]},"headingLevel":{"type":"number","default":2},"yearSortOrder":{"type":"string","default":"desc","enum":["asc","desc"]},"metadata":{"type":"object","default":{"name":"GatherPress References"}}},"supports":{"html":false,"color":{"background":true,"text":true,"link":true,"gradients":true,"__experimentalDefaultControls":{"background":true,"text":true}},"spacing":{"margin":true,"padding":true,"blockGap":true,"__experimentalDefaultControls":{"margin":true,"padding":true,"blockGap":true}},"typography":{"fontSize":true,"lineHeight":true,"fontFamily":true,"fontWeight":true,"fontStyle":true,"textTransform":true,"letterSpacing":true,"__experimentalDefaultControls":{"fontSize":true,"fontFamily":true}},"__experimentalBorder":{"color":true,"radius":true,"style":true,"width":true,"__experimentalDefaultControls":{"color":true,"radius":true}}},"style":"file:./style-index.css","textdomain":"gatherpress-references","editorScript":"file:./index.js","editorStyle":"file:./index.css","render":"file:./render.php"}');
 
 /***/ },
 
@@ -79,7 +79,8 @@ function Edit({
     productionId,
     year,
     referenceType,
-    headingLevel
+    headingLevel,
+    yearSortOrder
   } = attributes;
 
   /**
@@ -258,6 +259,38 @@ function Edit({
     return filtered;
   };
   const filteredData = getFilteredPlaceholderData();
+
+  /**
+   * Sort years based on yearSortOrder
+   *
+   * Only sorts when no specific year is selected.
+   * Preserves child arrays order (taxonomy data).
+   *
+   * @return {Array} Sorted array of year keys
+   */
+  const getSortedYears = () => {
+    const years = Object.keys(filteredData);
+
+    // Don't sort if a specific year is selected
+    if (year) {
+      return years;
+    }
+
+    // Sort based on yearSortOrder attribute
+    return years.sort((a, b) => {
+      const yearA = parseInt(a);
+      const yearB = parseInt(b);
+      if (yearSortOrder === 'asc') {
+        return yearA - yearB; // Oldest first
+      }
+      return yearB - yearA; // Newest first (default)
+    });
+  };
+  const sortedYears = getSortedYears();
+
+  // Determine if year sort control should be shown
+  const showYearSortControl = !year; // Only show when no specific year selected
+
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.Fragment, {
     children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(_wordpress_block_editor__WEBPACK_IMPORTED_MODULE_1__.InspectorControls, {
       children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.PanelBody, {
@@ -288,6 +321,13 @@ function Edit({
           }),
           help: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Filter by specific year (e.g., 2017). Leave empty for all years.', 'gatherpress-references'),
           type: "number"
+        }), showYearSortControl && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.ToggleControl, {
+          label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Sort Years Oldest First', 'gatherpress-references'),
+          checked: yearSortOrder === 'asc',
+          onChange: value => setAttributes({
+            yearSortOrder: value ? 'asc' : 'desc'
+          }),
+          help: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Toggle to sort years from oldest to newest. Default is newest first.', 'gatherpress-references')
         }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.SelectControl, {
           label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Reference Type', 'gatherpress-references'),
           value: referenceType,
@@ -323,7 +363,7 @@ function Edit({
     }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("div", {
       ...(0,_wordpress_block_editor__WEBPACK_IMPORTED_MODULE_1__.useBlockProps)(),
       children: Object.keys(filteredData).length > 0 && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.Fragment, {
-        children: Object.keys(filteredData).map(yearKey => {
+        children: sortedYears.map(yearKey => {
           const yearData = filteredData[yearKey];
           return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("div", {
             children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(YearHeading, {

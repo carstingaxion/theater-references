@@ -129,11 +129,12 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 * @param int    $production_id Optional. Filter by production term ID. Default 0 (all).
 		 * @param string $year          Optional. Filter by specific year (e.g., '2024'). Default '' (all).
 		 * @param string $type          Optional. Filter by reference type or 'all'. Default 'all'.
+		 * @param string $sort_order    Optional. Year sort order: 'asc' or 'desc'. Default 'desc'.
 		 * @return array<string, array<string, array<int, string>>> Nested array of references organized by year and type.
 		 */
-		public function get_references( int $production_id = 0, string $year = '', string $type = 'all' ): array {
+		public function get_references( int $production_id = 0, string $year = '', string $type = 'all', string $sort_order = 'desc' ): array {
 			// Try to get cached data first.
-			$cached = $this->get_cached_references( $production_id, $year, $type );
+			$cached = $this->get_cached_references( $production_id, $year, $type, $sort_order );
 			if ( false !== $cached ) {
 				return $cached;
 			}
@@ -143,11 +144,11 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 			$query = new \WP_Query( $args );
 			
 			// Organize results.
-			$references = $this->organize_query_results( $query );
+			$references = $this->organize_query_results( $query, $sort_order );
 
 			// Cache and return only if we have actual data.
 			if ( ! empty( $references ) ) {
-				$this->cache_references( $references, $production_id, $year, $type );
+				$this->cache_references( $references, $production_id, $year, $type, $sort_order );
 			}
 			
 			return $references;
@@ -160,10 +161,11 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 * @param int    $production_id Production term ID.
 		 * @param string $year          Year filter.
 		 * @param string $type          Reference type filter.
+		 * @param string $sort_order    Year sort order.
 		 * @return array<string, array<string, array<int, string>>>|false Cached data or false if not found.
 		 */
-		private function get_cached_references( int $production_id, string $year, string $type ) {
-			$cache_key = $this->cache_prefix . md5( maybe_serialize( array( $production_id, $year, $type ) ) );
+		private function get_cached_references( int $production_id, string $year, string $type, string $sort_order ) {
+			$cache_key = $this->cache_prefix . md5( maybe_serialize( array( $production_id, $year, $type, $sort_order ) ) );
 			$cached    = get_transient( $cache_key );
 			
 			if ( false !== $cached && is_array( $cached ) && ! empty( $cached ) ) {
@@ -186,10 +188,11 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 * @param int                                              $production_id Production term ID.
 		 * @param string                                           $year          Year filter.
 		 * @param string                                           $type          Reference type filter.
+		 * @param string                                           $sort_order    Year sort order.
 		 * @return void
 		 */
-		private function cache_references( array $references, int $production_id, string $year, string $type ): void {
-			$cache_key = $this->cache_prefix . md5( maybe_serialize( array( $production_id, $year, $type ) ) );
+		private function cache_references( array $references, int $production_id, string $year, string $type, string $sort_order ): void {
+			$cache_key = $this->cache_prefix . md5( maybe_serialize( array( $production_id, $year, $type, $sort_order ) ) );
 			set_transient( $cache_key, $references, $this->cache_expiration );
 		}
 
@@ -356,12 +359,14 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 * Organize query results
 		 *
 		 * Processes WP_Query results and organizes them by year and type.
+		 * Applies year sorting based on sort_order parameter.
 		 *
 		 * @since 0.1.0
-		 * @param \WP_Query $query Query object with results.
+		 * @param \WP_Query $query      Query object with results.
+		 * @param string    $sort_order Year sort order: 'asc' or 'desc'.
 		 * @return array<string, array<string, array<int, string>>> Organized references.
 		 */
-		private function organize_query_results( \WP_Query $query ): array {
+		private function organize_query_results( \WP_Query $query, string $sort_order = 'desc' ): array {
 			if ( empty( $query->posts ) ) {
 				return array();
 			}
@@ -381,7 +386,45 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 			$post_terms         = $this->get_post_terms( $post_ids, $display_taxonomies );
 
 			// Organize by year and type.
-			return $this->group_terms_by_year( $post_ids, $post_dates, $post_terms, $display_taxonomies );
+			$references = $this->group_terms_by_year( $post_ids, $post_dates, $post_terms, $display_taxonomies );
+
+			// Sort years based on sort_order.
+			return $this->sort_years( $references, $sort_order );
+		}
+
+		/**
+		 * Sort years in the references array
+		 *
+		 * Sorts the year keys while preserving child arrays (taxonomy data).
+		 *
+		 * @since 0.1.0
+		 * @param array<string, array<string, array<int, string>>> $references  Reference data to sort.
+		 * @param string                                           $sort_order  Sort order: 'asc' or 'desc'.
+		 * @return array<string, array<string, array<int, string>>> Sorted reference data.
+		 */
+		private function sort_years( array $references, string $sort_order ): array {
+			if ( empty( $references ) ) {
+				return $references;
+			}
+
+			// Get year keys and sort them.
+			$years = array_keys( $references );
+
+			if ( $sort_order === 'asc' ) {
+				// Sort oldest first.
+				sort( $years, SORT_NUMERIC );
+			} else {
+				// Sort newest first (default).
+				rsort( $years, SORT_NUMERIC );
+			}
+
+			// Rebuild array with sorted years.
+			$sorted = array();
+			foreach ( $years as $year ) {
+				$sorted[ (string) $year ] = $references[ (string) $year ];
+			}
+
+			return $sorted;
 		}
 
 		/**
@@ -694,13 +737,15 @@ $renderer = Renderer::get_instance();
  *   productionId?: int,
  *   year?: string,
  *   referenceType?: string,
- *   headingLevel?: int
+ *   headingLevel?: int,
+ *   yearSortOrder?: string
  * } $attributes
  */
-$production_id = isset( $attributes['productionId'] ) ? intval( $attributes['productionId'] ) : 0;
-$year          = isset( $attributes['year'] ) ? sanitize_text_field( $attributes['year'] ) : '';
-$type          = isset( $attributes['referenceType'] ) ? sanitize_text_field( $attributes['referenceType'] ) : 'all';
-$heading_level = isset( $attributes['headingLevel'] ) ? intval( $attributes['headingLevel'] ) : 2;
+$production_id  = isset( $attributes['productionId'] ) ? intval( $attributes['productionId'] ) : 0;
+$year           = isset( $attributes['year'] ) ? sanitize_text_field( $attributes['year'] ) : '';
+$type           = isset( $attributes['referenceType'] ) ? sanitize_text_field( $attributes['referenceType'] ) : 'all';
+$heading_level  = isset( $attributes['headingLevel'] ) ? intval( $attributes['headingLevel'] ) : 2;
+$year_sort      = isset( $attributes['yearSortOrder'] ) ? sanitize_text_field( $attributes['yearSortOrder'] ) : 'desc';
 
 // Ensure heading level is within valid range (H1-H6).
 $heading_level = max( 1, min( 6, $heading_level ) );
@@ -717,6 +762,11 @@ if ( $type === 'ref_client' ) {
 	$type = '_gatherpress-award';
 }
 
+// Validate sort order.
+if ( ! in_array( $year_sort, array( 'asc', 'desc' ), true ) ) {
+	$year_sort = 'desc';
+}
+
 // Auto-detect production from current taxonomy term if viewing a production archive.
 if ( $production_id === 0 && is_tax( 'gatherpress-productions' ) ) {
 	$term = get_queried_object();
@@ -725,8 +775,8 @@ if ( $production_id === 0 && is_tax( 'gatherpress-productions' ) ) {
 	}
 }
 
-// Fetch organized reference data.
-$references  = $renderer->get_references( $production_id, $year, $type );
+// Fetch organized reference data with year sorting.
+$references  = $renderer->get_references( $production_id, $year, $type, $year_sort );
 $type_labels = $renderer->get_type_labels();
 
 // Determine if we're showing a specific type (affects heading display).

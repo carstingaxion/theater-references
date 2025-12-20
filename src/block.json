@@ -26,6 +26,11 @@
 			"type": "number",
 			"default": 2
 		},
+		"yearSortOrder": {
+			"type": "string",
+			"default": "desc",
+			"enum": ["asc", "desc"]
+		},
 		"metadata": {
 			"type": "object",
 			"default": {
