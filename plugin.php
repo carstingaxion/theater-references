@@ -732,7 +732,7 @@ register_activation_hook( __FILE__, __NAMESPACE__ . '\gatherpress_references_act
  * - Clears all cached reference data
  *
  * Note: Does NOT delete taxonomies, terms, or post associations.
- * Use the uninstall.php file for complete data removal.
+ * Use the uninstall hook for complete data removal.
  *
  * @since 0.1.0
  * @return void
@@ -742,6 +742,79 @@ function gatherpress_references_deactivate(): void {
 	Plugin::get_instance()->clear_all_caches();
 }
 register_deactivation_hook( __FILE__, __NAMESPACE__ . '\gatherpress_references_deactivate' );
+
+/**
+ * Plugin uninstall hook
+ *
+ * Completely removes all plugin data when WordPress uninstalls the plugin.
+ * This function is registered with register_uninstall_hook() and is called
+ * only when a user explicitly uninstalls the plugin from the WordPress admin.
+ *
+ * Removes:
+ * - All taxonomy terms and term relationships
+ * - All cached transient data
+ * - Term meta for demo data markers
+ *
+ * Note: Does NOT delete:
+ * - GatherPress events (they remain but lose term associations)
+ * - Taxonomy registrations (these are removed when plugin files are deleted)
+ *
+ * @since 0.1.0
+ * @global \wpdb $wpdb WordPress database abstraction object.
+ * @return void
+ */
+function gatherpress_references_uninstall(): void {
+	global $wpdb;
+
+	if ( ! $wpdb instanceof \wpdb ) {
+		return;
+	}
+
+	// Define taxonomies created by this plugin.
+	$taxonomies = array(
+		'gatherpress-productions',
+		'_gatherpress-client',
+		'_gatherpress-festival',
+		'_gatherpress-award',
+	);
+
+	// 1. Remove all terms and term relationships.
+	foreach ( $taxonomies as $taxonomy ) {
+		// Get all terms for this taxonomy.
+		$terms = get_terms(
+			array(
+				'taxonomy'   => $taxonomy,
+				'hide_empty' => false,
+				'fields'     => 'ids',
+			)
+		);
+
+		if ( ! is_wp_error( $terms ) && ! empty( $terms ) ) {
+			foreach ( $terms as $term_id ) {
+				// Delete term and all its relationships.
+				wp_delete_term( $term_id, $taxonomy );
+			}
+		}
+
+		// Clean up term taxonomy table (belt and suspenders approach).
+		$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->prepare(
+				"DELETE FROM {$wpdb->term_taxonomy} WHERE taxonomy = %s",
+				$taxonomy
+			)
+		);
+	}
+
+	// 2. Clear all cached transients.
+	Plugin::get_instance()->clear_all_caches();
+
+	// 3. Clean up orphaned term meta (demo data markers).
+	$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		"DELETE FROM {$wpdb->termmeta} WHERE meta_key = '_demo_data'"
+	);
+
+}
+register_uninstall_hook( __FILE__, __NAMESPACE__ . '\gatherpress_references_uninstall' );
 
 
 // Initialize the singleton instance.
