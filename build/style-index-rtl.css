@@ -1,1 +1,125 @@
-.wp-block-gatherpress-references{background-color:transparent;color:inherit;font-family:inherit;font-size:inherit;line-height:inherit;margin-block:var(--wp--preset--spacing--50,1.5em);margin-inline:0}.wp-block-gatherpress-references .references-year{border-block-end:1px solid currentColor;font-size:var(--wp--custom--gatherpress-references--year-font-size,var(--wp--preset--font-size--large,1.5em));font-weight:700;margin-block-end:var(--wp--preset--spacing--30,.75em);margin-block-start:var(--wp--custom--gatherpress-references--year-margin-top,var(--wp--preset--spacing--50,1.5em));margin-inline:0;opacity:var(--wp--custom--gatherpress-references--year-border-opacity,.7);padding:0}.wp-block-gatherpress-references .references-year:first-child{margin-block-start:0}.wp-block-gatherpress-references .references-type{border-inline-start:2px solid currentColor;font-size:var(--wp--custom--gatherpress-references--type-font-size,var(--wp--preset--font-size--medium,1.125em));font-weight:600;margin-block-end:var(--wp--preset--spacing--20,.5em);margin-block-start:var(--wp--custom--gatherpress-references--type-margin-top,var(--wp--preset--spacing--40,1em));margin-inline:0;opacity:var(--wp--custom--gatherpress-references--type-border-opacity,.8);padding-inline-start:var(--wp--preset--spacing--20,.5em)}.wp-block-gatherpress-references .references-list{list-style:none;margin-block:var(--wp--preset--spacing--20,.5em) var(--wp--preset--spacing--30,1em);margin-inline:0;padding-inline-start:var(--wp--custom--gatherpress-references--list-padding-left,var(--wp--preset--spacing--40,1.5em))}.wp-block-gatherpress-references .references-list li{padding-block:var(--wp--preset--spacing--10,.25em);position:relative}.wp-block-gatherpress-references .references-list li:before{color:currentColor;content:"•";inset-inline-start:calc(var(--wp--custom--gatherpress-references--list-padding-left, var(--wp--preset--spacing--40, 1.5em))*-1);opacity:var(--wp--custom--gatherpress-references--list-bullet-opacity,.3);position:absolute}@media(max-width:781px){.wp-block-gatherpress-references .references-year{font-size:var(--wp--preset--font-size--medium,1.25em)}.wp-block-gatherpress-references .references-list{padding-inline-start:var(--wp--preset--spacing--30,1em)}}@media print{.wp-block-gatherpress-references{margin-block:1em}.wp-block-gatherpress-references .references-type,.wp-block-gatherpress-references .references-year{page-break-after:avoid}.wp-block-gatherpress-references .references-list li{page-break-inside:avoid}}
+/*!***************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[4].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[4].use[2]!./node_modules/sass-loader/dist/cjs.js??ruleSet[1].rules[4].use[3]!./src/style.scss ***!
+  \***************************************************************************************************************************************************************************************************************************************/
+@charset "UTF-8";
+/**
+ * GatherPress References Block Styles
+ * 
+ * Minimal defaults with CSS custom properties for easy theming.
+ * Designed for maximum flexibility with minimal opinionated styling.
+ * 
+ * CSS Custom Properties (Read-only, set by block):
+ * --wp--custom--gatherpress-references--year-heading-level
+ * --wp--custom--gatherpress-references--type-heading-level
+ * --wp--custom--gatherpress-references--production-id
+ * --wp--custom--gatherpress-references--year
+ * --wp--custom--gatherpress-references--type
+ * 
+ * CSS Custom Properties (Customizable by theme):
+ * --wp--custom--gatherpress-references--year-font-size
+ * --wp--custom--gatherpress-references--year-margin-top
+ * --wp--custom--gatherpress-references--year-border-opacity
+ * 
+ * --wp--custom--gatherpress-references--type-font-size
+ * --wp--custom--gatherpress-references--type-margin-top
+ * --wp--custom--gatherpress-references--type-border-opacity
+ * 
+ * --wp--custom--gatherpress-references--list-padding-left
+ * --wp--custom--gatherpress-references--list-bullet-opacity
+ * 
+ * --wp--custom--gatherpress-references--empty-opacity
+ */
+.wp-block-gatherpress-references {
+  /* Block Container */
+  margin-block: var(--wp--preset--spacing--50, 1.5em);
+  margin-inline: 0;
+  /* Inherit theme defaults */
+  background-color: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  /**
+   * Year Headings
+   */
+}
+.wp-block-gatherpress-references .references-year {
+  margin-block-start: var(--wp--custom--gatherpress-references--year-margin-top, var(--wp--preset--spacing--50, 1.5em));
+  margin-block-end: var(--wp--preset--spacing--30, 0.75em);
+  margin-inline: 0;
+  padding: 0;
+  font-size: var(--wp--custom--gatherpress-references--year-font-size, var(--wp--preset--font-size--large, 1.5em));
+  font-weight: 700;
+  border-block-end: 1px solid currentColor;
+  opacity: var(--wp--custom--gatherpress-references--year-border-opacity, 0.7);
+}
+.wp-block-gatherpress-references .references-year:first-child {
+  margin-block-start: 0;
+}
+.wp-block-gatherpress-references {
+  /**
+   * Type Headings
+   */
+}
+.wp-block-gatherpress-references .references-type {
+  margin-block-start: var(--wp--custom--gatherpress-references--type-margin-top, var(--wp--preset--spacing--40, 1em));
+  margin-block-end: var(--wp--preset--spacing--20, 0.5em);
+  margin-inline: 0;
+  padding-inline-start: var(--wp--preset--spacing--20, 0.5em);
+  font-size: var(--wp--custom--gatherpress-references--type-font-size, var(--wp--preset--font-size--medium, 1.125em));
+  font-weight: 600;
+  border-inline-start: 2px solid currentColor;
+  opacity: var(--wp--custom--gatherpress-references--type-border-opacity, 0.8);
+}
+.wp-block-gatherpress-references {
+  /**
+   * Reference Lists
+   */
+}
+.wp-block-gatherpress-references .references-list {
+  list-style: none;
+  margin-block: var(--wp--preset--spacing--20, 0.5em) var(--wp--preset--spacing--30, 1em);
+  margin-inline: 0;
+  padding-inline-start: var(--wp--custom--gatherpress-references--list-padding-left, var(--wp--preset--spacing--40, 1.5em));
+}
+.wp-block-gatherpress-references .references-list li {
+  position: relative;
+  padding-block: var(--wp--preset--spacing--10, 0.25em);
+}
+.wp-block-gatherpress-references .references-list li::before {
+  content: "•";
+  position: absolute;
+  inset-inline-start: calc(var(--wp--custom--gatherpress-references--list-padding-left, var(--wp--preset--spacing--40, 1.5em)) * -1);
+  color: currentColor;
+  opacity: var(--wp--custom--gatherpress-references--list-bullet-opacity, 0.3);
+}
+.wp-block-gatherpress-references {
+  /**
+   * Responsive
+   */
+}
+@media (max-width: 781px) {
+  .wp-block-gatherpress-references .references-year {
+    font-size: var(--wp--preset--font-size--medium, 1.25em);
+  }
+  .wp-block-gatherpress-references .references-list {
+    padding-inline-start: var(--wp--preset--spacing--30, 1em);
+  }
+}
+.wp-block-gatherpress-references {
+  /**
+   * Print
+   */
+}
+@media print {
+  .wp-block-gatherpress-references {
+    margin-block: 1em;
+  }
+  .wp-block-gatherpress-references .references-year,
+  .wp-block-gatherpress-references .references-type {
+    page-break-after: avoid;
+  }
+  .wp-block-gatherpress-references .references-list li {
+    page-break-inside: avoid;
+  }
+}

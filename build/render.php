@@ -143,7 +143,7 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 			$query = new \WP_Query( $args );
 			
 			// Organize results.
-			$references = $this->organize_query_results( $query, $type );
+			$references = $this->organize_query_results( $query );
 
 			// Cache and return only if we have actual data.
 			if ( ! empty( $references ) ) {
@@ -154,7 +154,7 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		}
 
 		/**
-		 * Get cached references if available
+		 * Get cached references if available.
 		 *
 		 * @since 0.1.0
 		 * @param int    $production_id Production term ID.
@@ -167,7 +167,11 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 			$cached    = get_transient( $cache_key );
 			
 			if ( false !== $cached && is_array( $cached ) && ! empty( $cached ) ) {
-				/** @var array<string, array<string, array<int, string>>> $cached */
+				/**
+				 * Type safe hint for phpstan and static analysis.
+				 *
+				 * @var array<string, array<string, array<int, string>>> $cached
+				 */
 				return $cached;
 			}
 			
@@ -175,7 +179,7 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		}
 
 		/**
-		 * Cache references data
+		 * Cache references data.
 		 *
 		 * @since 0.1.0
 		 * @param array<string, array<string, array<int, string>>> $references    References data to cache.
@@ -207,7 +211,7 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 			// Apply taxonomy filters.
 			$tax_query = $this->build_tax_query( $production_id, $type );
 			if ( ! empty( $tax_query ) ) {
-				$args['tax_query'] = $tax_query;
+				$args['tax_query'] = $tax_query; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
 			}
 
 			// Apply year filter.
@@ -355,15 +359,20 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 *
 		 * @since 0.1.0
 		 * @param \WP_Query $query Query object with results.
-		 * @param string    $type  Reference type filter.
 		 * @return array<string, array<string, array<int, string>>> Organized references.
 		 */
-		private function organize_query_results( \WP_Query $query, string $type ): array {
+		private function organize_query_results( \WP_Query $query ): array {
 			if ( empty( $query->posts ) ) {
 				return array();
 			}
 
-			/** @var array<int, int> $post_ids */
+			/**
+			 * Type safe hint for phpstan and static analysis.
+			 *
+			 * This is for sure an array of integers as we set 'fields' => 'ids' in the query args.
+			 *
+			 * @var array<int, int> $post_ids
+			 */
 			$post_ids = $query->posts;
 
 			// Batch fetch data.
@@ -408,9 +417,34 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 				$this->add_terms_to_year( $references[ $post_year ], $terms, $display_taxonomies );
 			}
 
+			// Sort term names alphabetically within each taxonomy.
+			$references = $this->sort_term_names( $references );
+
 			// Clean up empty arrays.
 			$references = $this->remove_empty_arrays( $references );
 
+			return $references;
+		}
+
+		/**
+		 * Sort term names alphabetically within each taxonomy
+		 *
+		 * Ensures all term names are displayed in alphabetical order
+		 * for better readability and consistency.
+		 *
+		 * @since 0.1.0
+		 * @param array<string, array<string, array<int, string>>> $references Reference data to sort.
+		 * @return array<string, array<string, array<int, string>>> Sorted reference data.
+		 */
+		private function sort_term_names( array $references ): array {
+			foreach ( $references as $year => $year_data ) {
+				foreach ( $year_data as $taxonomy => $items ) {
+					// Sort terms alphabetically (case-insensitive).
+					natcasesort( $references[ $year ][ $taxonomy ] );
+					// Re-index array to ensure sequential keys.
+					$references[ $year ][ $taxonomy ] = array_values( $references[ $year ][ $taxonomy ] );
+				}
+			}
 			return $references;
 		}
 
@@ -526,11 +560,16 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 * )
 		 *
 		 * @since 0.1.0
-		 * @param array<int, int> $post_ids Array of post IDs to fetch dates for
+		 *
+		 * @param array<int, int> $post_ids Array of post IDs to fetch dates for.
 		 * @return array<int, object{ID: string, year: string}> Associative array of post_id => year data.
 		 */
 		private function get_post_dates( array $post_ids ): array {
-			/** @var \wpdb $wpdb */
+			/**
+			 * Batch fetch post dates
+			 *
+			 * @var \wpdb  $wpdb WordPress database abstraction object.
+			 * */
 			global $wpdb;
 			
 			if ( empty( $post_ids ) ) {

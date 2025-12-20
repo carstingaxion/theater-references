@@ -182,16 +182,16 @@ export default function Edit( { attributes, setAttributes } ) {
 					ref_client: [
 						__( 'Royal Theater London', 'gatherpress-references' ),
 						__( 'Vienna Burgtheater', 'gatherpress-references' ),
-					],
+					].sort(),
 					ref_festival: [
 						__(
 							'Edinburgh International Festival',
 							'gatherpress-references'
 						),
-					],
+					].sort(),
 					ref_award: [
 						__( 'Best Director Award', 'gatherpress-references' ),
-					],
+					].sort(),
 				},
 			};
 		}
@@ -203,26 +203,26 @@ export default function Edit( { attributes, setAttributes } ) {
 				ref_client: [
 					__( 'Royal Theater London', 'gatherpress-references' ),
 					__( 'Vienna Burgtheater', 'gatherpress-references' ),
-				],
+				].sort(),
 				ref_festival: [
 					__(
 						'Edinburgh International Festival',
 						'gatherpress-references'
 					),
-				],
+				].sort(),
 				ref_award: [
 					__( 'Best Director Award', 'gatherpress-references' ),
-				],
+				].sort(),
 			},
 			// Cast as string to prevent a default ordering by integer keys.
 			[ currentYear - 1 + ' ' ]: {
 				ref_client: [
 					__( 'Berlin Staatstheater', 'gatherpress-references' ),
-				],
+				].sort(),
 				ref_festival: [
 					__( 'Avignon Festival', 'gatherpress-references' ),
 					__( 'Salzburg Festival', 'gatherpress-references' ),
-				],
+				].sort(),
 				ref_award: [],
 			},
 		};

@@ -1,1 +1,42 @@
-.wp-block-gatherpress-references.is-selected{outline:2px solid var(--wp--preset--color--primary,#2271b1);outline-offset:2px}.is-dark-theme .wp-block-gatherpress-references .no-references{background:var(--wp--preset--color--contrast-2,hsla(0,0%,100%,.05));border-color:var(--wp--preset--color--contrast-3,hsla(0,0%,100%,.1));color:var(--wp--preset--color--base,hsla(0,0%,100%,.7))}@media(prefers-reduced-motion:reduce){.wp-block-gatherpress-references.is-selected{transition:none}}
+/*!****************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[4].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[4].use[2]!./node_modules/sass-loader/dist/cjs.js??ruleSet[1].rules[4].use[3]!./src/editor.scss ***!
+  \****************************************************************************************************************************************************************************************************************************************/
+/**
+ * GatherPress References Block - Editor Styles
+ *
+ * Editor-specific styles with theme.json integration for accurate
+ * WYSIWYG preview in the block editor. Supports dynamic heading levels.
+ */
+.wp-block-gatherpress-references {
+  /* No custom placeholder needed - block now shows actual preview */
+  /* Ensure headings in editor match frontend styling */
+}
+.wp-block-gatherpress-references .references-year,
+.wp-block-gatherpress-references .references-type {
+  /* All heading level styles inherited from style.scss */
+}
+.wp-block-gatherpress-references {
+  /* Editor-specific adjustments for better UX */
+}
+.wp-block-gatherpress-references.is-selected {
+  outline: 2px solid var(--wp--preset--color--primary, #2271b1);
+  outline-offset: 2px;
+}
+.wp-block-gatherpress-references {
+  /* Dark mode support in editor */
+}
+.is-dark-theme .wp-block-gatherpress-references .no-references {
+  background: var(--wp--preset--color--contrast-2, rgba(255, 255, 255, 0.05));
+  border-color: var(--wp--preset--color--contrast-3, rgba(255, 255, 255, 0.1));
+  color: var(--wp--preset--color--base, rgba(255, 255, 255, 0.7));
+}
+.wp-block-gatherpress-references {
+  /* Reduced motion support */
+}
+@media (prefers-reduced-motion: reduce) {
+  .wp-block-gatherpress-references.is-selected {
+    transition: none;
+  }
+}
+
+/*# sourceMappingURL=index.css.map*/

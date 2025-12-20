@@ -417,9 +417,34 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 				$this->add_terms_to_year( $references[ $post_year ], $terms, $display_taxonomies );
 			}
 
+			// Sort term names alphabetically within each taxonomy.
+			$references = $this->sort_term_names( $references );
+
 			// Clean up empty arrays.
 			$references = $this->remove_empty_arrays( $references );
 
+			return $references;
+		}
+
+		/**
+		 * Sort term names alphabetically within each taxonomy
+		 *
+		 * Ensures all term names are displayed in alphabetical order
+		 * for better readability and consistency.
+		 *
+		 * @since 0.1.0
+		 * @param array<string, array<string, array<int, string>>> $references Reference data to sort.
+		 * @return array<string, array<string, array<int, string>>> Sorted reference data.
+		 */
+		private function sort_term_names( array $references ): array {
+			foreach ( $references as $year => $year_data ) {
+				foreach ( $year_data as $taxonomy => $items ) {
+					// Sort terms alphabetically (case-insensitive).
+					natcasesort( $references[ $year ][ $taxonomy ] );
+					// Re-index array to ensure sequential keys.
+					$references[ $year ][ $taxonomy ] = array_values( $references[ $year ][ $taxonomy ] );
+				}
+			}
 			return $references;
 		}
 
