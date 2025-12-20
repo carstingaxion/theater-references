@@ -91,7 +91,7 @@ function Edit({
    */
   const productions = (0,_wordpress_data__WEBPACK_IMPORTED_MODULE_3__.useSelect)(select => {
     const terms = select('core').getEntityRecords('taxonomy', 'gatherpress-productions', {
-      per_page: -1 // Fetch all productions
+      per_page: 9999 // Large number to get all, but avoid -1.
     });
     return terms || [];
   }, []);

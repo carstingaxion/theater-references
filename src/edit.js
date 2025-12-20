@@ -54,7 +54,7 @@ export default function Edit( { attributes, setAttributes } ) {
 			'taxonomy',
 			'gatherpress-productions',
 			{
-				per_page: -1, // Fetch all productions
+				per_page: 9999, // Large number to get all, but avoid -1.
 			}
 		);
 		return terms || [];

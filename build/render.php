@@ -270,7 +270,7 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		private function get_base_query_args(): array {
 			return array(
 				'post_type'              => 'gatherpress_event',
-				'posts_per_page'         => -1,
+				'posts_per_page'         => 9999,   // Large number to get all, but avoid -1.
 				'post_status'            => 'publish',
 				'orderby'                => 'date',
 				'order'                  => 'DESC', // Newest first.

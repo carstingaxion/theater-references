@@ -675,7 +675,7 @@ class Plugin {
 		$demo_events = get_posts(
 			array(
 				'post_type'      => 'gatherpress_event',
-				'posts_per_page' => -1,
+				'posts_per_page' => 9999,   // Large number to get all, but avoid -1.
 				'meta_key'       => '_demo_data', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
 				'meta_value'     => '1', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
 			)
