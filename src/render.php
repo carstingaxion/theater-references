@@ -3,8 +3,8 @@
  * GatherPress References Block - Frontend Renderer
  *
  * This file handles the server-side rendering of the GatherPress References block
- * for GatherPress events. It queries GatherPress events, organizes references
- * by year and type, and outputs structured HTML.
+ * for GatherPress events. It queries GatherPress events using GatherPress's custom
+ * gatherpress_events table, organizes references by year and type, and outputs structured HTML.
  *
  * @package GatherPress_References
  * @since 0.1.0
@@ -234,7 +234,7 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 				$args['tax_query'] = $tax_query; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
 			}
 
-			// Apply year filter.
+			// Apply year filter if specified.
 			if ( ! empty( $year ) ) {
 				$args['date_query'] = array(
 					array( 'year' => intval( $year ) ),
@@ -280,6 +280,8 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 * Get base query arguments
 		 *
 		 * Returns the default WP_Query arguments for GatherPress events.
+		 * Uses GatherPress's 'past' query parameter to ensure we only get
+		 * past events based on the gatherpress_events table.
 		 *
 		 * @since 0.1.0
 		 * @return array<string, mixed> Base query arguments.
@@ -287,7 +289,7 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		private function get_base_query_args(): array {
 			return array(
 				'post_type'              => 'gatherpress_event',
-				'gatherpress_event_query'=> 'past', // Only past events.
+				'gatherpress_event_query'=> 'past', // Only past events (uses custom table).
 				'posts_per_page'         => 9999,   // Large number to get all, but avoid -1.
 				'post_status'            => 'publish',
 				'orderby'                => 'date',
@@ -453,7 +455,7 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 *
 		 * @since 0.1.0
 		 * @param array<int, int>                              $post_ids           Array of post IDs.
-		 * @param array<int, object{ID: string, year: string}> $post_dates         Post date data.
+		 * @param array<int, object{post_id: string, year: string}> $post_dates         Post date data from GatherPress table.
 		 * @param array<int, ?array<string, array<\WP_Term>>>  $post_terms         Post terms organized by taxonomy.
 		 * @param array<int, string>                           $display_taxonomies Taxonomies to display.
 		 * @return array<string, array<string, array<int, string>>> Organized references.
@@ -606,9 +608,14 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		}
 
 		/**
-		 * Batch fetch post dates
+		 * Batch fetch post dates from GatherPress events table
 		 *
-		 * This method efficiently retrieves post dates for multiple posts using a single database query.
+		 * This method efficiently retrieves event dates for multiple posts using a single
+		 * database query against GatherPress's custom gatherpress_events table.
+		 *
+		 * GatherPress stores event metadata in a dedicated table with indexed columns,
+		 * which is more efficient than querying post meta or post dates. The datetime_start_gmt
+		 * column contains the actual event start datetime in GMT.
 		 *
 		 * This method is called internally by `get_references()` to batch-fetch years
 		 * for all matching events in a single query, avoiding N+1 query problems.
@@ -616,14 +623,14 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 *
 		 * Example return:
 		 * array(
-		 *    123 => (object) { ID: '123', year: '2024' },
-		 *    456 => (object) { ID: '456', year: '2023' },
+		 *    123 => (object) { post_id: '123', year: '2024' },
+		 *    456 => (object) { post_id: '456', year: '2023' },
 		 * )
 		 *
 		 * @since 0.1.0
 		 *
 		 * @param array<int, int> $post_ids Array of post IDs to fetch dates for.
-		 * @return array<int, object{ID: string, year: string}> Associative array of post_id => year data.
+		 * @return array<int, object{post_id: string, year: string}> Associative array of post_id => year data.
 		 */
 		private function get_post_dates( array $post_ids ): array {
 			/**
@@ -640,21 +647,31 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 			// Sanitize IDs for safe SQL.
 			$safe_ids     = array_map( 'intval', $post_ids );
 			$placeholders = implode( ',', array_fill( 0, count( $safe_ids ), '%d' ) );
-			$table        = $wpdb->posts;
 			
-			// Execute optimized query to get year from post_date.
+			// Use GatherPress's custom events table.
+			$table = $wpdb->prefix . 'gatherpress_events';
+			
+			// Execute optimized query to get year from datetime_start_gmt column.
 			/** @var literal-string $sql */
-			$sql = "SELECT ID, YEAR(post_date) AS year
+			$sql = "SELECT post_id, YEAR(datetime_start_gmt) AS year
 					FROM {$table}
-					WHERE ID IN ({$placeholders})
-					ORDER BY post_date DESC";
+					WHERE post_id IN ({$placeholders})
+					ORDER BY datetime_start_gmt DESC";
 
 			$results = $wpdb->get_results(
 				$wpdb->prepare( $sql, ...$safe_ids ),
 				OBJECT_K
 			);
 
-			/** @var array<int, object{ID: string, year: string}> $results */
+			if ( null === $results || ! is_array( $results ) ) {
+				return array();
+			}
+
+			/**
+			 * Type cast for phpstan.
+			 *
+			 * @var array<int, object{post_id: string, year: string}> $results
+			 */
 			return $results;
 		}
 

@@ -54,7 +54,7 @@ export default function Edit( { attributes, setAttributes } ) {
 			'taxonomy',
 			'gatherpress-productions',
 			{
-				per_page: 9999, // Large number to get all, but avoid -1.
+				per_page: 99, // Large number to get all, but avoid -1. More than 99 is not supported by WordPress.
 			}
 		);
 		return terms || [];

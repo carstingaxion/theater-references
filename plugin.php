@@ -517,6 +517,7 @@ class Plugin {
 	 * - 20 GatherPress event posts with random term assignments
 	 *
 	 * All demo items are marked with '_demo_data' meta for easy cleanup.
+	 * Uses GatherPress's Event class to properly initialize event dates.
 	 *
 	 * @since 0.1.0
 	 * @return void
@@ -620,6 +621,23 @@ class Plugin {
 			if ( ! is_wp_error( $post_id ) ) {
 				// Mark as demo data.
 				update_post_meta( $post_id, '_demo_data', '1' );
+
+				// Initialize GatherPress event data using the Event class.
+				if ( class_exists( '\GatherPress\Core\Event' ) ) {
+					$event = new \GatherPress\Core\Event( $post_id );
+					
+					// Set event date/time in GatherPress format.
+					$datetime_start = $date . ' 19:00:00';
+					$datetime_end   = $date . ' 22:00:00';
+					
+					$event->save_datetimes(
+						array(
+							'datetime_start' => $datetime_start,
+							'datetime_end'   => $datetime_end,
+							'timezone'       => 'UTC',
+						)
+					);
+				}
 
 				// Assign production term by term_id, not as array.
 				if ( ! empty( $production_ids ) ) {
