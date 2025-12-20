@@ -322,7 +322,7 @@ function Edit({
       })
     }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("div", {
       ...(0,_wordpress_block_editor__WEBPACK_IMPORTED_MODULE_1__.useBlockProps)(),
-      children: Object.keys(filteredData).length > 0 ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.Fragment, {
+      children: Object.keys(filteredData).length > 0 && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.Fragment, {
         children: Object.keys(filteredData).map(yearKey => {
           const yearData = filteredData[yearKey];
           return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("div", {
@@ -348,12 +348,6 @@ function Edit({
             })]
           }, yearKey);
         })
-      }) :
-      /*#__PURE__*/
-      // Empty state when no matching references
-      (0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("p", {
-        className: "no-references",
-        children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('No references found matching the selected criteria.', 'gatherpress-references')
       })
     })]
   });

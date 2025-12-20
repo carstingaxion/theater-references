@@ -380,7 +380,7 @@ export default function Edit( { attributes, setAttributes } ) {
 
 			{ /* Block content preview */ }
 			<div { ...useBlockProps() }>
-				{ Object.keys( filteredData ).length > 0 ? (
+				{ Object.keys( filteredData ).length > 0 && (
 					<>
 						{ /* Loop through years in placeholder data */ }
 						{ Object.keys( filteredData ).map( ( yearKey ) => {
@@ -433,14 +433,6 @@ export default function Edit( { attributes, setAttributes } ) {
 							);
 						} ) }
 					</>
-				) : (
-					// Empty state when no matching references
-					<p className="no-references">
-						{ __(
-							'No references found matching the selected criteria.',
-							'gatherpress-references'
-						) }
-					</p>
 				) }
 			</div>
 		</>

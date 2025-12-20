@@ -749,7 +749,7 @@ $is_specific_type = ( $type !== 'all' );
 					<h<?php echo esc_attr( (string) $secondary_heading_level ); ?> class="wp-block-heading references-type"><?php echo esc_html( $type_labels[ $ref_type ] ); ?></h<?php echo esc_attr( (string) $secondary_heading_level ); ?>>
 				<?php } ?>
 				
-				<ul class="references-list wp-block-list">
+				<ul class="wp-block-list references-list">
 					<?php foreach ( $items as $item ) { ?>
 						<li><?php echo esc_html( $item ); ?></li>
 					<?php } ?>
