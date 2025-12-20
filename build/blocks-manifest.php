@@ -19,8 +19,8 @@ return array(
 				'default' => 0
 			),
 			'year' => array(
-				'type' => 'string',
-				'default' => ''
+				'type' => 'number',
+				'default' => 0
 			),
 			'referenceType' => array(
 				'type' => 'string',

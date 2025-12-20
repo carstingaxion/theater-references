@@ -8,7 +8,7 @@
   \************************/
 (module) {
 
-module.exports = /*#__PURE__*/JSON.parse('{"$schema":"https://schemas.wp.org/trunk/block.json","apiVersion":3,"name":"gatherpress/references","version":"0.1.0","title":"GatherPress References","category":"widgets","icon":"awards","description":"Display event references including clients, festivals, and awards.","example":{},"attributes":{"productionId":{"type":"number","default":0},"year":{"type":"string","default":""},"referenceType":{"type":"string","default":"all","enum":["all","ref_client","ref_festival","ref_award"]},"headingLevel":{"type":"number","default":2},"yearSortOrder":{"type":"string","default":"desc","enum":["asc","desc"]},"metadata":{"type":"object","default":{"name":"GatherPress References"}}},"supports":{"html":false,"color":{"background":true,"text":true,"link":true,"gradients":true,"__experimentalDefaultControls":{"background":true,"text":true}},"spacing":{"margin":true,"padding":true,"blockGap":true,"__experimentalDefaultControls":{"margin":true,"padding":true,"blockGap":true}},"typography":{"fontSize":true,"lineHeight":true,"fontFamily":true,"fontWeight":true,"fontStyle":true,"textTransform":true,"letterSpacing":true,"__experimentalDefaultControls":{"fontSize":true,"fontFamily":true}},"__experimentalBorder":{"color":true,"radius":true,"style":true,"width":true,"__experimentalDefaultControls":{"color":true,"radius":true}}},"style":"file:./style-index.css","textdomain":"gatherpress-references","editorScript":"file:./index.js","editorStyle":"file:./index.css","render":"file:./render.php"}');
+module.exports = /*#__PURE__*/JSON.parse('{"$schema":"https://schemas.wp.org/trunk/block.json","apiVersion":3,"name":"gatherpress/references","version":"0.1.0","title":"GatherPress References","category":"widgets","icon":"awards","description":"Display event references including clients, festivals, and awards.","example":{},"attributes":{"productionId":{"type":"number","default":0},"year":{"type":"number","default":0},"referenceType":{"type":"string","default":"all","enum":["all","ref_client","ref_festival","ref_award"]},"headingLevel":{"type":"number","default":2},"yearSortOrder":{"type":"string","default":"desc","enum":["asc","desc"]},"metadata":{"type":"object","default":{"name":"GatherPress References"}}},"supports":{"html":false,"color":{"background":true,"text":true,"link":true,"gradients":true,"__experimentalDefaultControls":{"background":true,"text":true}},"spacing":{"margin":true,"padding":true,"blockGap":true,"__experimentalDefaultControls":{"margin":true,"padding":true,"blockGap":true}},"typography":{"fontSize":true,"lineHeight":true,"fontFamily":true,"fontWeight":true,"fontStyle":true,"textTransform":true,"letterSpacing":true,"__experimentalDefaultControls":{"fontSize":true,"fontFamily":true}},"__experimentalBorder":{"color":true,"radius":true,"style":true,"width":true,"__experimentalDefaultControls":{"color":true,"radius":true}}},"style":"file:./style-index.css","textdomain":"gatherpress-references","editorScript":"file:./index.js","editorStyle":"file:./index.css","render":"file:./render.php"}');
 
 /***/ },
 
@@ -125,8 +125,8 @@ function Edit({
       }
 
       // Add year if specified
-      if (year) {
-        parts.push(year);
+      if (year > 0) {
+        parts.push(year.toString());
       }
 
       // Add reference type if not "all"
@@ -200,10 +200,10 @@ function Edit({
   const getPlaceholderData = () => {
     // Determine which year(s) to show in preview
     const currentYear = new Date().getFullYear();
-    const displayYear = year ? parseInt(year) : currentYear;
+    const displayYear = year > 0 ? year : currentYear;
 
     // If year is specified, show only that year
-    if (year) {
+    if (year > 0) {
       return {
         [displayYear]: {
           ref_client: [(0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Royal Theater London', 'gatherpress-references'), (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Vienna Burgtheater', 'gatherpress-references')].sort(),
@@ -272,7 +272,7 @@ function Edit({
     const years = Object.keys(filteredData);
 
     // Don't sort if a specific year is selected
-    if (year) {
+    if (year > 0) {
       return years;
     }
 
@@ -289,7 +289,7 @@ function Edit({
   const sortedYears = getSortedYears();
 
   // Determine if year sort control should be shown
-  const showYearSortControl = !year; // Only show when no specific year selected
+  const showYearSortControl = year === 0; // Only show when no specific year selected
 
   // Determine if we should show type headings (only when showing all types)
   const showTypeHeadings = referenceType === 'all';
@@ -317,12 +317,18 @@ function Edit({
           help: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Select a specific production or leave as auto-detect', 'gatherpress-references')
         }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.TextControl, {
           label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Year', 'gatherpress-references'),
-          value: year,
-          onChange: value => setAttributes({
-            year: value
-          }),
-          help: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Filter by specific year (e.g., 2017). Leave empty for all years.', 'gatherpress-references'),
-          type: "number"
+          value: year > 0 ? year.toString() : '',
+          onChange: value => {
+            const numValue = parseInt(value);
+            setAttributes({
+              year: isNaN(numValue) ? 0 : numValue
+            });
+          },
+          type: "number",
+          min: "0",
+          max: new Date().getFullYear() + 1,
+          placeholder: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Leave empty for all years', 'gatherpress-references'),
+          help: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Enter a specific year (e.g., 2024) or leave empty for all years', 'gatherpress-references')
         }), showYearSortControl && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.ToggleControl, {
           label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)(yearSortOrder === 'asc' ? 'Sort Years Oldest First' : 'Sort Years Newest First', 'gatherpress-references'),
           checked: yearSortOrder === 'asc',

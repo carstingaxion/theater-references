@@ -16,8 +16,8 @@ import {
 	PanelBody,
 	SelectControl,
 	TextControl,
-	RangeControl,
 	ToggleControl,
+	RangeControl,
 } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { useEffect } from '@wordpress/element';
@@ -91,8 +91,8 @@ export default function Edit( { attributes, setAttributes } ) {
 			}
 
 			// Add year if specified
-			if ( year ) {
-				parts.push( year );
+			if ( year > 0 ) {
+				parts.push( year.toString() );
 			}
 
 			// Add reference type if not "all"
@@ -175,10 +175,10 @@ export default function Edit( { attributes, setAttributes } ) {
 	const getPlaceholderData = () => {
 		// Determine which year(s) to show in preview
 		const currentYear = new Date().getFullYear();
-		const displayYear = year ? parseInt( year ) : currentYear;
+		const displayYear = year > 0 ? year : currentYear;
 
 		// If year is specified, show only that year
-		if ( year ) {
+		if ( year > 0 ) {
 			return {
 				[ displayYear ]: {
 					ref_client: [
@@ -277,7 +277,7 @@ export default function Edit( { attributes, setAttributes } ) {
 		const years = Object.keys( filteredData );
 
 		// Don't sort if a specific year is selected
-		if ( year ) {
+		if ( year > 0 ) {
 			return years;
 		}
 
@@ -296,7 +296,7 @@ export default function Edit( { attributes, setAttributes } ) {
 	const sortedYears = getSortedYears();
 
 	// Determine if year sort control should be shown
-	const showYearSortControl = ! year; // Only show when no specific year selected
+	const showYearSortControl = year === 0; // Only show when no specific year selected
 
 	// Determine if we should show type headings (only when showing all types)
 	const showTypeHeadings = referenceType === 'all';
@@ -339,18 +339,27 @@ export default function Edit( { attributes, setAttributes } ) {
 						) }
 					/>
 
-					{ /* Year filter input */ }
+					{ /* Year filter text input */ }
 					<TextControl
 						label={ __( 'Year', 'gatherpress-references' ) }
-						value={ year }
-						onChange={ ( value ) =>
-							setAttributes( { year: value } )
-						}
-						help={ __(
-							'Filter by specific year (e.g., 2017). Leave empty for all years.',
+						value={ year > 0 ? year.toString() : '' }
+						onChange={ ( value ) => {
+							const numValue = parseInt( value );
+							setAttributes( {
+								year: isNaN( numValue ) ? 0 : numValue,
+							} );
+						} }
+						type="number"
+						min="0"
+						max={ new Date().getFullYear() + 1 }
+						placeholder={ __(
+							'Leave empty for all years',
 							'gatherpress-references'
 						) }
-						type="number"
+						help={ __(
+							'Enter a specific year (e.g., 2024) or leave empty for all years',
+							'gatherpress-references'
+						) }
 					/>
 
 					{ /* Year sort order toggle (only when no specific year) */ }

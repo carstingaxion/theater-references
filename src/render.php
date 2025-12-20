@@ -116,12 +116,12 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 * Uses MD5 hash of serialized parameters for consistency.
 		 *
 		 * @since 0.1.0
-		 * @param int    $production_id Production term ID.
-		 * @param string $year          Year filter.
+		 * @param int $production_id Production term ID.
+		 * @param int $year          Year filter.
 		 * @param string $type          Reference type filter.
 		 * @return string Cache key for transient storage.
 		 */
-		private function get_cache_key( int $production_id, string $year, string $type ): string {
+		private function get_cache_key( int $production_id, int $year, string $type ): string {
 			return $this->cache_prefix . md5( maybe_serialize( array( $production_id, $year, $type ) ) );
 		}
 
@@ -144,12 +144,12 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 *
 		 * @since 0.1.0
 		 * @param int    $production_id Optional. Filter by production term ID. Default 0 (all).
-		 * @param string $year          Optional. Filter by specific year (e.g., '2024'). Default '' (all).
+		 * @param int    $year          Optional. Filter by specific year (e.g., 2024). Default 0 (all).
 		 * @param string $type          Optional. Filter by reference type or 'all'. Default 'all'.
 		 * @param string $sort_order    Optional. Year sort order: 'asc' or 'desc'. Default 'desc'.
 		 * @return array<string, array<string, array<int, string>>> Nested array of references organized by year and type.
 		 */
-		public function get_references( int $production_id = 0, string $year = '', string $type = 'all', string $sort_order = 'desc' ): array {
+		public function get_references( int $production_id = 0, int $year = 0, string $type = 'all', string $sort_order = 'desc' ): array {
 			// Try to get cached data first.
 			$cached = $this->get_cached_references( $production_id, $year, $type );
 			if ( false !== $cached ) {
@@ -178,11 +178,11 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 *
 		 * @since 0.1.0
 		 * @param int    $production_id Production term ID.
-		 * @param string $year          Year filter.
+		 * @param int    $year          Year filter.
 		 * @param string $type          Reference type filter.
 		 * @return array<string, array<string, array<int, string>>>|false Cached data or false if not found.
 		 */
-		private function get_cached_references( int $production_id, string $year, string $type ) {
+		private function get_cached_references( int $production_id, int $year, string $type ) {
 			$cache_key = $this->get_cache_key( $production_id, $year, $type );
 			$cached    = get_transient( $cache_key );
 			
@@ -204,11 +204,11 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 * @since 0.1.0
 		 * @param array<string, array<string, array<int, string>>> $references    References data to cache.
 		 * @param int                                              $production_id Production term ID.
-		 * @param string                                           $year          Year filter.
+		 * @param int                                              $year          Year filter.
 		 * @param string                                           $type          Reference type filter.
 		 * @return void
 		 */
-		private function cache_references( array $references, int $production_id, string $year, string $type ): void {
+		private function cache_references( array $references, int $production_id, int $year, string $type ): void {
 			$cache_key = $this->get_cache_key( $production_id, $year, $type );
 			set_transient( $cache_key, $references, $this->cache_expiration );
 		}
@@ -220,11 +220,11 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 *
 		 * @since 0.1.0
 		 * @param int    $production_id Production term ID.
-		 * @param string $year          Year filter.
+		 * @param int    $year          Year filter.
 		 * @param string $type          Reference type filter.
 		 * @return array<string, mixed> WP_Query arguments.
 		 */
-		private function build_query_args( int $production_id, string $year, string $type ): array {
+		private function build_query_args( int $production_id, int $year, string $type ): array {
 			// Start with base arguments.
 			$args = $this->get_base_query_args();
 
@@ -235,9 +235,9 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 			}
 
 			// Apply year filter if specified.
-			if ( ! empty( $year ) ) {
+			if ( $year > 0 ) {
 				$args['date_query'] = array(
-					array( 'year' => intval( $year ) ),
+					array( 'year' => $year ),
 				);
 			}
 
@@ -270,7 +270,7 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 			 *
 			 * @param array<string, mixed> $args          WP_Query arguments array.
 			 * @param int                  $production_id Production term ID filter.
-			 * @param string               $year          Year filter.
+			 * @param int                  $year          Year filter.
 			 * @param string               $type          Reference type filter.
 			 */
 			return apply_filters( 'gatherpress_references_query_args', $args, $production_id, $year, $type );
@@ -767,14 +767,14 @@ $renderer = Renderer::get_instance();
  *
  * @var array{
  *   productionId?: int,
- *   year?: string,
+ *   year?: int,
  *   referenceType?: string,
  *   headingLevel?: int,
  *   yearSortOrder?: string
  * } $attributes
  */
 $production_id  = isset( $attributes['productionId'] ) ? intval( $attributes['productionId'] ) : 0;
-$year           = isset( $attributes['year'] ) ? sanitize_text_field( $attributes['year'] ) : '';
+$year           = isset( $attributes['year'] ) ? intval( $attributes['year'] ) : 0;
 $type           = isset( $attributes['referenceType'] ) ? sanitize_text_field( $attributes['referenceType'] ) : 'all';
 $heading_level  = isset( $attributes['headingLevel'] ) ? intval( $attributes['headingLevel'] ) : 2;
 $year_sort      = isset( $attributes['yearSortOrder'] ) ? sanitize_text_field( $attributes['yearSortOrder'] ) : 'desc';

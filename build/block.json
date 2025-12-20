@@ -14,8 +14,8 @@
       "default": 0
     },
     "year": {
-      "type": "string",
-      "default": ""
+      "type": "number",
+      "default": 0
     },
     "referenceType": {
       "type": "string",
