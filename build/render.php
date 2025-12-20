@@ -110,6 +110,23 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		}
 
 		/**
+		 * Generate cache key based on parameters
+		 *
+		 * Creates a unique, deterministic cache key from the given parameters.
+		 * Uses MD5 hash of serialized parameters for consistency.
+		 *
+		 * @since 0.1.0
+		 * @param int    $production_id Production term ID.
+		 * @param string $year          Year filter.
+		 * @param string $type          Reference type filter.
+		 * @param string $sort_order    Year sort order.
+		 * @return string Cache key for transient storage.
+		 */
+		private function get_cache_key( int $production_id, string $year, string $type, string $sort_order ): string {
+			return $this->cache_prefix . md5( maybe_serialize( array( $production_id, $year, $type, $sort_order ) ) );
+		}
+
+		/**
 		 * Get references organized by year and type
 		 *
 		 * Retrieves all matching GatherPress events and organizes their taxonomy terms
@@ -165,7 +182,7 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 * @return array<string, array<string, array<int, string>>>|false Cached data or false if not found.
 		 */
 		private function get_cached_references( int $production_id, string $year, string $type, string $sort_order ) {
-			$cache_key = $this->cache_prefix . md5( maybe_serialize( array( $production_id, $year, $type, $sort_order ) ) );
+			$cache_key = $this->get_cache_key( $production_id, $year, $type, $sort_order );
 			$cached    = get_transient( $cache_key );
 			
 			if ( false !== $cached && is_array( $cached ) && ! empty( $cached ) ) {
@@ -192,7 +209,7 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 * @return void
 		 */
 		private function cache_references( array $references, int $production_id, string $year, string $type, string $sort_order ): void {
-			$cache_key = $this->cache_prefix . md5( maybe_serialize( array( $production_id, $year, $type, $sort_order ) ) );
+			$cache_key = $this->get_cache_key( $production_id, $year, $type, $sort_order );
 			set_transient( $cache_key, $references, $this->cache_expiration );
 		}
 
