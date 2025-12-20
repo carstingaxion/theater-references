@@ -291,6 +291,8 @@ function Edit({
   // Determine if year sort control should be shown
   const showYearSortControl = !year; // Only show when no specific year selected
 
+  // Determine if we should show type headings (only when showing all types)
+  const showTypeHeadings = referenceType === 'all';
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.Fragment, {
     children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(_wordpress_block_editor__WEBPACK_IMPORTED_MODULE_1__.InspectorControls, {
       children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.PanelBody, {
@@ -322,7 +324,7 @@ function Edit({
           help: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Filter by specific year (e.g., 2017). Leave empty for all years.', 'gatherpress-references'),
           type: "number"
         }), showYearSortControl && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.ToggleControl, {
-          label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Sort Years Oldest First', 'gatherpress-references'),
+          label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)(yearSortOrder === 'asc' ? 'Sort Years Oldest First' : 'Sort Years Newest First', 'gatherpress-references'),
           checked: yearSortOrder === 'asc',
           onChange: value => setAttributes({
             yearSortOrder: value ? 'asc' : 'desc'
@@ -375,7 +377,7 @@ function Edit({
                 return null;
               }
               return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("div", {
-                children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(TypeHeading, {
+                children: [showTypeHeadings && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(TypeHeading, {
                   className: "references-type",
                   children: typeLabels[typeKey]
                 }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("ul", {

@@ -357,7 +357,7 @@ export default function Edit( { attributes, setAttributes } ) {
 					{ showYearSortControl && (
 						<ToggleControl
 							label={ __(
-								'Sort Years Oldest First',
+								( yearSortOrder === 'asc' ) ? 'Sort Years Oldest First' : 'Sort Years Newest First',
 								'gatherpress-references'
 							) }
 							checked={ yearSortOrder === 'asc' }

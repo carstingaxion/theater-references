@@ -119,11 +119,10 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 * @param int    $production_id Production term ID.
 		 * @param string $year          Year filter.
 		 * @param string $type          Reference type filter.
-		 * @param string $sort_order    Year sort order.
 		 * @return string Cache key for transient storage.
 		 */
-		private function get_cache_key( int $production_id, string $year, string $type, string $sort_order ): string {
-			return $this->cache_prefix . md5( maybe_serialize( array( $production_id, $year, $type, $sort_order ) ) );
+		private function get_cache_key( int $production_id, string $year, string $type ): string {
+			return $this->cache_prefix . md5( maybe_serialize( array( $production_id, $year, $type ) ) );
 		}
 
 		/**
@@ -131,6 +130,7 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 *
 		 * Retrieves all matching GatherPress events and organizes their taxonomy terms
 		 * by year and reference type. Results are cached for performance.
+		 * Year sorting is applied after retrieval based on the sort_order parameter.
 		 *
 		 * Example return structure:
 		 * array(
@@ -151,9 +151,10 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 */
 		public function get_references( int $production_id = 0, string $year = '', string $type = 'all', string $sort_order = 'desc' ): array {
 			// Try to get cached data first.
-			$cached = $this->get_cached_references( $production_id, $year, $type, $sort_order );
+			$cached = $this->get_cached_references( $production_id, $year, $type );
 			if ( false !== $cached ) {
-				return $cached;
+				// Sort the cached data based on requested order.
+				return $this->sort_years( $cached, $sort_order );
 			}
 
 			// Build and execute query.
@@ -161,14 +162,15 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 			$query = new \WP_Query( $args );
 			
 			// Organize results.
-			$references = $this->organize_query_results( $query, $sort_order );
+			$references = $this->organize_query_results( $query );
 
 			// Cache and return only if we have actual data.
 			if ( ! empty( $references ) ) {
-				$this->cache_references( $references, $production_id, $year, $type, $sort_order );
+				$this->cache_references( $references, $production_id, $year, $type );
 			}
 			
-			return $references;
+			// Sort and return.
+			return $this->sort_years( $references, $sort_order );
 		}
 
 		/**
@@ -178,11 +180,10 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 * @param int    $production_id Production term ID.
 		 * @param string $year          Year filter.
 		 * @param string $type          Reference type filter.
-		 * @param string $sort_order    Year sort order.
 		 * @return array<string, array<string, array<int, string>>>|false Cached data or false if not found.
 		 */
-		private function get_cached_references( int $production_id, string $year, string $type, string $sort_order ) {
-			$cache_key = $this->get_cache_key( $production_id, $year, $type, $sort_order );
+		private function get_cached_references( int $production_id, string $year, string $type ) {
+			$cache_key = $this->get_cache_key( $production_id, $year, $type );
 			$cached    = get_transient( $cache_key );
 			
 			if ( false !== $cached && is_array( $cached ) && ! empty( $cached ) ) {
@@ -205,11 +206,10 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 * @param int                                              $production_id Production term ID.
 		 * @param string                                           $year          Year filter.
 		 * @param string                                           $type          Reference type filter.
-		 * @param string                                           $sort_order    Year sort order.
 		 * @return void
 		 */
-		private function cache_references( array $references, int $production_id, string $year, string $type, string $sort_order ): void {
-			$cache_key = $this->get_cache_key( $production_id, $year, $type, $sort_order );
+		private function cache_references( array $references, int $production_id, string $year, string $type ): void {
+			$cache_key = $this->get_cache_key( $production_id, $year, $type );
 			set_transient( $cache_key, $references, $this->cache_expiration );
 		}
 
@@ -379,14 +379,12 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 * Organize query results
 		 *
 		 * Processes WP_Query results and organizes them by year and type.
-		 * Applies year sorting based on sort_order parameter.
 		 *
 		 * @since 0.1.0
-		 * @param \WP_Query $query      Query object with results.
-		 * @param string    $sort_order Year sort order: 'asc' or 'desc'.
+		 * @param \WP_Query $query Query object with results.
 		 * @return array<string, array<string, array<int, string>>> Organized references.
 		 */
-		private function organize_query_results( \WP_Query $query, string $sort_order = 'desc' ): array {
+		private function organize_query_results( \WP_Query $query ): array {
 			if ( empty( $query->posts ) ) {
 				return array();
 			}
@@ -408,8 +406,7 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 			// Organize by year and type.
 			$references = $this->group_terms_by_year( $post_ids, $post_dates, $post_terms, $display_taxonomies );
 
-			// Sort years based on sort_order.
-			return $this->sort_years( $references, $sort_order );
+			return $references;
 		}
 
 		/**
@@ -810,7 +807,7 @@ if ( $production_id === 0 && is_tax( 'gatherpress-productions' ) ) {
 	}
 }
 
-// Fetch organized reference data with year sorting.
+// Fetch organized reference data with year sorting applied after retrieval.
 $references  = $renderer->get_references( $production_id, $year, $type, $year_sort );
 $type_labels = $renderer->get_type_labels();
 
