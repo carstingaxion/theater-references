@@ -298,6 +298,9 @@ export default function Edit( { attributes, setAttributes } ) {
 	// Determine if year sort control should be shown
 	const showYearSortControl = ! year; // Only show when no specific year selected
 
+	// Determine if we should show type headings (only when showing all types)
+	const showTypeHeadings = referenceType === 'all';
+
 	return (
 		<>
 			{ /* Inspector Controls - Sidebar settings panel */ }
@@ -457,14 +460,16 @@ export default function Edit( { attributes, setAttributes } ) {
 
 											return (
 												<div key={ typeKey }>
-													{ /* Type heading */ }
-													<TypeHeading className="references-type">
-														{
-															typeLabels[
-																typeKey
-															]
-														}
-													</TypeHeading>
+													{ /* Type heading - only show when displaying all types */ }
+													{ showTypeHeadings && (
+														<TypeHeading className="references-type">
+															{
+																typeLabels[
+																	typeKey
+																]
+															}
+														</TypeHeading>
+													) }
 
 													{ /* Reference list */ }
 													<ul className="references-list">
