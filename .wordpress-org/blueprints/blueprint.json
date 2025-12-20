@@ -16,7 +16,7 @@
       "step": "setSiteOptions",
       "options": {
         "blogname": "GatherPress References",
-        "blogdescription": "Powering GatherPress Communities with References.",
+        "blogdescription": "Enhancing GatherPress Events with References.",
         "users_can_register": 1,
         "permalink_structure": "/%year%/%monthnum%/%postname%/"
       }

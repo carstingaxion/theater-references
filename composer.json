@@ -1,6 +1,6 @@
 {
     "name": "carstingaxion/gatherpress-references",
-    "description": "Display production references including clients, festivals, and awards in a structured, chronological format.",
+    "description": "Display production references including clients, festivals and awards in a structured, chronological format.",
     "license": "GPL-2.0+",
     "type": "wordpress-plugin",
     "keywords": [

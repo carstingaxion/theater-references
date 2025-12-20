@@ -10,9 +10,7 @@
 
 [![Playground Demo Link](https://img.shields.io/badge/WordPress_Playground-blue?logo=wordpress&logoColor=%23fff&labelColor=%233858e9&color=%233858e9)](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/carstingaxion/gatherpress-references/main/.wordpress-org/blueprints/blueprint.json)
 
-Display production references including clients, festivals, and awards in a structured, chronological format.
-
-![](assets/screenshot-1.png)
+Display production references including clients, festivals and awards in a structured, chronological format.
 
 ## Description
 
@@ -20,32 +18,7 @@ The **GatherPress References** block displays a generated list of references fro
 
 This plugin requires the GatherPress plugin to be installed and activated. It works with GatherPress events (`gatherpress_event` post type) to provide specialized reference management for e.g. theater productions.
 
-### Key features
-
-- Seamlessly integrates with GatherPress events
-- Uses custom taxonomies for efficient data management and querying
-- Automatic context detection when used within a production page
-- Filter by specific production (by ID)
-- Filter by year for annual reviews
-- Filter by reference type (clients, festivals, awards, or all)
-- Nested list output organized by year and reference type
-- Native WordPress term management UI
-- Better performance through taxonomy-based queries
-
 Perfect for creating dynamic reference pages, production portfolios, and annual summaries of achievements.
-
----
-
-## Installation
-
-1. **Install and activate GatherPress plugin first** (required dependency)
-2. Upload the plugin files to the `/wp-content/plugins/gatherpress-references` directory.
-3. Activate the plugin through the **Plugins** screen in WordPress.
-4. The plugin will create three custom taxonomies: **Clients**, **Festivals**, and **Awards**.
-5. Add terms to these taxonomies via the **Events** admin menu.
-6. Assign taxonomy terms to event posts.
-7. Insert the block into any page, post, or production content.
-8. Use the block settings to filter by production, year, or reference type.
 
 ---
 
@@ -62,6 +35,8 @@ Perfect for creating dynamic reference pages, production portfolios, and annual 
 
 **Result:** Displays all clients, festivals, and awards for that production across all years, organized chronologically.
 
+![Show the editing Interface for the block for: All References for a Specific Production](assets/screenshot-1.png)
+
 ---
 
 ### Example 2: Annual Report Page
@@ -70,10 +45,12 @@ Perfect for creating dynamic reference pages, production portfolios, and annual 
 
 **Settings:**
 - Production: Auto-detect (or all)
-- Year: 2024
-- Reference Type: All Types  
+- Year: Enter specific year (e.g., 2024)
+- Reference Type: All Types
 
 **Result:** Shows all references from 2024 regardless of production, grouped by type.
+
+![Shows the editing Interface for the block for: All references from 2024 regardless of production, grouped by type.](assets/screenshot-2.png)
 
 ---
 
@@ -88,6 +65,8 @@ Perfect for creating dynamic reference pages, production portfolios, and annual 
 
 **Result:** Lists all awards received across all productions and years, organized by year.
 
+![Shows the editing Interface for the block for: All awards received across all productions and years, organized by year.](assets/screenshot-3.png)
+
 ---
 
 ### Example 4: Production Awards for Specific Year
@@ -95,11 +74,13 @@ Perfect for creating dynamic reference pages, production portfolios, and annual 
 **Use Case:** Show what a production achieved in a particular year  
 
 **Settings:**
-- Production: Select specific production
-- Year: 2023
-- Reference Type: Awards  
+- Production: Select specific production (e.g., *Macbeth*)
+- Year: Enter specific year (e.g., 2023)
+- Reference Type: Awards
 
-**Result:** Displays only awards that specific production received in 2023.
+**Result:** Displays only awards that Macbeth received in 2023.
+
+![Shows the editing Interface for the block for: Displays only awards that Macbeth received in 2023.](assets/screenshot-4.png)
 
 ---
 
@@ -113,6 +94,8 @@ Perfect for creating dynamic reference pages, production portfolios, and annual 
 - Reference Type: Festivals  
 
 **Result:** Complete chronological list of festival participations across all productions.
+
+![Shows the editing Interface for the block for: A Complete chronological list of festival participations across all productions.](assets/screenshot-5.png)
 
 ---
 
@@ -140,6 +123,19 @@ This matrix shows all possible filter combinations and their expected behaviors:
 
 ---
 
+## Installation
+
+1. **Install and activate GatherPress plugin first** (required dependency)
+2. Upload the plugin files to the `/wp-content/plugins/gatherpress-references` directory.
+3. Activate the plugin through the **Plugins** screen in WordPress.
+4. The plugin will register three custom taxonomies: **Clients**, **Festivals**, and **Awards**.
+5. Add terms to these taxonomies via the **Events** admin menu.
+6. Assign taxonomy terms to event posts.
+7. Insert the block into any post or template.
+8. Use the block settings to filter by production, year, or reference type.
+
+---
+
 ## Frequently Asked Questions
 
 ### Does this plugin work without GatherPress?
@@ -148,22 +144,13 @@ No, this plugin is specifically designed as a GatherPress add-on and requires Ga
 
 ### What taxonomies does this plugin create?
 
-The plugin creates three custom taxonomies associated with the GatherPress `gatherpress_event` post type:
+The plugin registers four custom taxonomies associated with the GatherPress `gatherpress_event` post type:
+- `gatherpress-productions`: Hierarchical taxonomy for productions
 - `_gatherpress-client`: Clients
 - `_gatherpress-festival`: Festival participations
 - `_gatherpress-award`: Awards received
 
 These work alongside GatherPress's existing event taxonomies.
-
-### Why use taxonomies instead of post meta?
-
-Taxonomies offer several advantages:
-- Better query performance for filtering
-- Reusable terms across multiple events
-- Native WordPress UI for term management
-- More semantic data structure
-- Better for faceted search and filtering
-- Seamless integration with GatherPress event queries
 
 ### Can I show only awards for a specific production? =
 
@@ -171,7 +158,7 @@ Yes. Use the block settings to select a specific production and set the type fil
 
 ### Does it work automatically on production pages?
 
-Yes. When placed on a production archive or single page, the block automatically detects the production context and shows only its references.
+Yes. When placed on a production term archive, the block automatically detects the production context and shows only its references.
 
 ### How do I customize the block's appearance?
 
@@ -188,13 +175,16 @@ You can also use custom CSS:
 - `.references-year` - Year headings
 - `.references-type` - Type headings
 - `.references-list` - Reference lists
-- `.no-references` - Empty state message
 
 ### Can I change the heading levels?
 
 Yes. The block includes a **Year Heading Level** control in the block settings. You can set year headings to **H1–H5**, and type headings will automatically be one level smaller.
 
-### How do I add demo data for testing?
+### Can I change the year sort order?
+
+Yes. The block includes a **Sort Years** toggle control. By default, years are sorted newest first (descending). Toggle it on to sort from oldest to newest (ascending). This control only appears when showing all years (no specific year filter).
+
+= How do I add demo data for testing? =
 
 Go to **Events → Demo Data** in the WordPress admin and click **Generate Demo Data** to create:
 
@@ -216,10 +206,11 @@ No, this plugin only adds optional taxonomies to GatherPress events. Your existi
 
 ## Screenshots
 
-1. Block editor view with inspector controls
-2. Frontend display showing references grouped by year
-3. Filtered view showing only awards
-4. Term management interface for clients, festivals, and awards
+1. Show All References for a Specific Production
+2. Annual Report Page
+3. Awards Page
+4. Production Awards for Specific Year
+5. Festival Participation History
 
 ---
 
@@ -246,17 +237,22 @@ register_taxonomy('_gatherpress-award', 'gatherpress_event', [...]);
     "default": 0
   },
   "year": {
-    "type": "string",
-    "default": ""
+    "type": "number",
+    "default": 0
   },
   "referenceType": {
     "type": "string",
     "default": "all",
-    "enum": ["all", "_gatherpress-client", "_gatherpress-festival", "_gatherpress-award"]
+    "enum": ["all", "ref_client", "ref_festival", "ref_award"]
   },
   "headingLevel": {
     "type": "number",
     "default": 2
+  },
+  "yearSortOrder": {
+    "type": "string",
+    "default": "desc",
+    "enum": ["asc", "desc"]
   }
 }
 ```
@@ -440,21 +436,6 @@ add_filter( 'gatherpress_references_type_labels', function( $labels ) {
 4. **No Found Rows**: Set `'no_found_rows' => true` to skip pagination count
 5. **Term Cache**: Enable term caching with `'update_post_term_cache' => true`
 
-### Debug Mode
-
-Enable debug output in `render.php`:
-
-```php
-private bool $debug = true; // Set to true
-```
-
-This will output:
-- Filter parameters received
-- Query arguments before execution
-- SQL query generated
-- Number of posts found
-- Term assignment details
-- Final data structure
 
 ### Theme.json Integration
 
@@ -498,14 +479,14 @@ The block fully supports WordPress theme.json:
 
 ### 0.1.0
 * Initial release
-* Custom taxonomies for clients, festivals, and awards
+* Custom taxonomies for clients, festivals and awards
 * Support for production filtering
 * Support for year filtering
 * Support for reference type filtering
+* Year sort order control (ascending/descending)
 * Automatic production context detection
 * Demo data generator
 * Comprehensive theme.json support
 * Optimized caching system
-* Debug mode for development
 * Dynamic heading levels
 * Filter hooks for extensibility
