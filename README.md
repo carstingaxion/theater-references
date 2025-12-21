@@ -33,7 +33,7 @@ The default configuration uses theater productions with clients, festivals, and 
 <details>
 <summary>Example 1: <strong>Show All References for a Specific Reference Term</strong></summary>
 
-**Use Case:** Production detail page showing all achievements  
+#### Use Case: **Production detail page showing all achievements**
 
 **Settings:**
 - Reference Term: Select specific term (e.g., *Hamlet* production)
@@ -44,12 +44,14 @@ The default configuration uses theater productions with clients, festivals, and 
 
 ![Show the editing Interface for the block for: All References for a Specific Reference Term](assets/screenshot-1.png)
 
+---
+
 </details>
 
 <details>
 <summary>Example 2: <strong>Annual Report Page</strong></summary>
 
-**Use Case:** Yearly summary of all activities  
+#### Use Case: **Yearly summary of all activities**
 
 **Settings:**
 - Reference Term: All (or auto-detect)
@@ -60,12 +62,14 @@ The default configuration uses theater productions with clients, festivals, and 
 
 ![Shows the editing Interface for the block for: All references from 2024 regardless of reference term, grouped by type.](assets/screenshot-2.png)
 
+---
+
 </details>
 
 <details>
 <summary>Example 3: <strong>Awards Page</strong></summary>
 
-**Use Case:** Dedicated page highlighting awards won  
+#### Use Case: **Dedicated page highlighting awards won**
 
 **Settings:**
 - Reference Term: All (or auto-detect)
@@ -76,12 +80,14 @@ The default configuration uses theater productions with clients, festivals, and 
 
 ![Shows the editing Interface for the block for: All awards received across all reference terms and years, organized by year.](assets/screenshot-3.png)
 
+---
+
 </details>
 
 <details>
 <summary>Example 4: <strong>Production Awards for Specific Year</strong></summary>
 
-**Use Case:** Show what a production achieved in a particular year  
+#### Use Case: **Show what a production achieved in a particular year**
 
 **Settings:**
 - Reference Term: Select specific term (e.g., *Macbeth* production)
@@ -92,12 +98,14 @@ The default configuration uses theater productions with clients, festivals, and 
 
 ![Shows the editing Interface for the block for: Displays only awards that Macbeth received in 2023.](assets/screenshot-4.png)
 
+---
+
 </details>
 
 <details>
 <summary>Example 5: <strong>Festival Participation History</strong></summary>
 
-**Use Case:** Portfolio page showing festival presence  
+#### Use Case: **Portfolio page showing festival presence**
 
 **Settings:**
 - Reference Term: All (or auto-detect)
@@ -107,6 +115,8 @@ The default configuration uses theater productions with clients, festivals, and 
 **Result:** Complete chronological list of festival participations across all reference terms.
 
 ![Shows the editing Interface for the block for: A Complete chronological list of festival participations across all reference terms.](assets/screenshot-5.png)
+
+---
 
 </details>
 
@@ -119,19 +129,7 @@ Leverage GatherPress's native Topics and Venues taxonomies for powerful event or
 <details>
 <summary>Example 6: <strong>Conference Sessions by Topic and Venue</strong></summary>
 
-**Use Case:** Multi-track conference showcasing sessions organized by topic across different venues
-
-**Configuration Code:**
-```php
-add_action( 'registered_post_type_gatherpress_event', function() {
-    $config = array(
-        'ref_tax'   => 'gatherpress_topic',    // Main reference: Topics
-        'ref_types' => array( 'gatherpress_venue' ), // Sub-reference: Venues
-    );
-    
-    add_post_type_support( 'gatherpress_event', 'gatherpress_references', $config );
-} );
-```
+#### Use Case: **Multi-track conference showcasing sessions organized by topic across different venues**
 
 **Settings:**
 - Reference Term: Select topic (e.g., "WordPress Development")
@@ -145,24 +143,26 @@ add_action( 'registered_post_type_gatherpress_event', function() {
 - Topic evolution across different venues over time
 - Venue diversity for recurring conference topics
 
-</details>
-
-<details>
-<summary>Example 7: <strong>Venue Portfolio with Topic Distribution</strong></summary>
-
-**Use Case:** Showcase a venue's event history with topic variety
-
 **Configuration Code:**
 ```php
 add_action( 'registered_post_type_gatherpress_event', function() {
     $config = array(
-        'ref_tax'   => 'gatherpress_venue',    // Main reference: Venues
-        'ref_types' => array( 'gatherpress_topic' ), // Sub-reference: Topics
+        'ref_tax'   => 'gatherpress_topic',    // Main reference: Topics
+        'ref_types' => array( 'gatherpress_venue' ), // Sub-reference: Venues
     );
     
     add_post_type_support( 'gatherpress_event', 'gatherpress_references', $config );
 } );
 ```
+
+---
+
+</details>
+
+<details>
+<summary>Example 7: <strong>Venue Portfolio with Topic Distribution</strong></summary>
+
+#### Use Case: **Showcase a venue's event history with topic variety**
 
 **Settings:**
 - Reference Term: Select venue (e.g., "Downtown Conference Center")
@@ -176,6 +176,20 @@ add_action( 'registered_post_type_gatherpress_event', function() {
 - Event planning: See what topics have been successful at specific venues
 - Diversity reporting: Demonstrate topic breadth at your venue
 
+**Configuration Code:**
+```php
+add_action( 'registered_post_type_gatherpress_event', function() {
+    $config = array(
+        'ref_tax'   => 'gatherpress_venue',    // Main reference: Venues
+        'ref_types' => array( 'gatherpress_topic' ), // Sub-reference: Topics
+    );
+    
+    add_post_type_support( 'gatherpress_event', 'gatherpress_references', $config );
+} );
+```
+
+---
+
 </details>
 
 ---
@@ -187,19 +201,7 @@ Extend the plugin beyond events to organize regular blog posts with WordPress's 
 <details>
 <summary>Example 8: <strong>Blog Post Archive by Category and Tags</strong></summary>
 
-**Use Case:** Create a dynamic reference guide of blog content organized by category with tag breakdowns
-
-**Configuration Code:**
-```php
-add_action( 'init', function() {
-    $config = array(
-        'ref_tax'   => 'category',              // Main reference: Categories
-        'ref_types' => array( 'post_tag' ),     // Sub-reference: Tags
-    );
-    
-    add_post_type_support( 'post', 'gatherpress_references', $config );
-}, 20 );
-```
+#### Use Case: **Create a dynamic reference guide of blog content organized by category with tag breakdowns**
 
 **Settings:**
 - Post Type: Post
@@ -214,12 +216,39 @@ add_action( 'init', function() {
 - Editorial planning: Identify gaps in tag coverage
 - Reader navigation: "See all tutorial topics we've covered since 2020"
 
+**Configuration Code:**
+```php
+add_action( 'init', function() {
+    $config = array(
+        'ref_tax'   => 'category',              // Main reference: Categories
+        'ref_types' => array( 'post_tag' ),     // Sub-reference: Tags
+    );
+    
+    add_post_type_support( 'post', 'gatherpress_references', $config );
+}, 20 );
+```
+
+---
+
 </details>
 
 <details>
 <summary>Example 9: <strong>Multi-Author Blog Tag Distribution</strong></summary>
 
-**Use Case:** Author portfolio page showing their topic expertise through tags
+#### Use Case: **Author portfolio page showing their topic expertise through tags**
+
+**Settings:**
+- Post Type: Post
+- Reference Term: Select author
+- Year: 2024
+- Reference Type: Tags
+
+**Result:** Shows all tags the author wrote about in 2024, demonstrating their expertise areas and content focus for that year.
+
+**Real-world Application:**
+- Author bio pages: "Topics I've covered this year"
+- Editorial analytics: Track author specialization over time
+- Guest author portfolios: Showcase contribution breadth
 
 **Configuration Code:**
 ```php
@@ -248,18 +277,7 @@ add_action( 'init', function() {
 }, 20 );
 ```
 
-**Settings:**
-- Post Type: Post
-- Reference Term: Select author
-- Year: 2024
-- Reference Type: Tags
-
-**Result:** Shows all tags the author wrote about in 2024, demonstrating their expertise areas and content focus for that year.
-
-**Real-world Application:**
-- Author bio pages: "Topics I've covered this year"
-- Editorial analytics: Track author specialization over time
-- Guest author portfolios: Showcase contribution breadth
+---
 
 </details>
 
@@ -270,7 +288,19 @@ add_action( 'init', function() {
 <details>
 <summary>Example 10: <strong>Recipe Blog - Cuisine Types and Dietary Tags</strong></summary>
 
-**Use Case:** Food blog organizing recipes by cuisine with dietary restriction filters
+#### Use Case: **Food blog organizing recipes by cuisine with dietary restriction filters**
+
+**Settings:**
+- Reference Term: "Italian"
+- Year: Leave empty
+- Reference Type: Dietary
+
+**Result:** Shows all dietary variations of Italian recipes (Vegan, Gluten-Free, etc.) organized by year published. Helps readers find dietary-appropriate recipes within their favorite cuisines.
+
+**Real-world Application:**
+- Recipe filtering: "All our vegan Italian recipes since 2020"
+- Content diversity: Show dietary inclusivity across cuisines
+- Meal planning: "Italian breakfast, lunch, and dinner options"
 
 **Configuration Code:**
 ```php
@@ -319,24 +349,27 @@ add_action( 'init', function() {
 }, 20 );
 ```
 
-**Settings:**
-- Reference Term: "Italian"
-- Year: Leave empty
-- Reference Type: Dietary
-
-**Result:** Shows all dietary variations of Italian recipes (Vegan, Gluten-Free, etc.) organized by year published. Helps readers find dietary-appropriate recipes within their favorite cuisines.
-
-**Real-world Application:**
-- Recipe filtering: "All our vegan Italian recipes since 2020"
-- Content diversity: Show dietary inclusivity across cuisines
-- Meal planning: "Italian breakfast, lunch, and dinner options"
+---
 
 </details>
 
 <details>
 <summary>Example 11: <strong>E-Learning Platform - Courses by Topic and Skill Level</strong></summary>
 
-**Use Case:** Educational site showcasing course progression and topic breadth
+#### Use Case: **Educational site showcasing course progression and topic breadth**
+
+**Settings:**
+- Post Type: Course
+- Reference Term: "JavaScript"
+- Year: Leave empty
+- Reference Type: Skill Levels
+
+**Result:** Shows the learning path for JavaScript courses - Beginner, Intermediate, Advanced - organized by when courses were published. Demonstrates curriculum evolution.
+
+**Real-world Application:**
+- Course catalog: "Our JavaScript curriculum has grown from 3 beginner courses in 2020 to 15 courses across all levels"
+- Student guidance: See available skill progressions for topics
+- Instructor metrics: Show teaching breadth across levels and topics
 
 **Configuration Code:**
 ```php
@@ -397,27 +430,30 @@ add_action( 'registered_post_type_course', function() {
 });
 ```
 
-**Settings:**
-- Post Type: Course
-- Reference Term: "JavaScript"
-- Year: Leave empty
-- Reference Type: Skill Levels
-
-**Result:** Shows the learning path for JavaScript courses - Beginner, Intermediate, Advanced - organized by when courses were published. Demonstrates curriculum evolution.
-
-**Real-world Application:**
-- Course catalog: "Our JavaScript curriculum has grown from 3 beginner courses in 2020 to 15 courses across all levels"
-- Student guidance: See available skill progressions for topics
-- Instructor metrics: Show teaching breadth across levels and topics
+---
 
 </details>
 
 <details>
 <summary>Example 12: <strong>Podcast Network - Shows by Category and Guest Appearances</strong></summary>
 
-**Use Case:** Podcast network showcasing show diversity and notable guest appearances
+#### Use Case: **Podcast network showcasing show diversity and notable guest appearances**
+
+**Settings:**
+- Reference Term: "Tech Talk Tuesday"
+- Year: 2024
+- Reference Type: Guests
+
+**Result:** Shows all guests who appeared on Tech Talk Tuesday in 2024, organized chronologically. Great for show marketing and guest prospecting.
+
+**Real-world Application:**
+- Show promotion: "We've featured 50+ industry leaders in 2024"
+- Guest outreach: "Join names like [Previous Guest List]"
+- Audience discovery: Browse guests by genre across shows
+- Network analytics: Show guest diversity across the network
 
 **Configuration Code:**
+
 ```php
 // Register podcast taxonomies
 function register_podcast_taxonomies() {
@@ -461,18 +497,7 @@ add_action( 'init', function() {
 }, 20 );
 ```
 
-**Settings:**
-- Reference Term: "Tech Talk Tuesday"
-- Year: 2024
-- Reference Type: Guests
-
-**Result:** Shows all guests who appeared on Tech Talk Tuesday in 2024, organized chronologically. Great for show marketing and guest prospecting.
-
-**Real-world Application:**
-- Show promotion: "We've featured 50+ industry leaders in 2024"
-- Guest outreach: "Join names like [Previous Guest List]"
-- Audience discovery: Browse guests by genre across shows
-- Network analytics: Show guest diversity across the network
+---
 
 </details>
 
