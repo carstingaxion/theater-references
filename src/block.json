@@ -6,10 +6,14 @@
 	"title": "GatherPress References",
 	"category": "widgets",
 	"icon": "awards",
-	"description": "Display event references including clients, festivals, and awards.",
+	"description": "Display references such as clients, festivals and awards in a structured, chronological format.",
 	"example": {},
 	"attributes": {
-		"productionId": {
+		"postType": {
+			"type": "string",
+			"default": ""
+		},
+		"refTermId": {
 			"type": "number",
 			"default": 0
 		},
@@ -19,8 +23,7 @@
 		},
 		"referenceType": {
 			"type": "string",
-			"default": "all",
-			"enum": ["all", "ref_client", "ref_festival", "ref_award"]
+			"default": "all"
 		},
 		"headingLevel": {
 			"type": "number",
@@ -34,7 +37,7 @@
 		"metadata": {
 			"type": "object",
 			"default": {
-				"name": "GatherPress References"
+				"name": "References"
 			}
 		}
 	},
@@ -43,7 +46,7 @@
 		"color": {
 			"background": true,
 			"text": true,
-			"link": true,
+			"link": false,
 			"gradients": true,
 			"__experimentalDefaultControls": {
 				"background": true,
@@ -53,11 +56,11 @@
 		"spacing": {
 			"margin": true,
 			"padding": true,
-			"blockGap": true,
+			"blockGap": false,
 			"__experimentalDefaultControls": {
 				"margin": true,
 				"padding": true,
-				"blockGap": true
+				"blockGap": false
 			}
 		},
 		"typography": {

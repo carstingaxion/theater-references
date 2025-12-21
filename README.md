@@ -10,71 +10,81 @@
 
 [![Playground Demo Link](https://img.shields.io/badge/WordPress_Playground-blue?logo=wordpress&logoColor=%23fff&labelColor=%233858e9&color=%233858e9)](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/carstingaxion/gatherpress-references/main/.wordpress-org/blueprints/blueprint.json)
 
-Display production references including clients, festivals and awards in a structured, chronological format.
+Display references such as clients, festivals and awards in a structured, chronological format.
 
 ## Description
 
-The **GatherPress References** block displays a generated list of references from past events. It automatically organizes references by year and type (clients, festivals, awards).
+The **GatherPress References** block displays a generated list of references from past events. It automatically organizes references by year and type (e.g., clients, festivals, awards).
 
-This plugin requires the GatherPress plugin to be installed and activated. It works with GatherPress events (`gatherpress_event` post type) to provide specialized reference management for e.g. theater productions.
+This plugin requires the GatherPress plugin to be installed and activated. It works with GatherPress events (`gatherpress_event` post type) to provide specialized reference management for theater productions and similar use cases.
 
-Perfect for creating dynamic reference pages, production portfolios, and annual summaries of achievements.
+Perfect for creating dynamic reference pages, portfolios, and annual summaries of achievements.
 
 ---
 
 ## Usage Examples
 
-### Example 1: Show All References for a Specific Production
+These examples demonstrate the plugin's flexibility across different use cases, from theater productions to conference management and blog organization.
+
+### Default Theater Production Examples
+
+The default configuration uses theater productions with clients, festivals, and awards. These examples work out-of-the-box after plugin activation.
+
+<details>
+<summary>Example 1: <strong>Show All References for a Specific Reference Term</strong></summary>
 
 **Use Case:** Production detail page showing all achievements  
 
 **Settings:**
-- Production: Select specific production (e.g., *Hamlet*)
+- Reference Term: Select specific term (e.g., *Hamlet* production)
 - Year: Leave empty (all years)
 - Reference Type: All Types  
 
-**Result:** Displays all clients, festivals, and awards for that production across all years, organized chronologically.
+**Result:** Displays all clients, festivals, and awards for that term across all years, organized chronologically.
 
-![Show the editing Interface for the block for: All References for a Specific Production](assets/screenshot-1.png)
+![Show the editing Interface for the block for: All References for a Specific Reference Term](assets/screenshot-1.png)
 
----
+</details>
 
-### Example 2: Annual Report Page
+<details>
+<summary>Example 2: <strong>Annual Report Page</strong></summary>
 
 **Use Case:** Yearly summary of all activities  
 
 **Settings:**
-- Production: Auto-detect (or all)
+- Reference Term: All (or auto-detect)
 - Year: Enter specific year (e.g., 2024)
 - Reference Type: All Types
 
-**Result:** Shows all references from 2024 regardless of production, grouped by type.
+**Result:** Shows all references from 2024 regardless of reference term, grouped by type.
 
-![Shows the editing Interface for the block for: All references from 2024 regardless of production, grouped by type.](assets/screenshot-2.png)
+![Shows the editing Interface for the block for: All references from 2024 regardless of reference term, grouped by type.](assets/screenshot-2.png)
 
----
+</details>
 
-### Example 3: Awards Page
+<details>
+<summary>Example 3: <strong>Awards Page</strong></summary>
 
 **Use Case:** Dedicated page highlighting awards won  
 
 **Settings:**
-- Production: Auto-detect (or all)
+- Reference Term: All (or auto-detect)
 - Year: Leave empty (all years)
 - Reference Type: Awards  
 
-**Result:** Lists all awards received across all productions and years, organized by year.
+**Result:** Lists all awards received across all reference terms and years, organized by year.
 
-![Shows the editing Interface for the block for: All awards received across all productions and years, organized by year.](assets/screenshot-3.png)
+![Shows the editing Interface for the block for: All awards received across all reference terms and years, organized by year.](assets/screenshot-3.png)
 
----
+</details>
 
-### Example 4: Production Awards for Specific Year
+<details>
+<summary>Example 4: <strong>Production Awards for Specific Year</strong></summary>
 
 **Use Case:** Show what a production achieved in a particular year  
 
 **Settings:**
-- Production: Select specific production (e.g., *Macbeth*)
+- Reference Term: Select specific term (e.g., *Macbeth* production)
 - Year: Enter specific year (e.g., 2023)
 - Reference Type: Awards
 
@@ -82,20 +92,389 @@ Perfect for creating dynamic reference pages, production portfolios, and annual 
 
 ![Shows the editing Interface for the block for: Displays only awards that Macbeth received in 2023.](assets/screenshot-4.png)
 
----
+</details>
 
-### Example 5: Festival Participation History
+<details>
+<summary>Example 5: <strong>Festival Participation History</strong></summary>
 
 **Use Case:** Portfolio page showing festival presence  
 
 **Settings:**
-- Production: Auto-detect (or all)
+- Reference Term: All (or auto-detect)
 - Year: Leave empty
 - Reference Type: Festivals  
 
-**Result:** Complete chronological list of festival participations across all productions.
+**Result:** Complete chronological list of festival participations across all reference terms.
 
-![Shows the editing Interface for the block for: A Complete chronological list of festival participations across all productions.](assets/screenshot-5.png)
+![Shows the editing Interface for the block for: A Complete chronological list of festival participations across all reference terms.](assets/screenshot-5.png)
+
+</details>
+
+---
+
+### GatherPress Built-in Taxonomies
+
+Leverage GatherPress's native Topics and Venues taxonomies for powerful event organization and reference display.
+
+<details>
+<summary>Example 6: <strong>Conference Sessions by Topic and Venue</strong></summary>
+
+**Use Case:** Multi-track conference showcasing sessions organized by topic across different venues
+
+**Configuration Code:**
+```php
+add_action( 'registered_post_type_gatherpress_event', function() {
+    $config = array(
+        'ref_tax'   => 'gatherpress_topic',    // Main reference: Topics
+        'ref_types' => array( 'gatherpress_venue' ), // Sub-reference: Venues
+    );
+    
+    add_post_type_support( 'gatherpress_event', 'gatherpress_references', $config );
+} );
+```
+
+**Settings:**
+- Reference Term: Select topic (e.g., "WordPress Development")
+- Year: Leave empty (all conferences)
+- Reference Type: Venues
+
+**Result:** Shows all venues where WordPress Development sessions were held, organized by year. Perfect for conference retrospectives showing topic distribution across locations.
+
+**Real-world Application:** A WordCamp network could use this to show:
+- Which cities hosted specific topics
+- Topic evolution across different venues over time
+- Venue diversity for recurring conference topics
+
+</details>
+
+<details>
+<summary>Example 7: <strong>Venue Portfolio with Topic Distribution</strong></summary>
+
+**Use Case:** Showcase a venue's event history with topic variety
+
+**Configuration Code:**
+```php
+add_action( 'registered_post_type_gatherpress_event', function() {
+    $config = array(
+        'ref_tax'   => 'gatherpress_venue',    // Main reference: Venues
+        'ref_types' => array( 'gatherpress_topic' ), // Sub-reference: Topics
+    );
+    
+    add_post_type_support( 'gatherpress_event', 'gatherpress_references', $config );
+} );
+```
+
+**Settings:**
+- Reference Term: Select venue (e.g., "Downtown Conference Center")
+- Year: Leave empty (all years)
+- Reference Type: Topics
+
+**Result:** Displays all topics covered at the venue over time, organized chronologically. Shows the venue's versatility and event diversity.
+
+**Real-world Application:** 
+- Venue marketing: "We've hosted 50+ different event topics since 2018"
+- Event planning: See what topics have been successful at specific venues
+- Diversity reporting: Demonstrate topic breadth at your venue
+
+</details>
+
+---
+
+### Regular WordPress Posts
+
+Extend the plugin beyond events to organize regular blog posts with WordPress's built-in taxonomies.
+
+<details>
+<summary>Example 8: <strong>Blog Post Archive by Category and Tags</strong></summary>
+
+**Use Case:** Create a dynamic reference guide of blog content organized by category with tag breakdowns
+
+**Configuration Code:**
+```php
+add_action( 'init', function() {
+    $config = array(
+        'ref_tax'   => 'category',              // Main reference: Categories
+        'ref_types' => array( 'post_tag' ),     // Sub-reference: Tags
+    );
+    
+    add_post_type_support( 'post', 'gatherpress_references', $config );
+}, 20 );
+```
+
+**Settings:**
+- Post Type: Post
+- Reference Term: Select category (e.g., "Tutorials")
+- Year: Leave empty (all years)
+- Reference Type: Tags
+
+**Result:** Shows all tags used in the Tutorials category, organized by publication year. Creates a visual taxonomy map of your content evolution.
+
+**Real-world Application:**
+- Content audit: See which tags were popular each year
+- Editorial planning: Identify gaps in tag coverage
+- Reader navigation: "See all tutorial topics we've covered since 2020"
+
+</details>
+
+<details>
+<summary>Example 9: <strong>Multi-Author Blog Tag Distribution</strong></summary>
+
+**Use Case:** Author portfolio page showing their topic expertise through tags
+
+**Configuration Code:**
+```php
+// First, register a custom 'author' taxonomy for better organization
+function register_author_taxonomy() {
+    register_taxonomy( 'blog_author', 'post', array(
+        'labels' => array(
+            'name' => 'Authors',
+            'singular_name' => 'Author',
+        ),
+        'hierarchical' => true,
+        'show_in_rest' => true,
+        'public' => true,
+    ));
+}
+add_action( 'init', 'register_author_taxonomy' );
+
+// Configure references
+add_action( 'init', function() {
+    $config = array(
+        'ref_tax'   => 'blog_author',           // Main reference: Authors
+        'ref_types' => array( 'post_tag', 'category' ), // Topics & Categories
+    );
+    
+    add_post_type_support( 'post', 'gatherpress_references', $config );
+}, 20 );
+```
+
+**Settings:**
+- Post Type: Post
+- Reference Term: Select author
+- Year: 2024
+- Reference Type: Tags
+
+**Result:** Shows all tags the author wrote about in 2024, demonstrating their expertise areas and content focus for that year.
+
+**Real-world Application:**
+- Author bio pages: "Topics I've covered this year"
+- Editorial analytics: Track author specialization over time
+- Guest author portfolios: Showcase contribution breadth
+
+</details>
+
+---
+
+### Creative Advanced Use Cases
+
+<details>
+<summary>Example 10: <strong>Recipe Blog - Cuisine Types and Dietary Tags</strong></summary>
+
+**Use Case:** Food blog organizing recipes by cuisine with dietary restriction filters
+
+**Configuration Code:**
+```php
+// Register custom taxonomies
+function register_recipe_taxonomies() {
+    // Cuisine taxonomy (hierarchical)
+    register_taxonomy( 'cuisine', 'post', array(
+        'labels' => array(
+            'name' => 'Cuisines',
+            'singular_name' => 'Cuisine',
+        ),
+        'hierarchical' => true,
+        'show_in_rest' => true,
+    ));
+    
+    // Dietary restrictions (non-hierarchical)
+    register_taxonomy( 'dietary', 'post', array(
+        'labels' => array(
+            'name' => 'Dietary Tags',
+            'singular_name' => 'Dietary Tag',
+        ),
+        'hierarchical' => false,
+        'show_in_rest' => true,
+    ));
+    
+    // Meal type
+    register_taxonomy( 'meal_type', 'post', array(
+        'labels' => array(
+            'name' => 'Meal Types',
+            'singular_name' => 'Meal Type',
+        ),
+        'hierarchical' => false,
+        'show_in_rest' => true,
+    ));
+}
+add_action( 'init', 'register_recipe_taxonomies' );
+
+// Configure references
+add_action( 'init', function() {
+    $config = array(
+        'ref_tax'   => 'cuisine',               // Main: Cuisine type
+        'ref_types' => array( 'dietary', 'meal_type' ), // Dietary & Meal types
+    );
+    
+    add_post_type_support( 'post', 'gatherpress_references', $config );
+}, 20 );
+```
+
+**Settings:**
+- Reference Term: "Italian"
+- Year: Leave empty
+- Reference Type: Dietary
+
+**Result:** Shows all dietary variations of Italian recipes (Vegan, Gluten-Free, etc.) organized by year published. Helps readers find dietary-appropriate recipes within their favorite cuisines.
+
+**Real-world Application:**
+- Recipe filtering: "All our vegan Italian recipes since 2020"
+- Content diversity: Show dietary inclusivity across cuisines
+- Meal planning: "Italian breakfast, lunch, and dinner options"
+
+</details>
+
+<details>
+<summary>Example 11: <strong>E-Learning Platform - Courses by Topic and Skill Level</strong></summary>
+
+**Use Case:** Educational site showcasing course progression and topic breadth
+
+**Configuration Code:**
+```php
+// Register custom post type and taxonomies
+function register_course_types() {
+    // Course post type
+    register_post_type( 'course', array(
+        'labels' => array(
+            'name' => 'Courses',
+            'singular_name' => 'Course',
+        ),
+        'public' => true,
+        'has_archive' => true,
+        'show_in_rest' => true,
+        'supports' => array( 'title', 'editor', 'thumbnail' ),
+    ));
+    
+    // Topic taxonomy
+    register_taxonomy( 'course_topic', 'course', array(
+        'labels' => array(
+            'name' => 'Course Topics',
+            'singular_name' => 'Course Topic',
+        ),
+        'hierarchical' => true,
+        'show_in_rest' => true,
+    ));
+    
+    // Skill level
+    register_taxonomy( 'skill_level', 'course', array(
+        'labels' => array(
+            'name' => 'Skill Levels',
+            'singular_name' => 'Skill Level',
+        ),
+        'hierarchical' => false,
+        'show_in_rest' => true,
+    ));
+    
+    // Instructor
+    register_taxonomy( 'instructor', 'course', array(
+        'labels' => array(
+            'name' => 'Instructors',
+            'singular_name' => 'Instructor',
+        ),
+        'hierarchical' => false,
+        'show_in_rest' => true,
+    ));
+}
+add_action( 'init', 'register_course_types' );
+
+// Configure references
+add_action( 'registered_post_type_course', function() {
+    $config = array(
+        'ref_tax'   => 'course_topic',          // Main: Course topics
+        'ref_types' => array( 'skill_level', 'instructor' ),
+    );
+    
+    add_post_type_support( 'course', 'gatherpress_references', $config );
+});
+```
+
+**Settings:**
+- Post Type: Course
+- Reference Term: "JavaScript"
+- Year: Leave empty
+- Reference Type: Skill Levels
+
+**Result:** Shows the learning path for JavaScript courses - Beginner, Intermediate, Advanced - organized by when courses were published. Demonstrates curriculum evolution.
+
+**Real-world Application:**
+- Course catalog: "Our JavaScript curriculum has grown from 3 beginner courses in 2020 to 15 courses across all levels"
+- Student guidance: See available skill progressions for topics
+- Instructor metrics: Show teaching breadth across levels and topics
+
+</details>
+
+<details>
+<summary>Example 12: <strong>Podcast Network - Shows by Category and Guest Appearances</strong></summary>
+
+**Use Case:** Podcast network showcasing show diversity and notable guest appearances
+
+**Configuration Code:**
+```php
+// Register podcast taxonomies
+function register_podcast_taxonomies() {
+    register_taxonomy( 'podcast_show', 'post', array(
+        'labels' => array(
+            'name' => 'Podcast Shows',
+            'singular_name' => 'Podcast Show',
+        ),
+        'hierarchical' => true,
+        'show_in_rest' => true,
+    ));
+    
+    register_taxonomy( 'podcast_guest', 'post', array(
+        'labels' => array(
+            'name' => 'Podcast Guests',
+            'singular_name' => 'Podcast Guest',
+        ),
+        'hierarchical' => false,
+        'show_in_rest' => true,
+    ));
+    
+    register_taxonomy( 'podcast_genre', 'post', array(
+        'labels' => array(
+            'name' => 'Podcast Genres',
+            'singular_name' => 'Podcast Genre',
+        ),
+        'hierarchical' => false,
+        'show_in_rest' => true,
+    ));
+}
+add_action( 'init', 'register_podcast_taxonomies' );
+
+// Configure references
+add_action( 'init', function() {
+    $config = array(
+        'ref_tax'   => 'podcast_show',          // Main: Show name
+        'ref_types' => array( 'podcast_guest', 'podcast_genre' ),
+    );
+    
+    add_post_type_support( 'post', 'gatherpress_references', $config );
+}, 20 );
+```
+
+**Settings:**
+- Reference Term: "Tech Talk Tuesday"
+- Year: 2024
+- Reference Type: Guests
+
+**Result:** Shows all guests who appeared on Tech Talk Tuesday in 2024, organized chronologically. Great for show marketing and guest prospecting.
+
+**Real-world Application:**
+- Show promotion: "We've featured 50+ industry leaders in 2024"
+- Guest outreach: "Join names like [Previous Guest List]"
+- Audience discovery: Browse guests by genre across shows
+- Network analytics: Show guest diversity across the network
+
+</details>
 
 ---
 
@@ -103,21 +482,21 @@ Perfect for creating dynamic reference pages, production portfolios, and annual 
 
 This matrix shows all possible filter combinations and their expected behaviors:
 
-| # | Production | Year     | Type     | Expected Result                                      |
-|---|------------|----------|----------|-----------------------------------------------------|
-| 1 | Any/All    | All      | All      | Show all events, all types (no filters)             |
-| 2 | Specific   | All      | All      | Show events for production, all types               |
-| 3 | Specific   | All      | Specific | Show events for production with specific type       |
-| 4 | Any/All    | All      | Specific | Show all events with specific type                  |
-| 5 | Any/All    | Specific | All      | Show all events from year, all types                |
-| 6 | Specific   | Specific | All      | Show production events from year, all types         |
-| 7 | Specific   | Specific | Specific | Show production events from year with specific type |
-| 8 | Any/All    | Specific | Specific | Show all events from year with specific type        |
+| # | Reference Term | Year     | Type     | Expected Result                                      |
+|---|----------------|----------|----------|-----------------------------------------------------|
+| 1 | Any/All        | All      | All      | Show all events, all types (no filters)             |
+| 2 | Specific       | All      | All      | Show events for reference term, all types           |
+| 3 | Specific       | All      | Specific | Show events for reference term with specific type   |
+| 4 | Any/All        | All      | Specific | Show all events with specific type                  |
+| 5 | Any/All        | Specific | All      | Show all events from year, all types                |
+| 6 | Specific       | Specific | All      | Show reference term events from year, all types     |
+| 7 | Specific       | Specific | Specific | Show reference term events from year with specific type |
+| 8 | Any/All        | Specific | Specific | Show all events from year with specific type        |
 
 **Filter Logic:**
 
 - All filters use **AND** logic when combined  
-- **Any/All** for Production means no production filter is applied  
+- **Any/All** for Reference Term means no term filter is applied  
 - **All** for Type means no type filter is applied  
 - **All** for Year means no year filter is applied  
 
@@ -128,11 +507,11 @@ This matrix shows all possible filter combinations and their expected behaviors:
 1. **Install and activate GatherPress plugin first** (required dependency)
 2. Upload the plugin files to the `/wp-content/plugins/gatherpress-references` directory.
 3. Activate the plugin through the **Plugins** screen in WordPress.
-4. The plugin will register three custom taxonomies: **Clients**, **Festivals**, and **Awards**.
+4. The plugin will register custom taxonomies based on configuration (by default: Productions, Clients, Festivals, and Awards).
 5. Add terms to these taxonomies via the **Events** admin menu.
 6. Assign taxonomy terms to event posts.
 7. Insert the block into any post or template.
-8. Use the block settings to filter by production, year, or reference type.
+8. Use the block settings to filter by reference term, year, or reference type.
 
 ---
 
@@ -144,21 +523,29 @@ No, this plugin is specifically designed as a GatherPress add-on and requires Ga
 
 ### What taxonomies does this plugin create?
 
-The plugin registers four custom taxonomies associated with the GatherPress `gatherpress_event` post type:
-- `gatherpress-productions`: Hierarchical taxonomy for productions
+By default, the plugin registers four custom taxonomies associated with the GatherPress `gatherpress_event` post type:
+- `gatherpress-production`: Hierarchical taxonomy for productions (the default reference taxonomy)
 - `_gatherpress-client`: Clients
 - `_gatherpress-festival`: Festival participations
 - `_gatherpress-award`: Awards received
 
-These work alongside GatherPress's existing event taxonomies.
+These work alongside GatherPress's existing event taxonomies and can be customized via post type support configuration.
 
-### Can I show only awards for a specific production? =
+### Can I use this plugin with regular WordPress posts?
+
+Yes! While designed for GatherPress events, the plugin works with any post type. Add support using `add_post_type_support()` with your desired taxonomies. See Example 8 and 9 for complete code examples.
+
+### Can I use GatherPress's built-in taxonomies (Topics and Venues)?
+
+Absolutely! Examples 6 and 7 show how to leverage GatherPress's native Topics and Venues taxonomies for powerful event organization and reference displays.
+
+### Can I show only awards for a specific production?
 
 Yes. Use the block settings to select a specific production and set the type filter to **Awards**.
 
-### Does it work automatically on production pages?
+### Does it work automatically on reference term archive pages?
 
-Yes. When placed on a production term archive, the block automatically detects the production context and shows only its references.
+Yes. When placed on a reference taxonomy term archive, the block automatically detects the term context and shows only its references.
 
 ### How do I customize the block's appearance?
 
@@ -184,7 +571,7 @@ Yes. The block includes a **Year Heading Level** control in the block settings. 
 
 Yes. The block includes a **Sort Years** toggle control. By default, years are sorted newest first (descending). Toggle it on to sort from oldest to newest (ascending). This control only appears when showing all years (no specific year filter).
 
-= How do I add demo data for testing? =
+### How do I add demo data for testing?
 
 Go to **Events → Demo Data** in the WordPress admin and click **Generate Demo Data** to create:
 
@@ -196,11 +583,9 @@ Go to **Events → Demo Data** in the WordPress admin and click **Generate Demo 
 
 All demo data is marked for easy cleanup via the **Delete Demo Data** button.
 
-
-## Does this affect my existing GatherPress events?
+### Does this affect my existing GatherPress events?
 
 No, this plugin only adds optional taxonomies to GatherPress events. Your existing events remain unchanged unless you explicitly assign the new taxonomy terms to them.
-
 
 ---
 
@@ -218,21 +603,22 @@ No, this plugin only adds optional taxonomies to GatherPress events. Your existi
 
 ### GatherPress Integration
 
-The plugin extends GatherPress by:
+The plugin extends GatherPress by registering taxonomies and using post type support for configuration:
 
 ```php
-// Registers taxonomies for gatherpress_event post type
-register_taxonomy('gatherpress-productions', 'gatherpress_event', [...]);
-register_taxonomy('_gatherpress-client', 'gatherpress_event', [...]);
-register_taxonomy('_gatherpress-festival', 'gatherpress_event', [...]);
-register_taxonomy('_gatherpress-award', 'gatherpress_event', [...]);
+// Configure which taxonomies to use via post type support
+$config = array(
+    'ref_tax'   => 'gatherpress-production',  // The main reference taxonomy
+    'ref_types' => array( '_gatherpress-client', '_gatherpress-festival', '_gatherpress-award' ),
+);
+add_post_type_support( 'gatherpress_event', 'gatherpress_references', $config );
 ```
 
 ### Block Attributes
 
 ```json
 {
-  "productionId": {
+  "refTermId": {
     "type": "number",
     "default": 0
   },
@@ -264,7 +650,7 @@ The plugin uses WordPress transients for performance:
 ```php
 // Cache key based on filter parameters
 $cache_key = 'gatherpress_refs_' . md5(serialize([
-    $production_id,
+    $ref_term_id,
     $year,
     $type
 ]));
@@ -339,7 +725,7 @@ add_filter( 'gatherpress_references_cache_expiration', '__return_zero' );
 
 **Parameters:**
 - `$args` (array) - WP_Query arguments array
-- `$production_id` (int) - Production term ID filter
+- `$ref_term_id` (int) - Reference term ID filter
 - `$year` (string) - Year filter
 - `$type` (string) - Reference type filter
 
@@ -365,17 +751,9 @@ add_filter( 'gatherpress_references_query_args', function( $args ) {
 } );
 ```
 
-**Example - Exclude specific post IDs:**
-```php
-add_filter( 'gatherpress_references_query_args', function( $args ) {
-    $args['post__not_in'] = array( 123, 456, 789 );
-    return $args;
-} );
-```
-
 **Example - Conditional ordering:**
 ```php
-add_filter( 'gatherpress_references_query_args', function( $args, $production_id, $year, $type ) {
+add_filter( 'gatherpress_references_query_args', function( $args, $ref_term_id, $year, $type ) {
     // Order by title alphabetically for award references
     if ( $type === '_gatherpress-award' ) {
         $args['orderby'] = 'title';
@@ -386,7 +764,6 @@ add_filter( 'gatherpress_references_query_args', function( $args, $production_id
 ```
 
 ---
-
 
 #### `gatherpress_references_type_labels`
 
@@ -427,7 +804,6 @@ add_filter( 'gatherpress_references_type_labels', function( $labels ) {
 } );
 ```
 
-
 ### Performance Considerations
 
 1. **Batch Queries**: Use `get_post_dates()` and `get_post_terms()` to minimize database calls
@@ -435,7 +811,6 @@ add_filter( 'gatherpress_references_type_labels', function( $labels ) {
 3. **Cache Management**: Automatic transient caching with smart invalidation
 4. **No Found Rows**: Set `'no_found_rows' => true` to skip pagination count
 5. **Term Cache**: Enable term caching with `'update_post_term_cache' => true`
-
 
 ### Theme.json Integration
 
@@ -478,13 +853,13 @@ The block fully supports WordPress theme.json:
 ## Changelog
 
 ### 0.1.0
-* Initial release
-* Custom taxonomies for clients, festivals and awards
-* Support for production filtering
+* Initial release created with https://telex.automattic.ai/projects/236ea3ff
+* Custom taxonomies for references (configurable via post type support)
+* Support for reference term filtering
 * Support for year filtering
 * Support for reference type filtering
 * Year sort order control (ascending/descending)
-* Automatic production context detection
+* Automatic reference term context detection
 * Demo data generator
 * Comprehensive theme.json support
 * Optimized caching system

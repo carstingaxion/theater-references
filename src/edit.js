@@ -18,9 +18,10 @@ import {
 	TextControl,
 	ToggleControl,
 	RangeControl,
+	Notice,
 } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
-import { useEffect } from '@wordpress/element';
+import { useEffect, useMemo } from '@wordpress/element';
 
 /**
  * Editor styles
@@ -40,25 +41,153 @@ import './editor.scss';
  */
 export default function Edit( { attributes, setAttributes } ) {
 	// Destructure attributes for easier access
-	const { productionId, year, referenceType, headingLevel, yearSortOrder } =
+	const { postType, refTermId, year, referenceType, headingLevel, yearSortOrder } =
 		attributes;
 
 	/**
-	 * Fetch productions from WordPress data store
-	 *
-	 * Uses the core data store to fetch all production terms.
-	 * Returns empty array while loading to prevent errors.
+	 * Fetch all post types with gatherpress_references support
 	 */
-	const productions = useSelect( ( select ) => {
-		const terms = select( 'core' ).getEntityRecords(
-			'taxonomy',
-			'gatherpress-productions',
-			{
-				per_page: 99, // Large number to get all, but avoid -1. More than 99 is not supported by WordPress.
-			}
-		);
-		return terms || [];
+	const supportedPostTypes = useSelect( ( select ) => {
+		const postTypes = select( 'core' ).getPostTypes( { per_page: -1 } );
+		
+		if ( ! postTypes ) {
+			return [];
+		}
+		
+		return postTypes.filter( ( type ) => {
+			return type.supports && type.supports.gatherpress_references;
+		} );
 	}, [] );
+
+	/**
+	 * Auto-assign post type on block insertion if only one supported type exists
+	 */
+	useEffect( () => {
+		if ( ! postType && supportedPostTypes.length === 1 ) {
+			setAttributes( { postType: supportedPostTypes[0].slug } );
+		}
+	}, [ postType, supportedPostTypes, setAttributes ] );
+
+	/**
+	 * Determine active post type for configuration lookup
+	 */
+	const activePostType = useMemo( () => {
+		// Use explicitly set post type if available
+		if ( postType ) {
+			return postType;
+		}
+		
+		// Fall back to first supported post type
+		return supportedPostTypes.length > 0 ? supportedPostTypes[0].slug : null;
+	}, [ postType, supportedPostTypes ] );
+
+	/**
+	 * Fetch block configuration from the active post type
+	 */
+	const config = useSelect(
+		( select ) => {
+			if ( ! activePostType ) {
+				return null;
+			}
+			
+			const postTypeObject = select( 'core' ).getPostType( activePostType );
+			
+			if ( ! postTypeObject || ! postTypeObject.supports ) {
+				return null;
+			}
+			
+			// Extract the configuration from the supports object
+			const referencesSupport = postTypeObject.supports.gatherpress_references;
+			
+			if ( ! referencesSupport ) {
+				return null;
+			}
+			
+			// If it's an array, take the first element (WordPress stores support args in arrays)
+			if ( Array.isArray( referencesSupport ) && referencesSupport.length > 0 ) {
+				return referencesSupport[0];
+			}
+			
+			// If it's an object, use it directly
+			if ( typeof referencesSupport === 'object' && referencesSupport !== null ) {
+				return referencesSupport;
+			}
+			
+			// If it's just true, we need to handle this case
+			if ( referencesSupport === true ) {
+				// Return null as we need actual configuration
+				return null;
+			}
+			
+			return null;
+		},
+		[ activePostType ]
+	);
+
+	/**
+	 * Fetch reference taxonomy object and terms
+	 */
+	const { refTaxonomy, refTerms } = useSelect(
+		( select ) => {
+			if ( ! config || ! config.ref_tax ) {
+				return { refTaxonomy: null, refTerms: [] };
+			}
+
+			const taxonomy = select( 'core' ).getTaxonomy( config.ref_tax );
+			const terms = select( 'core' ).getEntityRecords(
+				'taxonomy',
+				config.ref_tax,
+				{
+					per_page: 99, // Large number to get all, but avoid -1. More than 99 is not supported by WordPress.
+				}
+			);
+			return {
+				refTaxonomy: taxonomy || null,
+				refTerms: terms || [],
+			};
+		},
+		[ config ]
+	);
+
+	/**
+	 * Fetch taxonomy objects for reference types
+	 */
+	const taxonomies = useSelect(
+		( select ) => {
+			if ( ! config || ! config.ref_types || ! Array.isArray( config.ref_types ) ) {
+				return [];
+			}
+
+			const taxonomyObjects = config.ref_types
+				.map( ( slug ) => select( 'core' ).getTaxonomy( slug ) )
+				.filter( ( tax ) => tax !== null && tax !== undefined );
+
+			return taxonomyObjects;
+		},
+		[ config ]
+	);
+
+	/**
+	 * Build type labels mapping
+	 */
+	const typeLabels = useMemo( () => {
+		const labels = {};
+		taxonomies.forEach( ( tax ) => {
+			labels[ tax.slug ] = tax.labels?.name || tax.name;
+		} );
+		return labels;
+	}, [ taxonomies ] );
+
+	/**
+	 * Check if block is properly configured
+	 */
+	const isConfigured =
+		config &&
+		typeof config === 'object' &&
+		config.ref_tax &&
+		config.ref_types &&
+		Array.isArray( config.ref_types ) &&
+		config.ref_types.length > 0;
 
 	/**
 	 * Update block metadata with dynamic label
@@ -67,11 +196,15 @@ export default function Edit( { attributes, setAttributes } ) {
 	 * It updates the block's metadata attribute so the label appears in the list view.
 	 */
 	useEffect( () => {
+		if ( ! isConfigured ) {
+			return;
+		}
+
 		/**
 		 * Generate dynamic block label based on attributes
 		 *
 		 * Creates a human-readable label that reflects current filters:
-		 * - Production name (if specific production selected)
+		 * - Reference term name (if specific term selected)
 		 * - Year (if specified)
 		 * - Reference type (if not "all")
 		 *
@@ -80,13 +213,13 @@ export default function Edit( { attributes, setAttributes } ) {
 		const getBlockLabel = () => {
 			const parts = [];
 
-			// Add production name if specific production selected
-			if ( productionId > 0 ) {
-				const production = productions.find(
-					( p ) => p.id === productionId
+			// Add reference term name if specific term selected
+			if ( refTermId > 0 ) {
+				const refTerm = refTerms.find(
+					( p ) => p.id === refTermId
 				);
-				if ( production ) {
-					parts.push( production.name );
+				if ( refTerm ) {
+					parts.push( refTerm.name );
 				}
 			}
 
@@ -97,18 +230,13 @@ export default function Edit( { attributes, setAttributes } ) {
 
 			// Add reference type if not "all"
 			if ( referenceType !== 'all' ) {
-				const typeLabels = {
-					ref_client: __( 'Clients', 'gatherpress-references' ),
-					ref_festival: __( 'Festivals', 'gatherpress-references' ),
-					ref_award: __( 'Awards', 'gatherpress-references' ),
-				};
 				parts.push( typeLabels[ referenceType ] || referenceType );
 			}
 
 			// Construct final label
 			if ( parts.length > 0 ) {
 				return (
-					__( 'References:', 'gatherpress-references' ) +
+					__( 'References', 'gatherpress-references' ) + ': ' +
 					parts.join( ' • ' )
 				);
 			}
@@ -127,10 +255,12 @@ export default function Edit( { attributes, setAttributes } ) {
 		} );
 	}, [
 		setAttributes,
-		productionId,
+		refTermId,
 		year,
 		referenceType,
-		productions,
+		refTerms,
+		typeLabels,
+		isConfigured,
 	] );
 
 	/**
@@ -146,87 +276,41 @@ export default function Edit( { attributes, setAttributes } ) {
 	const TypeHeading = `h${ secondaryHeadingLevel }`;
 
 	/**
-	 * Type labels mapping
-	 *
-	 * Maps internal taxonomy slugs to user-facing labels.
-	 * Used for displaying type headings in preview.
-	 */
-	const typeLabels = {
-		ref_client: __( 'Clients', 'gatherpress-references' ),
-		ref_festival: __( 'Festivals', 'gatherpress-references' ),
-		ref_award: __( 'Awards', 'gatherpress-references' ),
-	};
-
-	/**
 	 * Placeholder data for editor preview
-	 *
-	 * Provides realistic sample data to show users what the block
-	 * will look like with actual content. Organized by year and type.
-	 *
-	 * Structure matches the output from render.php:
-	 * {
-	 *   '2024': {
-	 *     'ref_client': ['Client 1', 'Client 2'],
-	 *     'ref_festival': ['Festival 1'],
-	 *     'ref_award': ['Award 1']
-	 *   }
-	 * }
 	 */
 	const getPlaceholderData = () => {
+		if ( ! isConfigured || ! config.ref_types ) {
+			return {};
+		}
+
 		// Determine which year(s) to show in preview
 		const currentYear = new Date().getFullYear();
 		const displayYear = year > 0 ? year : currentYear;
 
+		// Build placeholder data using configured taxonomies
+		const buildYearData = () => {
+			const yearData = {};
+			config.ref_types.forEach( ( taxSlug ) => {
+				const taxLabel = typeLabels[ taxSlug ] || taxSlug;
+				yearData[ taxSlug ] = [
+					`${ taxLabel } Example 1`,
+					`${ taxLabel } Example 2`,
+				].sort();
+			} );
+			return yearData;
+		};
+
 		// If year is specified, show only that year
 		if ( year > 0 ) {
 			return {
-				[ displayYear ]: {
-					ref_client: [
-						__( 'Royal Theater London', 'gatherpress-references' ),
-						__( 'Vienna Burgtheater', 'gatherpress-references' ),
-					].sort(),
-					ref_festival: [
-						__(
-							'Edinburgh International Festival',
-							'gatherpress-references'
-						),
-					].sort(),
-					ref_award: [
-						__( 'Best Director Award', 'gatherpress-references' ),
-					].sort(),
-				},
+				[ displayYear ]: buildYearData(),
 			};
 		}
 
 		// If no year specified, show two years of data
 		return {
-			// Cast as string to prevent a default ordering by integer keys.
-			[ currentYear + ' ' ]: {
-				ref_client: [
-					__( 'Royal Theater London', 'gatherpress-references' ),
-					__( 'Vienna Burgtheater', 'gatherpress-references' ),
-				].sort(),
-				ref_festival: [
-					__(
-						'Edinburgh International Festival',
-						'gatherpress-references'
-					),
-				].sort(),
-				ref_award: [
-					__( 'Best Director Award', 'gatherpress-references' ),
-				].sort(),
-			},
-			// Cast as string to prevent a default ordering by integer keys.
-			[ currentYear - 1 + ' ' ]: {
-				ref_client: [
-					__( 'Berlin Staatstheater', 'gatherpress-references' ),
-				].sort(),
-				ref_festival: [
-					__( 'Avignon Festival', 'gatherpress-references' ),
-					__( 'Salzburg Festival', 'gatherpress-references' ),
-				].sort(),
-				ref_award: [],
-			},
+			[ currentYear + ' ' ]: buildYearData(),
+			[ currentYear - 1 + ' ' ]: buildYearData(),
 		};
 	};
 
@@ -296,14 +380,59 @@ export default function Edit( { attributes, setAttributes } ) {
 	const sortedYears = getSortedYears();
 
 	// Determine if year sort control should be shown
-	const showYearSortControl = year === 0; // Only show when no specific year selected
+	const showYearSortControl = year === 0;
 
-	// Determine if we should show type headings (only when showing all types)
+	// Determine if we should show type headings.
 	const showTypeHeadings = referenceType === 'all';
+
+	// Show configuration error if block is not properly configured
+	if ( ! isConfigured || ! activePostType ) {
+		return (
+			<>
+				<InspectorControls>
+					<PanelBody
+						title={ __(
+							'Reference Settings',
+							'gatherpress-references'
+						) }
+					>
+						<Notice status="warning" isDismissible={ false }>
+							{ __(
+								'References block requires a post type with gatherpress_references support.',
+								'gatherpress-references'
+							) }
+						</Notice>
+					</PanelBody>
+				</InspectorControls>
+				<div { ...useBlockProps() }>
+					<Notice status="warning" isDismissible={ false }>
+						<p>
+							{ __(
+								'This block requires a post type with gatherpress_references support configured.',
+								'gatherpress-references'
+							) }
+						</p>
+						{ supportedPostTypes.length > 0 && (
+							<p>
+								<strong>
+									{ __(
+										'Supported post types:',
+										'gatherpress-references'
+									) }
+								</strong>{ ' ' }
+								{ supportedPostTypes
+									.map( ( type ) => type.labels?.name || type.name )
+									.join( ', ' ) }
+							</p>
+						) }
+					</Notice>
+				</div>
+			</>
+		);
+	}
 
 	return (
 		<>
-			{ /* Inspector Controls - Sidebar settings panel */ }
 			<InspectorControls>
 				<PanelBody
 					title={ __(
@@ -311,32 +440,66 @@ export default function Edit( { attributes, setAttributes } ) {
 						'gatherpress-references'
 					) }
 				>
-					{ /* Production filter dropdown */ }
+					{ /* Post Type selector - only show if multiple supported post types */ }
+					{ supportedPostTypes.length > 1 && (
+						<SelectControl
+							label={ __( 'Post Type', 'gatherpress-references' ) }
+							value={ postType || '' }
+							options={ [
+								{
+									label: __(
+										'Select post type',
+										'gatherpress-references'
+									),
+									value: '',
+								},
+								...supportedPostTypes.map( ( type ) => ( {
+									label: type.labels?.name || type.name,
+									value: type.slug,
+								} ) ),
+							] }
+							onChange={ ( value ) =>
+								setAttributes( { postType: value } )
+							}
+							help={ __(
+								'Select which post type to query for references',
+								'gatherpress-references'
+							) }
+						/>
+					) }
+
+					{ /* Reference Term filter dropdown */ }
 					<SelectControl
-						label={ __( 'Production', 'gatherpress-references' ) }
-						value={ productionId }
+						label={
+							refTaxonomy?.labels?.singular_name ||
+							__( 'Reference Term', 'gatherpress-references' )
+						}
+						value={ refTermId }
 						options={ [
 							// Default option for auto-detection
 							{
 								label: __(
-									'Auto-detect (or all)',
+									'All (or auto-detect)',
 									'gatherpress-references'
 								),
 								value: 0,
 							},
-							// Map production terms to options
-							...productions.map( ( production ) => ( {
-								label: production.name,
-								value: production.id,
+							...refTerms.map( ( refTerm ) => ( {
+								label: refTerm.name,
+								value: refTerm.id,
 							} ) ),
 						] }
 						onChange={ ( value ) =>
-							setAttributes( { productionId: parseInt( value ) } )
+							setAttributes( { refTermId: parseInt( value ) } )
 						}
-						help={ __(
-							'Select a specific production or leave as auto-detect',
-							'gatherpress-references'
-						) }
+						help={
+							refTaxonomy?.labels?.singular_name
+								? `Select a specific ${ refTaxonomy.labels.singular_name.toLowerCase() } or leave as auto-detect`
+								: __(
+										'Select a specific reference term or leave as auto-detect',
+										'gatherpress-references'
+								  )
+						}
 					/>
 
 					{ /* Year filter text input */ }
@@ -366,7 +529,9 @@ export default function Edit( { attributes, setAttributes } ) {
 					{ showYearSortControl && (
 						<ToggleControl
 							label={ __(
-								( yearSortOrder === 'asc' ) ? 'Sort Years Oldest First' : 'Sort Years Newest First',
+								yearSortOrder === 'asc'
+									? 'Sort Years Oldest First'
+									: 'Sort Years Newest First',
 								'gatherpress-references'
 							) }
 							checked={ yearSortOrder === 'asc' }
@@ -397,24 +562,10 @@ export default function Edit( { attributes, setAttributes } ) {
 								),
 								value: 'all',
 							},
-							{
-								label: __(
-									'Clients',
-									'gatherpress-references'
-								),
-								value: 'ref_client',
-							},
-							{
-								label: __(
-									'Festivals',
-									'gatherpress-references'
-								),
-								value: 'ref_festival',
-							},
-							{
-								label: __( 'Awards', 'gatherpress-references' ),
-								value: 'ref_award',
-							},
+							...taxonomies.map( ( tax ) => ( {
+								label: tax.labels?.name || tax.name,
+								value: tax.slug,
+							} ) ),
 						] }
 						onChange={ ( value ) =>
 							setAttributes( { referenceType: value } )
@@ -454,7 +605,6 @@ export default function Edit( { attributes, setAttributes } ) {
 							const yearData = filteredData[ yearKey ];
 							return (
 								<div key={ yearKey }>
-									{ /* Year heading */ }
 									<YearHeading className="references-year">
 										{ yearKey }
 									</YearHeading>
@@ -480,7 +630,6 @@ export default function Edit( { attributes, setAttributes } ) {
 														</TypeHeading>
 													) }
 
-													{ /* Reference list */ }
 													<ul className="references-list">
 														{ items.map(
 															( item, index ) => (
