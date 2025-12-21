@@ -125,14 +125,15 @@ export default function Edit( { attributes, setAttributes } ) {
 	);
 
 	/**
-	 * Fetch reference taxonomy terms (configured via ref_tax)
+	 * Fetch reference taxonomy object and terms
 	 */
-	const refTerms = useSelect(
+	const { refTaxonomy, refTerms } = useSelect(
 		( select ) => {
 			if ( ! config || ! config.ref_tax ) {
-				return [];
+				return { refTaxonomy: null, refTerms: [] };
 			}
 
+			const taxonomy = select( 'core' ).getTaxonomy( config.ref_tax );
 			const terms = select( 'core' ).getEntityRecords(
 				'taxonomy',
 				config.ref_tax,
@@ -140,7 +141,10 @@ export default function Edit( { attributes, setAttributes } ) {
 					per_page: 99, // Large number to get all, but avoid -1. More than 99 is not supported by WordPress.
 				}
 			);
-			return terms || [];
+			return {
+				refTaxonomy: taxonomy || null,
+				refTerms: terms || [],
+			};
 		},
 		[ config ]
 	);
@@ -466,7 +470,10 @@ export default function Edit( { attributes, setAttributes } ) {
 
 					{ /* Reference Term filter dropdown */ }
 					<SelectControl
-						label={ __( 'Reference Term', 'gatherpress-references' ) }
+						label={
+							refTaxonomy?.labels?.singular_name ||
+							__( 'Reference Term', 'gatherpress-references' )
+						}
 						value={ refTermId }
 						options={ [
 							// Default option for auto-detection
@@ -485,10 +492,14 @@ export default function Edit( { attributes, setAttributes } ) {
 						onChange={ ( value ) =>
 							setAttributes( { refTermId: parseInt( value ) } )
 						}
-						help={ __(
-							'Select a specific reference term or leave as auto-detect',
-							'gatherpress-references'
-						) }
+						help={
+							refTaxonomy?.labels?.singular_name
+								? `Select a specific ${ refTaxonomy.labels.singular_name.toLowerCase() } or leave as auto-detect`
+								: __(
+										'Select a specific reference term or leave as auto-detect',
+										'gatherpress-references'
+								  )
+						}
 					/>
 
 					{ /* Year filter text input */ }

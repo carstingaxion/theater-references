@@ -160,16 +160,26 @@ function Edit({
   }, [activePostType]);
 
   /**
-   * Fetch reference taxonomy terms (configured via ref_tax)
+   * Fetch reference taxonomy object and terms
    */
-  const refTerms = (0,_wordpress_data__WEBPACK_IMPORTED_MODULE_3__.useSelect)(select => {
+  const {
+    refTaxonomy,
+    refTerms
+  } = (0,_wordpress_data__WEBPACK_IMPORTED_MODULE_3__.useSelect)(select => {
     if (!config || !config.ref_tax) {
-      return [];
+      return {
+        refTaxonomy: null,
+        refTerms: []
+      };
     }
+    const taxonomy = select('core').getTaxonomy(config.ref_tax);
     const terms = select('core').getEntityRecords('taxonomy', config.ref_tax, {
       per_page: 99 // Large number to get all, but avoid -1. More than 99 is not supported by WordPress.
     });
-    return terms || [];
+    return {
+      refTaxonomy: taxonomy || null,
+      refTerms: terms || []
+    };
   }, [config]);
 
   /**
@@ -419,7 +429,7 @@ function Edit({
           }),
           help: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Select which post type to query for references', 'gatherpress-references')
         }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.SelectControl, {
-          label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Reference Term', 'gatherpress-references'),
+          label: refTaxonomy?.labels?.singular_name || (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Reference Term', 'gatherpress-references'),
           value: refTermId,
           options: [
           // Default option for auto-detection
@@ -433,7 +443,7 @@ function Edit({
           onChange: value => setAttributes({
             refTermId: parseInt(value)
           }),
-          help: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Select a specific reference term or leave as auto-detect', 'gatherpress-references')
+          help: refTaxonomy?.labels?.singular_name ? `Select a specific ${refTaxonomy.labels.singular_name.toLowerCase()} or leave as auto-detect` : (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Select a specific reference term or leave as auto-detect', 'gatherpress-references')
         }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.TextControl, {
           label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Year', 'gatherpress-references'),
           value: year > 0 ? year.toString() : '',
