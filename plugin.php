@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name:       GatherPress References
- * Description:       Display production references including clients, festivals and awards in a structured, chronological format.
+ * Description:       Display references such as clients, festivals and awards in a structured, chronological format.
  * Version:           0.1.0
  * Requires at least: 6.1
  * Requires PHP:      7.4
@@ -25,6 +25,10 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * This function defines the configuration for which taxonomies should be
  * registered and associated with the gatherpress_event post type.
+ *
+ * Example configuration for theater productions:
+ * - ref_tax: The main reference taxonomy (e.g., 'gatherpress-production' for theater productions)
+ * - ref_types: Array of reference type taxonomies (e.g., clients, festivals, awards)
  *
  * The configuration is stored in post type support, making it easy to
  * query and extend by other plugins or themes.
@@ -231,6 +235,36 @@ class Plugin {
 	}
 
 	/**
+	 * Check if block should be registered
+	 *
+	 * Block is only registered if:
+	 * 1. At least one post type has 'gatherpress_references' support
+	 * 2. At least one config has a valid ref_tax
+	 * 3. At least one config has non-empty ref_types
+	 *
+	 * @since 0.1.0
+	 * @return bool True if block should be registered.
+	 */
+	private function should_register_block(): bool {
+		$configs = $this->get_all_configs();
+		
+		if ( empty( $configs ) ) {
+			return false;
+		}
+		
+		// Check if at least one config has both ref_tax and non-empty ref_types.
+		foreach ( $configs as $config ) {
+			if ( ! empty( $config['ref_tax'] ) && 
+				 ! empty( $config['ref_types'] ) && 
+				 is_array( $config['ref_types'] ) ) {
+				return true;
+			}
+		}
+		
+		return false;
+	}
+
+	/**
 	 * Register all taxonomies based on configurations
 	 *
 	 * Iterates through all post types with 'gatherpress_references' support
@@ -247,11 +281,11 @@ class Plugin {
 		}
 		
 		foreach ( $configs as $post_type => $config ) {
-			// Only register our production taxonomy if the configured slug matches our constant.
+			// Only register our production taxonomy if it is still present in the post type support config.
 			if ( ! empty( $config['ref_tax'] ) && 
-			     $config['ref_tax'] === 'gatherpress-production' && 
-			     ! taxonomy_exists( $config['ref_tax'] ) ) {
-				$this->register_productions_taxonomy( $post_type );
+				 $config['ref_tax'] === 'gatherpress-production' && 
+				 ! taxonomy_exists( $config['ref_tax'] ) ) {
+				$this->register_reference_taxonomy( $post_type );
 			}
 			
 			// Register reference type taxonomies if configured and not already registered.
@@ -275,10 +309,11 @@ class Plugin {
 	}
 
 	/**
-	 * Register the productions taxonomy
+	 * Register the reference taxonomy (productions in the theater use case)
 	 *
-	 * Hierarchical taxonomy (like categories) for productions.
-	 * Allows events to be grouped by production and enables filtering.
+	 * Hierarchical taxonomy (like categories) for organizing references.
+	 * Allows events to be grouped by reference term and enables filtering.
+	 * In the default theater setup, this is used for theater productions.
 	 *
 	 * Non-public but queryable - no frontend archives or permalinks.
 	 *
@@ -286,7 +321,7 @@ class Plugin {
 	 * @param string $post_type     Post type to associate with.
 	 * @return void
 	 */
-	private function register_productions_taxonomy( string $post_type ): void {
+	private function register_reference_taxonomy( string $post_type ): void {
 		$labels = array(
 			'name'              => __( 'Productions', 'gatherpress-references' ),
 			'singular_name'     => __( 'Production', 'gatherpress-references' ),
@@ -439,13 +474,19 @@ class Plugin {
 	/**
 	 * Register the GatherPress References block
 	 *
-	 * Registers the block type from the compiled build directory.
-	 * Uses block.json for metadata (requires WordPress 5.8+).
+	 * Only registers the block if:
+	 * 1. At least one post type has 'gatherpress_references' support
+	 * 2. At least one config has a valid ref_tax
+	 * 3. At least one config has non-empty ref_types
 	 *
 	 * @since 0.1.0
 	 * @return void
 	 */
 	public function register_block(): void {
+		if ( ! $this->should_register_block() ) {
+			return;
+		}
+		
 		register_block_type( __DIR__ . '/build/' );
 	}
 
@@ -580,13 +621,13 @@ class Plugin {
 		?>
 		<div class="wrap">
 			<h1><?php esc_html_e( 'References Demo Data', 'gatherpress-references' ); ?></h1>
-			<p><?php esc_html_e( 'Generate sample GatherPress events with productions and references for development and testing.', 'gatherpress-references' ); ?></p>
+			<p><?php esc_html_e( 'Generate sample GatherPress events with reference terms for development and testing.', 'gatherpress-references' ); ?></p>
 			
 			<div style="background: #fff; padding: 20px; margin: 20px 0; border: 1px solid #ccc;">
 				<h2><?php esc_html_e( 'Generate Demo Data', 'gatherpress-references' ); ?></h2>
 				<p><?php esc_html_e( 'This will create:', 'gatherpress-references' ); ?></p>
 				<ul style="list-style: disc; margin-left: 20px;">
-					<li><?php esc_html_e( '5  productions', 'gatherpress-references' ); ?></li>
+					<li><?php esc_html_e( '5  reference terms (theater productions)', 'gatherpress-references' ); ?></li>
 					<li><?php esc_html_e( '20 GatherPress event posts', 'gatherpress-references' ); ?></li>
 					<li><?php esc_html_e( '8 client terms', 'gatherpress-references' ); ?></li>
 					<li><?php esc_html_e( '6 festival terms', 'gatherpress-references' ); ?></li>
@@ -619,9 +660,10 @@ class Plugin {
 	 *
 	 * Creates sample events and taxonomy terms for testing.
 	 * Uses the first available post type with 'gatherpress_references' support.
+	 * Demo data uses the theater production example by default.
 	 *
 	 * Creates:
-	 * - 5 production terms
+	 * - 5 reference taxonomy terms (theater productions)
 	 * - 8 client terms
 	 * - 6 festival terms
 	 * - 6 award terms
@@ -645,8 +687,8 @@ class Plugin {
 		$post_type = array_key_first( $configs );
 		$config    = $configs[ $post_type ];
 		
-		// Sample production names.
-		$productions = array( 'Hamlet', 'Romeo and Juliet', 'A Midsummer Night\'s Dream', 'Macbeth', 'The Tempest' );
+		// Sample reference taxonomy term names (theater productions).
+		$ref_terms = array( 'Hamlet', 'Romeo and Juliet', 'A Midsummer Night\'s Dream', 'Macbeth', 'The Tempest' );
 		
 		// Sample client names from major theater cities.
 		$clients = array(
@@ -680,13 +722,13 @@ class Plugin {
 			'Innovation in Theatre Award',
 		);
 
-		// Create production terms and store IDs.
-		$production_ids = array();
+		// Create reference taxonomy terms and store IDs.
+		$ref_term_ids = array();
 		if ( ! empty( $config['ref_tax'] ) && taxonomy_exists( $config['ref_tax'] ) ) {
-			foreach ( $productions as $production ) {
-				$term = wp_insert_term( $production, $config['ref_tax'] );
+			foreach ( $ref_terms as $ref_term ) {
+				$term = wp_insert_term( $ref_term, $config['ref_tax'] );
 				if ( ! is_wp_error( $term ) ) {
-					$production_ids[] = $term['term_id'];
+					$ref_term_ids[] = $term['term_id'];
 					// Mark as demo data for cleanup.
 					update_term_meta( $term['term_id'], '_demo_data', '1' );
 				}
@@ -736,11 +778,11 @@ class Plugin {
 			$month      = wp_rand( 1, 12 );
 			$day        = wp_rand( 1, 28 );
 			$date       = sprintf( '%04d-%02d-%02d', $year, $month, $day );
-			$production = $productions[ array_rand( $productions ) ];
+			$ref_term = $ref_terms[ array_rand( $ref_terms ) ];
 
 			$event_data = array(
-				'post_title'   => $production . ' - Event ' . ( $i + 1 ),
-				'post_content' => 'Demo event for ' . $production . '.',
+				'post_title'   => $ref_term . ' - Event ' . ( $i + 1 ),
+				'post_content' => 'Demo event for ' . $ref_term . '.',
 				'post_status'  => 'publish',
 				'post_type'    => $post_type,
 				'post_date'    => $date . ' 19:00:00',
@@ -769,10 +811,10 @@ class Plugin {
 					);
 				}
 
-				// Assign production term by term_id.
-				if ( ! empty( $production_ids ) ) {
-					$selected_production = $production_ids[ array_rand( $production_ids ) ];
-					wp_set_object_terms( $post_id, $selected_production, $config['ref_tax'], false );
+				// Assign reference taxonomy term by term_id.
+				if ( ! empty( $ref_term_ids ) ) {
+					$selected_ref_term = $ref_term_ids[ array_rand( $ref_term_ids ) ];
+					wp_set_object_terms( $post_id, $selected_ref_term, $config['ref_tax'], false );
 				}
 
 				// Use randomization to create varied reference patterns.

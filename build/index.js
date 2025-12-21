@@ -8,7 +8,7 @@
   \************************/
 (module) {
 
-module.exports = /*#__PURE__*/JSON.parse('{"$schema":"https://schemas.wp.org/trunk/block.json","apiVersion":3,"name":"gatherpress/references","version":"0.1.0","title":"GatherPress References","category":"widgets","icon":"awards","description":"Display event references including clients, festivals, and awards.","example":{},"attributes":{"productionId":{"type":"number","default":0},"year":{"type":"number","default":0},"referenceType":{"type":"string","default":"all","enum":["all","ref_client","ref_festival","ref_award"]},"headingLevel":{"type":"number","default":2},"yearSortOrder":{"type":"string","default":"desc","enum":["asc","desc"]},"metadata":{"type":"object","default":{"name":"GatherPress References"}}},"supports":{"html":false,"color":{"background":true,"text":true,"link":true,"gradients":true,"__experimentalDefaultControls":{"background":true,"text":true}},"spacing":{"margin":true,"padding":true,"blockGap":true,"__experimentalDefaultControls":{"margin":true,"padding":true,"blockGap":true}},"typography":{"fontSize":true,"lineHeight":true,"fontFamily":true,"fontWeight":true,"fontStyle":true,"textTransform":true,"letterSpacing":true,"__experimentalDefaultControls":{"fontSize":true,"fontFamily":true}},"__experimentalBorder":{"color":true,"radius":true,"style":true,"width":true,"__experimentalDefaultControls":{"color":true,"radius":true}}},"style":"file:./style-index.css","textdomain":"gatherpress-references","editorScript":"file:./index.js","editorStyle":"file:./index.css","render":"file:./render.php"}');
+module.exports = /*#__PURE__*/JSON.parse('{"$schema":"https://schemas.wp.org/trunk/block.json","apiVersion":3,"name":"gatherpress/references","version":"0.1.0","title":"GatherPress References","category":"widgets","icon":"awards","description":"Display references such as clients, festivals and awards in a structured, chronological format.","example":{},"attributes":{"postType":{"type":"string","default":""},"refTermId":{"type":"number","default":0},"year":{"type":"number","default":0},"referenceType":{"type":"string","default":"all"},"headingLevel":{"type":"number","default":2},"yearSortOrder":{"type":"string","default":"desc","enum":["asc","desc"]},"metadata":{"type":"object","default":{"name":"References"}}},"supports":{"html":false,"color":{"background":true,"text":true,"link":false,"gradients":true,"__experimentalDefaultControls":{"background":true,"text":true}},"spacing":{"margin":true,"padding":true,"blockGap":false,"__experimentalDefaultControls":{"margin":true,"padding":true,"blockGap":false}},"typography":{"fontSize":true,"lineHeight":true,"fontFamily":true,"fontWeight":true,"fontStyle":true,"textTransform":true,"letterSpacing":true,"__experimentalDefaultControls":{"fontSize":true,"fontFamily":true}},"__experimentalBorder":{"color":true,"radius":true,"style":true,"width":true,"__experimentalDefaultControls":{"color":true,"radius":true}}},"style":"file:./style-index.css","textdomain":"gatherpress-references","editorScript":"file:./index.js","editorStyle":"file:./index.css","render":"file:./render.php"}');
 
 /***/ },
 
@@ -76,7 +76,8 @@ function Edit({
 }) {
   // Destructure attributes for easier access
   const {
-    productionId,
+    postType,
+    refTermId,
     year,
     referenceType,
     headingLevel,
@@ -84,17 +85,119 @@ function Edit({
   } = attributes;
 
   /**
-   * Fetch productions from WordPress data store
-   *
-   * Uses the core data store to fetch all production terms.
-   * Returns empty array while loading to prevent errors.
+   * Fetch all post types with gatherpress_references support
    */
-  const productions = (0,_wordpress_data__WEBPACK_IMPORTED_MODULE_3__.useSelect)(select => {
-    const terms = select('core').getEntityRecords('taxonomy', 'gatherpress-productions', {
+  const supportedPostTypes = (0,_wordpress_data__WEBPACK_IMPORTED_MODULE_3__.useSelect)(select => {
+    const postTypes = select('core').getPostTypes({
+      per_page: -1
+    });
+    if (!postTypes) {
+      return [];
+    }
+    return postTypes.filter(type => {
+      return type.supports && type.supports.gatherpress_references;
+    });
+  }, []);
+
+  /**
+   * Auto-assign post type on block insertion if only one supported type exists
+   */
+  (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_4__.useEffect)(() => {
+    if (!postType && supportedPostTypes.length === 1) {
+      setAttributes({
+        postType: supportedPostTypes[0].slug
+      });
+    }
+  }, [postType, supportedPostTypes, setAttributes]);
+
+  /**
+   * Determine active post type for configuration lookup
+   */
+  const activePostType = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_4__.useMemo)(() => {
+    // Use explicitly set post type if available
+    if (postType) {
+      return postType;
+    }
+
+    // Fall back to first supported post type
+    return supportedPostTypes.length > 0 ? supportedPostTypes[0].slug : null;
+  }, [postType, supportedPostTypes]);
+
+  /**
+   * Fetch block configuration from the active post type
+   */
+  const config = (0,_wordpress_data__WEBPACK_IMPORTED_MODULE_3__.useSelect)(select => {
+    if (!activePostType) {
+      return null;
+    }
+    const postTypeObject = select('core').getPostType(activePostType);
+    if (!postTypeObject || !postTypeObject.supports) {
+      return null;
+    }
+
+    // Extract the configuration from the supports object
+    const referencesSupport = postTypeObject.supports.gatherpress_references;
+    if (!referencesSupport) {
+      return null;
+    }
+
+    // If it's an array, take the first element (WordPress stores support args in arrays)
+    if (Array.isArray(referencesSupport) && referencesSupport.length > 0) {
+      return referencesSupport[0];
+    }
+
+    // If it's an object, use it directly
+    if (typeof referencesSupport === 'object' && referencesSupport !== null) {
+      return referencesSupport;
+    }
+
+    // If it's just true, we need to handle this case
+    if (referencesSupport === true) {
+      // Return null as we need actual configuration
+      return null;
+    }
+    return null;
+  }, [activePostType]);
+
+  /**
+   * Fetch reference taxonomy terms (configured via ref_tax)
+   */
+  const refTerms = (0,_wordpress_data__WEBPACK_IMPORTED_MODULE_3__.useSelect)(select => {
+    if (!config || !config.ref_tax) {
+      return [];
+    }
+    const terms = select('core').getEntityRecords('taxonomy', config.ref_tax, {
       per_page: 99 // Large number to get all, but avoid -1. More than 99 is not supported by WordPress.
     });
     return terms || [];
-  }, []);
+  }, [config]);
+
+  /**
+   * Fetch taxonomy objects for reference types
+   */
+  const taxonomies = (0,_wordpress_data__WEBPACK_IMPORTED_MODULE_3__.useSelect)(select => {
+    if (!config || !config.ref_types || !Array.isArray(config.ref_types)) {
+      return [];
+    }
+    const taxonomyObjects = config.ref_types.map(slug => select('core').getTaxonomy(slug)).filter(tax => tax !== null && tax !== undefined);
+    return taxonomyObjects;
+  }, [config]);
+
+  /**
+   * Build type labels mapping
+   */
+  const typeLabels = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_4__.useMemo)(() => {
+    const labels = {};
+    taxonomies.forEach(tax => {
+      labels[tax.slug] = tax.labels?.name || tax.name;
+    });
+    return labels;
+  }, [taxonomies]);
+
+  /**
+   * Check if block is properly configured
+   */
+  const isConfigured = config && typeof config === 'object' && config.ref_tax && config.ref_types && Array.isArray(config.ref_types) && config.ref_types.length > 0;
 
   /**
    * Update block metadata with dynamic label
@@ -103,11 +206,15 @@ function Edit({
    * It updates the block's metadata attribute so the label appears in the list view.
    */
   (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_4__.useEffect)(() => {
+    if (!isConfigured) {
+      return;
+    }
+
     /**
      * Generate dynamic block label based on attributes
      *
      * Creates a human-readable label that reflects current filters:
-     * - Production name (if specific production selected)
+     * - Reference term name (if specific term selected)
      * - Year (if specified)
      * - Reference type (if not "all")
      *
@@ -116,11 +223,11 @@ function Edit({
     const getBlockLabel = () => {
       const parts = [];
 
-      // Add production name if specific production selected
-      if (productionId > 0) {
-        const production = productions.find(p => p.id === productionId);
-        if (production) {
-          parts.push(production.name);
+      // Add reference term name if specific term selected
+      if (refTermId > 0) {
+        const refTerm = refTerms.find(p => p.id === refTermId);
+        if (refTerm) {
+          parts.push(refTerm.name);
         }
       }
 
@@ -131,17 +238,12 @@ function Edit({
 
       // Add reference type if not "all"
       if (referenceType !== 'all') {
-        const typeLabels = {
-          ref_client: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Clients', 'gatherpress-references'),
-          ref_festival: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Festivals', 'gatherpress-references'),
-          ref_award: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Awards', 'gatherpress-references')
-        };
         parts.push(typeLabels[referenceType] || referenceType);
       }
 
       // Construct final label
       if (parts.length > 0) {
-        return (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('References:', 'gatherpress-references') + parts.join(' • ');
+        return (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('References', 'gatherpress-references') + ': ' + parts.join(' • ');
       }
 
       // Default label when no filters applied
@@ -156,7 +258,7 @@ function Edit({
         name: label
       }
     });
-  }, [setAttributes, productionId, year, referenceType, productions]);
+  }, [setAttributes, refTermId, year, referenceType, refTerms, typeLabels, isConfigured]);
 
   /**
    * Calculate secondary heading level
@@ -171,62 +273,38 @@ function Edit({
   const TypeHeading = `h${secondaryHeadingLevel}`;
 
   /**
-   * Type labels mapping
-   *
-   * Maps internal taxonomy slugs to user-facing labels.
-   * Used for displaying type headings in preview.
-   */
-  const typeLabels = {
-    ref_client: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Clients', 'gatherpress-references'),
-    ref_festival: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Festivals', 'gatherpress-references'),
-    ref_award: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Awards', 'gatherpress-references')
-  };
-
-  /**
    * Placeholder data for editor preview
-   *
-   * Provides realistic sample data to show users what the block
-   * will look like with actual content. Organized by year and type.
-   *
-   * Structure matches the output from render.php:
-   * {
-   *   '2024': {
-   *     'ref_client': ['Client 1', 'Client 2'],
-   *     'ref_festival': ['Festival 1'],
-   *     'ref_award': ['Award 1']
-   *   }
-   * }
    */
   const getPlaceholderData = () => {
+    if (!isConfigured || !config.ref_types) {
+      return {};
+    }
+
     // Determine which year(s) to show in preview
     const currentYear = new Date().getFullYear();
     const displayYear = year > 0 ? year : currentYear;
 
+    // Build placeholder data using configured taxonomies
+    const buildYearData = () => {
+      const yearData = {};
+      config.ref_types.forEach(taxSlug => {
+        const taxLabel = typeLabels[taxSlug] || taxSlug;
+        yearData[taxSlug] = [`${taxLabel} Example 1`, `${taxLabel} Example 2`].sort();
+      });
+      return yearData;
+    };
+
     // If year is specified, show only that year
     if (year > 0) {
       return {
-        [displayYear]: {
-          ref_client: [(0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Royal Theater London', 'gatherpress-references'), (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Vienna Burgtheater', 'gatherpress-references')].sort(),
-          ref_festival: [(0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Edinburgh International Festival', 'gatherpress-references')].sort(),
-          ref_award: [(0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Best Director Award', 'gatherpress-references')].sort()
-        }
+        [displayYear]: buildYearData()
       };
     }
 
     // If no year specified, show two years of data
     return {
-      // Cast as string to prevent a default ordering by integer keys.
-      [currentYear + ' ']: {
-        ref_client: [(0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Royal Theater London', 'gatherpress-references'), (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Vienna Burgtheater', 'gatherpress-references')].sort(),
-        ref_festival: [(0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Edinburgh International Festival', 'gatherpress-references')].sort(),
-        ref_award: [(0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Best Director Award', 'gatherpress-references')].sort()
-      },
-      // Cast as string to prevent a default ordering by integer keys.
-      [currentYear - 1 + ' ']: {
-        ref_client: [(0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Berlin Staatstheater', 'gatherpress-references')].sort(),
-        ref_festival: [(0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Avignon Festival', 'gatherpress-references'), (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Salzburg Festival', 'gatherpress-references')].sort(),
-        ref_award: []
-      }
+      [currentYear + ' ']: buildYearData(),
+      [currentYear - 1 + ' ']: buildYearData()
     };
   };
   const placeholderData = getPlaceholderData();
@@ -289,32 +367,73 @@ function Edit({
   const sortedYears = getSortedYears();
 
   // Determine if year sort control should be shown
-  const showYearSortControl = year === 0; // Only show when no specific year selected
+  const showYearSortControl = year === 0;
 
-  // Determine if we should show type headings (only when showing all types)
+  // Determine if we should show type headings.
   const showTypeHeadings = referenceType === 'all';
+
+  // Show configuration error if block is not properly configured
+  if (!isConfigured || !activePostType) {
+    return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.Fragment, {
+      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(_wordpress_block_editor__WEBPACK_IMPORTED_MODULE_1__.InspectorControls, {
+        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.PanelBody, {
+          title: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Reference Settings', 'gatherpress-references'),
+          children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.Notice, {
+            status: "warning",
+            isDismissible: false,
+            children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('References block requires a post type with gatherpress_references support.', 'gatherpress-references')
+          })
+        })
+      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("div", {
+        ...(0,_wordpress_block_editor__WEBPACK_IMPORTED_MODULE_1__.useBlockProps)(),
+        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.Notice, {
+          status: "warning",
+          isDismissible: false,
+          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("p", {
+            children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('This block requires a post type with gatherpress_references support configured.', 'gatherpress-references')
+          }), supportedPostTypes.length > 0 && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("p", {
+            children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("strong", {
+              children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Supported post types:', 'gatherpress-references')
+            }), ' ', supportedPostTypes.map(type => type.labels?.name || type.name).join(', ')]
+          })]
+        })
+      })]
+    });
+  }
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.Fragment, {
     children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(_wordpress_block_editor__WEBPACK_IMPORTED_MODULE_1__.InspectorControls, {
       children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.PanelBody, {
         title: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Reference Settings', 'gatherpress-references'),
-        children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.SelectControl, {
-          label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Production', 'gatherpress-references'),
-          value: productionId,
+        children: [supportedPostTypes.length > 1 && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.SelectControl, {
+          label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Post Type', 'gatherpress-references'),
+          value: postType || '',
+          options: [{
+            label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Select post type', 'gatherpress-references'),
+            value: ''
+          }, ...supportedPostTypes.map(type => ({
+            label: type.labels?.name || type.name,
+            value: type.slug
+          }))],
+          onChange: value => setAttributes({
+            postType: value
+          }),
+          help: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Select which post type to query for references', 'gatherpress-references')
+        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.SelectControl, {
+          label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Reference Term', 'gatherpress-references'),
+          value: refTermId,
           options: [
           // Default option for auto-detection
           {
-            label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Auto-detect (or all)', 'gatherpress-references'),
+            label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('All (or auto-detect)', 'gatherpress-references'),
             value: 0
-          },
-          // Map production terms to options
-          ...productions.map(production => ({
-            label: production.name,
-            value: production.id
+          }, ...refTerms.map(refTerm => ({
+            label: refTerm.name,
+            value: refTerm.id
           }))],
           onChange: value => setAttributes({
-            productionId: parseInt(value)
+            refTermId: parseInt(value)
           }),
-          help: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Select a specific production or leave as auto-detect', 'gatherpress-references')
+          help: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Select a specific reference term or leave as auto-detect', 'gatherpress-references')
         }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_2__.TextControl, {
           label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Year', 'gatherpress-references'),
           value: year > 0 ? year.toString() : '',
@@ -342,16 +461,10 @@ function Edit({
           options: [{
             label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('All Types', 'gatherpress-references'),
             value: 'all'
-          }, {
-            label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Clients', 'gatherpress-references'),
-            value: 'ref_client'
-          }, {
-            label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Festivals', 'gatherpress-references'),
-            value: 'ref_festival'
-          }, {
-            label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_0__.__)('Awards', 'gatherpress-references'),
-            value: 'ref_award'
-          }],
+          }, ...taxonomies.map(tax => ({
+            label: tax.labels?.name || tax.name,
+            value: tax.slug
+          }))],
           onChange: value => setAttributes({
             referenceType: value
           }),

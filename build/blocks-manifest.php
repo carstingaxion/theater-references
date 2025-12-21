@@ -9,12 +9,16 @@ return array(
 		'title' => 'GatherPress References',
 		'category' => 'widgets',
 		'icon' => 'awards',
-		'description' => 'Display event references including clients, festivals, and awards.',
+		'description' => 'Display references such as clients, festivals and awards in a structured, chronological format.',
 		'example' => array(
 			
 		),
 		'attributes' => array(
-			'productionId' => array(
+			'postType' => array(
+				'type' => 'string',
+				'default' => ''
+			),
+			'refTermId' => array(
 				'type' => 'number',
 				'default' => 0
 			),
@@ -24,13 +28,7 @@ return array(
 			),
 			'referenceType' => array(
 				'type' => 'string',
-				'default' => 'all',
-				'enum' => array(
-					'all',
-					'ref_client',
-					'ref_festival',
-					'ref_award'
-				)
+				'default' => 'all'
 			),
 			'headingLevel' => array(
 				'type' => 'number',
@@ -47,7 +45,7 @@ return array(
 			'metadata' => array(
 				'type' => 'object',
 				'default' => array(
-					'name' => 'GatherPress References'
+					'name' => 'References'
 				)
 			)
 		),
@@ -56,7 +54,7 @@ return array(
 			'color' => array(
 				'background' => true,
 				'text' => true,
-				'link' => true,
+				'link' => false,
 				'gradients' => true,
 				'__experimentalDefaultControls' => array(
 					'background' => true,
@@ -66,11 +64,11 @@ return array(
 			'spacing' => array(
 				'margin' => true,
 				'padding' => true,
-				'blockGap' => true,
+				'blockGap' => false,
 				'__experimentalDefaultControls' => array(
 					'margin' => true,
 					'padding' => true,
-					'blockGap' => true
+					'blockGap' => false
 				)
 			),
 			'typography' => array(
