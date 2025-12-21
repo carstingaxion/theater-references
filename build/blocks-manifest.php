@@ -7,7 +7,7 @@ return array(
 		'name' => 'gatherpress/references',
 		'version' => '0.1.0',
 		'title' => 'GatherPress References',
-		'category' => 'widgets',
+		'category' => 'gatherpress',
 		'icon' => 'awards',
 		'description' => 'Display references such as clients, festivals and awards in a structured, chronological format.',
 		'example' => array(
