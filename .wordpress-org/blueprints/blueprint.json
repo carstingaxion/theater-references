@@ -33,7 +33,7 @@
     },
     {
       "step": "runPHP",
-      "code": "<?php require_once '/wordpress/wp-load.php';\n$page_args = array(\n'post_type'    => 'page',\n'post_status'  => 'publish',\n'post_title'   => 'GatherPress References Demo',\n'post_content' => '<!-- wp:gatherpress/references {\"metadata\":{\"name\":\"References\"}} /-->',\n);\n$page_id = wp_insert_post( $page_args, true );\nif ( is_wp_error( $page_id ) ) {\nerror_log( 'addPage error: ' . $page_id->get_error_message() );\n}",
+      "code": "<?php require_once '/wordpress/wp-load.php';\n$page_args = array(\n'post_type'    => 'page',\n'post_status'  => 'publish',\n'post_title'   => 'GatherPress References',\n'post_content' => '<!-- wp:gatherpress/references {\"postType\":\"gatherpress_event\",\"metadata\":{\"name\":\"References\"}} /-->',\n);\n$page_id = wp_insert_post( $page_args, true );\nif ( is_wp_error( $page_id ) ) {\nerror_log( 'addPage error: ' . $page_id->get_error_message() );\n}",
       "progress": {
         "caption": "Crafting a GatherPress References Demo Page"
       }
