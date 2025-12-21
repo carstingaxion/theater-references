@@ -853,7 +853,7 @@ The block fully supports WordPress theme.json:
 ## Changelog
 
 ### 0.1.0
-* Initial release
+* Initial release created with https://telex.automattic.ai/projects/236ea3ff
 * Custom taxonomies for references (configurable via post type support)
 * Support for reference term filtering
 * Support for year filtering
