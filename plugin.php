@@ -131,11 +131,16 @@ class Plugin {
 		add_action( 'init', array( $this, 'register_taxonomies' ) );
 		add_action( 'init', array( $this, 'register_block' ) );
 
-		// Cache invalidation hooks.
-		add_action( 'save_post', array( $this, 'clear_cache_on_post_save' ) );
-		add_action( 'delete_post', array( $this, 'clear_cache_on_post_delete' ) );
-		add_action( 'edited_term', array( $this, 'clear_cache_on_term_change' ), 10, 3 );
+		// Cache invalidation hooks - post status changes.
+		add_action( 'transition_post_status', array( $this, 'clear_cache_on_status_change' ), 10, 3 );
+		
+		// Cache invalidation hooks - term changes.
+		add_action( 'create_term', array( $this, 'clear_cache_on_term_change' ), 10, 3 );
+		add_action( 'edit_term', array( $this, 'clear_cache_on_term_change' ), 10, 3 );
 		add_action( 'delete_term', array( $this, 'clear_cache_on_term_change' ), 10, 3 );
+		
+		// Cache invalidation hooks - term relationships.
+		add_action( 'set_object_terms', array( $this, 'clear_cache_on_term_relationship' ), 10, 3 );
 
 		// Admin interface hooks.
 		add_action( 'admin_menu', array( $this, 'add_demo_data_menu' ) );
@@ -491,49 +496,60 @@ class Plugin {
 	}
 
 	/**
-	 * Clear cache when a post is saved
+	 * Clear cache when event post status changes to or from 'publish'.
 	 *
-	 * Hooked to 'save_post' action to invalidate cache when event content changes.
-	 * Only clears cache if the post type has 'gatherpress_references' support.
+	 * Hooked to 'transition_post_status' action. This is more precise than
+	 * 'save_post' as it only triggers when the post status actually changes.
+	 * Clears all reference caches whenever a supported post type is published
+	 * or unpublished.
+	 *
+	 * Examples of status transitions that trigger cache clearing:
+	 * - draft → publish (new event published)
+	 * - publish → draft (event unpublished)
+	 * - publish → trash (event deleted)
+	 * - trash → publish (event restored)
+	 * - pending → publish (event approved)
 	 *
 	 * @since 0.1.0
-	 * @param int $post_id The post ID being saved.
+	 *
+	 * @param string   $new_status New post status.
+	 * @param string   $old_status Old post status.
+	 * @param \WP_Post $post       Post object.
 	 * @return void
 	 */
-	public function clear_cache_on_post_save( int $post_id ): void {
-		$post_type = get_post_type( $post_id );
-		if ( $post_type && post_type_supports( $post_type, 'gatherpress_references' ) ) {
-			$this->clear_all_caches();
+	public function clear_cache_on_status_change( string $new_status, string $old_status, $post ): void {
+		if ( ! is_object( $post ) || ! isset( $post->post_type ) ) {
+			return;
+		}
+		
+		if ( ! post_type_supports( $post->post_type, 'gatherpress_references' ) ) {
+			return;
+		}
+		
+		// Only clear cache if status is changing to or from 'publish'.
+		// This catches: publish→anything or anything→publish.
+		if ( 'publish' === $new_status || 'publish' === $old_status ) {
+			// Only clear if status actually changed.
+			if ( $new_status !== $old_status ) {
+				$this->clear_all_caches();
+			}
 		}
 	}
 
 	/**
-	 * Clear cache when a post is deleted
+	 * Clear cache when taxonomy terms are modified.
 	 *
-	 * Hooked to 'delete_post' action to invalidate cache when event is removed.
-	 * Only clears cache if the post type has 'gatherpress_references' support.
+	 * Hooked to term creation, editing, and deletion actions. Clears all reference
+	 * caches when terms in any supported taxonomy are changed.
 	 *
-	 * @since 0.1.0
-	 * @param int $post_id The post ID being deleted.
-	 * @return void
-	 */
-	public function clear_cache_on_post_delete( int $post_id ): void {
-		$post_type = get_post_type( $post_id );
-		if ( $post_type && post_type_supports( $post_type, 'gatherpress_references' ) ) {
-			$this->clear_all_caches();
-		}
-	}
-
-	/**
-	 * Clear cache when a taxonomy term is changed or deleted
-	 *
-	 * Hooked to 'edited_term' and 'delete_term' actions.
-	 * Only clears cache for taxonomies configured in post type support.
+	 * This function respects the configuration - if a taxonomy is not in any
+	 * post type's configuration, changes to its terms won't trigger cache clearing.
 	 *
 	 * @since 0.1.0
-	 * @param int    $term_id  The term ID.
-	 * @param int    $tt_id    The term taxonomy ID.
-	 * @param string $taxonomy The taxonomy slug.
+	 *
+	 * @param int    $term_id  Term ID.
+	 * @param int    $tt_id    Term taxonomy ID.
+	 * @param string $taxonomy Taxonomy slug.
 	 * @return void
 	 */
 	public function clear_cache_on_term_change( int $term_id, int $tt_id, string $taxonomy ): void {
@@ -542,6 +558,48 @@ class Plugin {
 		if ( in_array( $taxonomy, $all_taxonomies, true ) ) {
 			$this->clear_all_caches();
 		}
+	}
+
+	/**
+	 * Clear cache when term relationships change.
+	 *
+	 * Hooked to 'set_object_terms' action. Clears all reference caches when
+	 * taxonomy terms are assigned to or removed from posts of supported post types.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param int             $object_id Object ID (post ID).
+	 * @param array<int, int> $terms     An array of term IDs.
+	 * @param array<int, int> $tt_ids    An array of term taxonomy IDs.
+	 * @return void
+	 */
+	public function clear_cache_on_term_relationship( int $object_id, array $terms, array $tt_ids ): void {
+		// Only proceed if terms were assigned to a supported post.
+		if ( $this->is_supported_post( $object_id ) ) {
+			$this->clear_all_caches();
+		}
+	}
+
+	/**
+	 * Check if a specific post is supported for references.
+	 *
+	 * A post is considered supported if its post type supports
+	 * 'gatherpress_references' and its status is 'publish'.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param int $post_id Post ID to check.
+	 * @return bool True if supported, false otherwise.
+	 */
+	private function is_supported_post( int $post_id ): bool {
+		$post = get_post( $post_id );
+		
+		if ( ! $post ) {
+			return false;
+		}
+		
+		return post_type_supports( $post->post_type, 'gatherpress_references' ) 
+			&& $post->post_status === 'publish';
 	}
 
 	/**
