@@ -165,7 +165,7 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 			$query = new \WP_Query( $args );
 			
 			// Organize results.
-			$references = $this->organize_query_results( $post_type, $query );
+			$references = $this->organize_query_results( $post_type, $query, $type );
 
 			// Cache and return only if we have actual data.
 			if ( ! empty( $references ) ) {
@@ -437,9 +437,10 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 * @since 0.1.0
 		 * @param string    $post_type Post type slug.
 		 * @param \WP_Query $query     Query object with results.
+		 * @param string    $type      Reference type filter being applied.
 		 * @return array<string, array<string, array<int, string>>> Organized references.
 		 */
-		private function organize_query_results( string $post_type, \WP_Query $query ): array {
+		private function organize_query_results( string $post_type, \WP_Query $query, string $type ): array {
 			if ( empty( $query->posts ) ) {
 				return array();
 			}
@@ -464,7 +465,7 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 			$post_terms = $this->get_post_terms( $post_ids, $config['ref_types'] );
 
 			// Organize by year and type.
-			$references = $this->group_terms_by_year( $post_ids, $post_dates, $post_terms, $config['ref_types'] );
+			$references = $this->group_terms_by_year( $post_ids, $post_dates, $post_terms, $config['ref_types'], $type );
 
 			return $references;
 		}
@@ -508,16 +509,17 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 * Group terms by year
 		 *
 		 * Organizes post terms into a nested structure by year and taxonomy.
-		 * Filters out empty arrays to ensure clean data structure.
+		 * Now handles filtering during grouping and removes empty years before caching.
 		 *
 		 * @since 0.1.0
 		 * @param array<int, int>                                   $post_ids           Array of post IDs.
 		 * @param array<int, object{post_id: string, year: string}> $post_dates         Post date data.
 		 * @param array<int, ?array<string, array<\WP_Term>>>       $post_terms         Post terms organized by taxonomy.
 		 * @param array<int, string>                                $display_taxonomies Taxonomies to display.
+		 * @param string                                            $type_filter        Current type filter ('all' or specific type).
 		 * @return array<string, array<string, array<int, string>>> Organized references.
 		 */
-		private function group_terms_by_year( array $post_ids, array $post_dates, array $post_terms, array $display_taxonomies ): array {
+		private function group_terms_by_year( array $post_ids, array $post_dates, array $post_terms, array $display_taxonomies, string $type_filter ): array {
 			$references = array();
 
 			foreach ( $post_ids as $post_id ) {
@@ -541,7 +543,7 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 			$references = $this->sort_term_names( $references );
 
 			// Clean up empty arrays.
-			$references = $this->remove_empty_arrays( $references );
+			$references = $this->remove_empty_arrays( $references, $type_filter );
 
 			return $references;
 		}
@@ -575,22 +577,40 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 * 1. Empty taxonomy arrays within a year
 		 * 2. Years that have no taxonomy data after cleanup
 		 *
+		 * Filters based on the active type filter to ensure
+		 * years are only included if they have data for the requested type.
+		 *
 		 * @since 0.1.0
-		 * @param array<string, array<string, array<int, string>>> $references Reference data to clean.
+		 * @param array<string, array<string, array<int, string>>> $references  Reference data to clean.
+		 * @param string                                            $type_filter Current type filter ('all' or specific type).
 		 * @return array<string, array<string, array<int, string>>> Cleaned reference data.
 		 */
-		private function remove_empty_arrays( array $references ): array {
+		private function remove_empty_arrays( array $references, string $type_filter ): array {
 			foreach ( $references as $year => $year_data ) {
-				// Remove empty taxonomy arrays.
-				foreach ( $year_data as $taxonomy => $items ) {
-					if ( empty( $items ) ) {
-						unset( $references[ $year ][ $taxonomy ] );
+				// If filtering by specific type, only check that type.
+				if ( $type_filter !== 'all' ) {
+					// Check if the specific type has data.
+					if ( ! isset( $year_data[ $type_filter ] ) || empty( $year_data[ $type_filter ] ) ) {
+						// No data for this type in this year - remove the year.
+						unset( $references[ $year ] );
+						continue;
 					}
-				}
+					// Keep only the filtered type.
+					$references[ $year ] = array(
+						$type_filter => $year_data[ $type_filter ],
+					);
+				} else {
+					// When showing all types, remove empty taxonomy arrays.
+					foreach ( $year_data as $taxonomy => $items ) {
+						if ( empty( $items ) ) {
+							unset( $references[ $year ][ $taxonomy ] );
+						}
+					}
 
-				// If all taxonomies are empty for this year, remove the year.
-				if ( empty( $references[ $year ] ) ) {
-					unset( $references[ $year ] );
+					// If all taxonomies are empty for this year, remove the year.
+					if ( empty( $references[ $year ] ) ) {
+						unset( $references[ $year ] );
+					}
 				}
 			}
 
