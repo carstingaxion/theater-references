@@ -104,7 +104,6 @@ if( ! class_exists( Block_Renderer::class ) ) {
 			if ( ! $render_data ) {
 				return '';
 			}
-			
 			// Get references data.
 			$references = $this->get_references_data(
 				$render_data['post_type'],
@@ -120,6 +119,11 @@ if( ! class_exists( Block_Renderer::class ) ) {
 			// Sort years.
 			$references = $this->data_organizer->sort_years( $references, $render_data['year_sort'] );
 			
+			// Apply custom type order if specified.
+			if ( ! empty( $render_data['type_order'] ) ) {
+				$references = $this->apply_type_order( $references, $render_data['type_order'] );
+			}
+
 			// Generate HTML.
 			return $this->generate_html(
 				$references,
@@ -136,7 +140,7 @@ if( ! class_exists( Block_Renderer::class ) ) {
 		 *
 		 * @since 0.1.0
 		 * @param array<string, mixed> $attributes Block attributes.
-		 * @return ?array{post_type: string, ref_term_id: int, year: int, type: string, heading_level: int, secondary_heading_level: int, year_sort: string, type_labels: array<string, string>}
+		 * @return ?array{post_type: string, ref_term_id: int, year: int, type: string, heading_level: int, secondary_heading_level: int, year_sort: string, type_order: array<int, string>, type_labels: array<string, string>}
 		 */
 		private function prepare_render_data( array $attributes ): ?array {
 			// Extract attributes.
@@ -146,6 +150,7 @@ if( ! class_exists( Block_Renderer::class ) ) {
 			$type           = isset( $attributes['referenceType'] ) ? sanitize_text_field( $attributes['referenceType'] ) : 'all';
 			$heading_level  = isset( $attributes['headingLevel'] ) ? intval( $attributes['headingLevel'] ) : 2;
 			$year_sort      = isset( $attributes['yearSortOrder'] ) ? sanitize_text_field( $attributes['yearSortOrder'] ) : 'desc';
+			$type_order     = isset( $attributes['typeOrder'] ) && is_array( $attributes['typeOrder'] ) ? array_map( 'sanitize_text_field', $attributes['typeOrder'] ) : array();
 			
 			// Validate post type.
 			if ( empty( $post_type ) || ! post_type_supports( $post_type, 'gatherpress_references' ) ) {
@@ -186,6 +191,7 @@ if( ! class_exists( Block_Renderer::class ) ) {
 				'heading_level'           => $heading_level,
 				'secondary_heading_level' => $secondary_heading_level,
 				'year_sort'               => $year_sort,
+				'type_order'              => $type_order,
 				'type_labels'             => $type_labels,
 			);
 		}
@@ -251,6 +257,44 @@ if( ! class_exists( Block_Renderer::class ) ) {
 		}
 
 		/**
+		 * Apply custom type order to references data
+		 *
+		 * @since 0.1.0
+		 * @param array<string, array<string, array<int, string>>> $references References data.
+		 * @param array<int, string>                                $type_order Custom type order.
+		 * @return array<string, array<string, array<int, string>>> Reordered references data.
+		 */
+		private function apply_type_order( array $references, array $type_order ): array {
+			if ( empty( $type_order ) ) {
+				return $references;
+			}
+
+			$reordered = array();
+
+			foreach ( $references as $year => $types ) {
+				$reordered_types = array();
+
+				// First, add types in the specified order
+				foreach ( $type_order as $type_slug ) {
+					if ( isset( $types[ $type_slug ] ) ) {
+						$reordered_types[ $type_slug ] = $types[ $type_slug ];
+					}
+				}
+
+				// Then, add any remaining types that weren't in the order
+				foreach ( $types as $type_slug => $items ) {
+					if ( ! isset( $reordered_types[ $type_slug ] ) ) {
+						$reordered_types[ $type_slug ] = $items;
+					}
+				}
+
+				$reordered[ $year ] = $reordered_types;
+			}
+
+			return $reordered;
+		}
+
+		/**
 		 * Generate HTML output
 		 *
 		 * @since 0.1.0
@@ -300,4 +344,4 @@ if( ! class_exists( Block_Renderer::class ) ) {
 }
 // Initialize renderer and handle the render callback.
 $renderer = Block_Renderer::get_instance();
-return $renderer->render( $attributes, $content, $block );
+echo $renderer->render( $attributes, $content, $block );

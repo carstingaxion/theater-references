@@ -37,6 +37,10 @@
         "desc"
       ]
     },
+    "typeOrder": {
+      "type": "array",
+      "default": []
+    },
     "metadata": {
       "type": "object",
       "default": {

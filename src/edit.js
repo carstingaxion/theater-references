@@ -19,9 +19,12 @@ import {
 	ToggleControl,
 	RangeControl,
 	Notice,
+	Button,
+	ButtonGroup,
 } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
-import { useEffect, useMemo } from '@wordpress/element';
+import { useEffect, useMemo, useRef } from '@wordpress/element';
+import { chevronUp, chevronDown } from '@wordpress/icons';
 
 /**
  * Editor styles
@@ -48,6 +51,7 @@ export default function Edit( { attributes, setAttributes } ) {
 		referenceType,
 		headingLevel,
 		yearSortOrder,
+		typeOrder,
 	} = attributes;
 
 	/**
@@ -199,6 +203,76 @@ export default function Edit( { attributes, setAttributes } ) {
 	}, [ taxonomies ] );
 
 	/**
+	 * Get ordered type keys based on typeOrder attribute or default config order
+	 */
+	const orderedTypeKeys = useMemo( () => {
+		if ( ! config || ! config.ref_types ) {
+			return [];
+		}
+
+		// If typeOrder exists and is valid, use it
+		if ( typeOrder && Array.isArray( typeOrder ) && typeOrder.length > 0 ) {
+			// Validate that all items in typeOrder exist in config.ref_types
+			const validOrder = typeOrder.filter( ( type ) =>
+				config.ref_types.includes( type )
+			);
+
+			// Add any missing types from config that aren't in typeOrder
+			const missingTypes = config.ref_types.filter(
+				( type ) => ! validOrder.includes( type )
+			);
+
+			return [ ...validOrder, ...missingTypes ];
+		}
+
+		// Default to config.ref_types order
+		return config.ref_types;
+	}, [ config, typeOrder ] );
+
+	/**
+	 * Initialize typeOrder attribute if not set
+	 */
+	useEffect( () => {
+		if ( config && config.ref_types && ! typeOrder ) {
+			setAttributes( { typeOrder: config.ref_types } );
+		}
+	}, [ config, typeOrder, setAttributes ] );
+
+	/**
+	 * Move type up in order
+	 */
+	const moveTypeUp = ( typeKey ) => {
+		const currentIndex = orderedTypeKeys.indexOf( typeKey );
+		if ( currentIndex <= 0 ) {
+			return;
+		}
+
+		const newOrder = [ ...orderedTypeKeys ];
+		const temp = newOrder[ currentIndex - 1 ];
+		newOrder[ currentIndex - 1 ] = newOrder[ currentIndex ];
+		newOrder[ currentIndex ] = temp;
+
+		setAttributes( { typeOrder: newOrder } );
+	};
+
+	/**
+	 * Move type down in order
+	 */
+	const moveTypeDown = ( typeKey ) => {
+		const currentIndex = orderedTypeKeys.indexOf( typeKey );
+		if ( currentIndex === -1 || currentIndex >= orderedTypeKeys.length - 1 ) {
+			return;
+		}
+
+		const newOrder = [ ...orderedTypeKeys ];
+		const temp = newOrder[ currentIndex + 1 ];
+		newOrder[ currentIndex + 1 ] = newOrder[ currentIndex ];
+		newOrder[ currentIndex ] = temp;
+
+		setAttributes( { typeOrder: newOrder } );
+	};
+
+	/**
 	 * Check if block is properly configured
 	 */
 	const isConfigured =
@@ -214,7 +288,10 @@ export default function Edit( { attributes, setAttributes } ) {
 	 *
 	 * This effect runs whenever the attributes change that affect the label.
 	 * It updates the block's metadata attribute so the label appears in the list view.
+	 * Uses a ref to track the previous label and only updates when it changes.
 	 */
+	const previousLabelRef = useRef( '' );
+
 	useEffect( () => {
 		if ( ! isConfigured ) {
 			return;
@@ -263,15 +340,18 @@ export default function Edit( { attributes, setAttributes } ) {
 			// Default label when no filters applied
 			return __( 'References', 'gatherpress-references' );
 		};
-		const label = getBlockLabel();
 
-		// Update the metadata attribute with the new name
-		setAttributes( {
-			metadata: {
-				...attributes.metadata,
-				name: label,
-			},
-		} );
+		const newLabel = getBlockLabel();
+
+		// Only update if the label has actually changed
+		if ( newLabel !== previousLabelRef.current ) {
+			previousLabelRef.current = newLabel;
+			setAttributes( {
+				metadata: {
+					name: newLabel,
+				},
+			} );
+		}
 	}, [
 		setAttributes,
 		refTermId,
@@ -306,10 +386,10 @@ export default function Edit( { attributes, setAttributes } ) {
 		const currentYear = new Date().getFullYear();
 		const displayYear = year > 0 ? year : currentYear;
 
-		// Build placeholder data using configured taxonomies
+		// Build placeholder data using ordered taxonomies
 		const buildYearData = () => {
 			const yearData = {};
-			config.ref_types.forEach( ( taxSlug ) => {
+			orderedTypeKeys.forEach( ( taxSlug ) => {
 				const taxLabel = typeLabels[ taxSlug ] || taxSlug;
 				yearData[ taxSlug ] = [
 					`${ taxLabel } Example 1`,
@@ -403,6 +483,10 @@ export default function Edit( { attributes, setAttributes } ) {
 
 	// Determine if we should show type headings.
 	const showTypeHeadings = referenceType === 'all';
+
+	// Determine if we should show type reorder controls
+	const showTypeReorderControls =
+		referenceType === 'all' && orderedTypeKeys.length > 1;
 
 	// Show configuration error if block is not properly configured
 	if ( ! isConfigured || ! activePostType ) {
@@ -634,48 +718,84 @@ export default function Edit( { attributes, setAttributes } ) {
 										{ yearKey }
 									</YearHeading>
 
-									{ /* Loop through types within year */ }
-									{ Object.keys( yearData ).map(
-										( typeKey ) => {
-											const items = yearData[ typeKey ];
-											if ( items.length === 0 ) {
-												return null;
-											}
-
-											return (
-												<div key={ typeKey }>
-													{ /* Type heading - only show when displaying all types */ }
-													{ showTypeHeadings && (
-														<TypeHeading className="references-type">
-															{
-																typeLabels[
-																	typeKey
-																]
-															}
-														</TypeHeading>
-													) }
-
-													<ul className="references-list">
-														{ items.map(
-															( item, index ) => (
-																<li
-																	key={
-																		index
-																	}
-																>
-																	{ item }
-																</li>
-															)
-														) }
-													</ul>
-												</div>
-											);
+									{ /* Loop through types within year using ordered keys */ }
+									{ orderedTypeKeys.map( ( typeKey ) => {
+										const items = yearData[ typeKey ];
+										if ( ! items || items.length === 0 ) {
+											return null;
 										}
-									) }
+
+										const currentIndex =
+											orderedTypeKeys.indexOf( typeKey );
+										const isFirstType = currentIndex === 0;
+										const isLastType =
+											currentIndex ===
+											orderedTypeKeys.length - 1;
+
+										return (
+											<div
+												key={ typeKey }
+												className="reference-type-container"
+											>
+												{ /* Type heading with reorder controls */ }
+												{ showTypeHeadings && (
+													<div className="references-type-header">
+														<TypeHeading className="references-type">
+															{ typeLabels[ typeKey ] }
+														</TypeHeading>
+														{ showTypeReorderControls && (
+															<ButtonGroup className="references-type-movers">
+																<Button
+																	icon={ chevronUp }
+																	onClick={ () =>
+																		moveTypeUp(
+																			typeKey
+																		)
+																	}
+																	label={ __(
+																		'Move up',
+																		'gatherpress-references'
+																	) }
+																	disabled={
+																		isFirstType
+																	}
+																	isSmall
+																/>
+																<Button
+																	icon={ chevronDown }
+																	onClick={ () =>
+																		moveTypeDown(
+																			typeKey
+																		)
+																	}
+																	label={ __(
+																		'Move down',
+																		'gatherpress-references'
+																	) }
+																	disabled={
+																		isLastType
+																	}
+																	isSmall
+																/>
+															</ButtonGroup>
+														) }
+													</div>
+												) }
+
+												<ul className="references-list">
+													{ items.map( ( item, index ) => (
+														<li key={ index }>
+															{ item }
+														</li>
+													) ) }
+												</ul>
+											</div>
+										);
+									} ) }
 								</div>
 							);
 						} ) }
-					</>
+				</>
 				) }
 			</div>
 		</>

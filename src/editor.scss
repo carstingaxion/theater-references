@@ -13,6 +13,44 @@
 		/* All heading level styles inherited from style.scss */
 	}
 
+	/**
+	 * Type header with reorder controls
+	 */
+	.references-type-header {
+		display: flex;
+		align-items: center;
+		gap: var(--wp--preset--spacing--20, 0.5em);
+		justify-content: space-between;
+
+		.references-type {
+			margin: 0;
+			flex-grow: 1;
+		}
+
+		.references-type-movers {
+			display: flex;
+			gap: 0;
+			flex-shrink: 0;
+			opacity: 0.6;
+			transition: opacity 0.2s ease;
+
+			&:hover {
+				opacity: 1;
+			}
+
+			.components-button {
+				min-width: 24px;
+				height: 24px;
+				padding: 0;
+				border-radius: 2px;
+
+				&:disabled {
+					opacity: 0.3;
+				}
+			}
+		}
+	}
+
 	/* Editor-specific adjustments for better UX */
 	&.is-selected {
 		outline: 2px solid var(--wp--preset--color--primary, #2271b1);
@@ -23,6 +61,10 @@
 	@media (prefers-reduced-motion: reduce) {
 
 		&.is-selected {
+			transition: none;
+		}
+
+		.references-type-movers {
 			transition: none;
 		}
 	}
