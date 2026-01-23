@@ -42,7 +42,7 @@ The default configuration uses theater productions with clients, festivals, and 
 
 **Result:** Displays all clients, festivals, and awards for that term across all years, organized chronologically.
 
-![Show the editing Interface for the block for: All References for a Specific Reference Term](assets/screenshot-1.png)
+![Show the editing Interface for the block for: All References for a Specific Reference Term](.wordpress-org/screenshot-1.png)
 
 ---
 
@@ -60,7 +60,7 @@ The default configuration uses theater productions with clients, festivals, and 
 
 **Result:** Shows all references from 2024 regardless of reference term, grouped by type.
 
-![Shows the editing Interface for the block for: All references from 2024 regardless of reference term, grouped by type.](assets/screenshot-2.png)
+![Shows the editing Interface for the block for: All references from 2024 regardless of reference term, grouped by type.](.wordpress-org/screenshot-2.png)
 
 ---
 
@@ -78,7 +78,7 @@ The default configuration uses theater productions with clients, festivals, and 
 
 **Result:** Lists all awards received across all reference terms and years, organized by year.
 
-![Shows the editing Interface for the block for: All awards received across all reference terms and years, organized by year.](assets/screenshot-3.png)
+![Shows the editing Interface for the block for: All awards received across all reference terms and years, organized by year.](.wordpress-org/screenshot-3.png)
 
 ---
 
@@ -96,7 +96,7 @@ The default configuration uses theater productions with clients, festivals, and 
 
 **Result:** Displays only awards that Macbeth received in 2023.
 
-![Shows the editing Interface for the block for: Displays only awards that Macbeth received in 2023.](assets/screenshot-4.png)
+![Shows the editing Interface for the block for: Displays only awards that Macbeth received in 2023.](.wordpress-org/screenshot-4.png)
 
 ---
 
@@ -114,7 +114,7 @@ The default configuration uses theater productions with clients, festivals, and 
 
 **Result:** Complete chronological list of festival participations across all reference terms.
 
-![Shows the editing Interface for the block for: A Complete chronological list of festival participations across all reference terms.](assets/screenshot-5.png)
+![Shows the editing Interface for the block for: A Complete chronological list of festival participations across all reference terms.](.wordpress-org/screenshot-5.png)
 
 ---
 
