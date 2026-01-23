@@ -5,9 +5,6 @@
     "php": "8.2",
     "wp": "latest"
   },
-  "phpExtensionBundles": [
-    "kitchen-sink"
-  ],
   "features": {
     "networking": true
   },
@@ -40,8 +37,7 @@
     },
     {
       "step": "login",
-      "username": "admin",
-      "password": "password"
+      "username": "admin"
     },
     {
       "step": "updateUserMeta",
@@ -75,8 +71,21 @@
       }
     },
     {
+      "step": "writeFile",
+      "path": "/wordpress/wp-content/plugins/gatherpress-references-demo-data-generator.php",
+      "data": {
+        "resource": "url",
+        "url": "https://gist.githubusercontent.com/carstingaxion/fd8b833d935f69b23e6a081b12a5937a/raw/2c33ebd7588ac83a0a29e576a43e342882b22855/gatherpress-references-demo-data-generator.php"
+      }
+    },
+    {
+      "step": "activatePlugin",
+      "pluginName": "Demo Data Generator for GatherPress References",
+      "pluginPath": "gatherpress-references-demo-data-generator.php"
+    },
+    {
       "step": "runPHP",
-      "code": "<?php require '/wordpress/wp-load.php'; \\GatherPress\\References\\Plugin::get_instance()->generate_demo_data();"
+      "code": "<?php require '/wordpress/wp-load.php'; \\GatherPress\\ReferencesDemodata\\Plugin::get_instance()->generate_demo_data();"
     }
   ]
 }

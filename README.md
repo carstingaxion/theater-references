@@ -598,6 +598,8 @@ Yes. The block includes a **Sort Years** toggle control. By default, years are s
 
 ### How do I add demo data for testing?
 
+The Playground contains a [Demo Data Generator](https://gist.github.com/carstingaxion/fd8b833d935f69b23e6a081b12a5937a), that can be used to create a bunch of real data to test the plugin.
+
 Go to **Events → Demo Data** in the WordPress admin and click **Generate Demo Data** to create:
 
 - 5 theater productions  
