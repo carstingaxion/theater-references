@@ -57,6 +57,10 @@ return array(
 		),
 		'supports' => array(
 			'html' => false,
+			'align' => array(
+				'wide',
+				'full'
+			),
 			'color' => array(
 				'background' => true,
 				'text' => true,

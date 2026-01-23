@@ -47,6 +47,7 @@
 	},
 	"supports": {
 		"html": false,
+		"align": ["wide", "full"],
 		"color": {
 			"background": true,
 			"text": true,
