@@ -260,8 +260,8 @@ class Plugin {
 		// Check if at least one config has both ref_tax and non-empty ref_types.
 		foreach ( $configs as $config ) {
 			if ( ! empty( $config['ref_tax'] ) && 
-				 ! empty( $config['ref_types'] ) && 
-				 is_array( $config['ref_types'] ) ) {
+				! empty( $config['ref_types'] ) && 
+				is_array( $config['ref_types'] ) ) {
 				return true;
 			}
 		}
@@ -288,8 +288,8 @@ class Plugin {
 		foreach ( $configs as $post_type => $config ) {
 			// Only register our production taxonomy if it is still present in the post type support config.
 			if ( ! empty( $config['ref_tax'] ) && 
-				 $config['ref_tax'] === 'gatherpress-production' && 
-				 ! taxonomy_exists( $config['ref_tax'] ) ) {
+				$config['ref_tax'] === 'gatherpress-production' && 
+				! taxonomy_exists( $config['ref_tax'] ) ) {
 				$this->register_reference_taxonomy( $post_type );
 			}
 			
@@ -730,7 +730,6 @@ class Plugin {
 	 * All demo items are marked with '_demo_data' meta for easy cleanup.
 	 * Uses GatherPress's Event class to properly initialize event dates.
 	 *
-	 *
 	 * @since 0.1.0
 	 * @return void
 	 */
@@ -832,10 +831,10 @@ class Plugin {
 		// Generate 20 GatherPress event posts with realistic data.
 		for ( $i = 0; $i < 20; $i++ ) {
 			// Generate random date between 2018-2024.
-			$year       = wp_rand( 2018, 2024 );
-			$month      = wp_rand( 1, 12 );
-			$day        = wp_rand( 1, 28 );
-			$date       = sprintf( '%04d-%02d-%02d', $year, $month, $day );
+			$year     = wp_rand( 2018, 2024 );
+			$month    = wp_rand( 1, 12 );
+			$day      = wp_rand( 1, 28 );
+			$date     = sprintf( '%04d-%02d-%02d', $year, $month, $day );
 			$ref_term = $ref_terms[ array_rand( $ref_terms ) ];
 
 			$event_data = array(
@@ -1080,7 +1079,6 @@ function gatherpress_references_uninstall(): void {
 	$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		"DELETE FROM {$wpdb->termmeta} WHERE meta_key = '_demo_data'"
 	);
-
 }
 register_uninstall_hook( __FILE__, __NAMESPACE__ . '\gatherpress_references_uninstall' );
 

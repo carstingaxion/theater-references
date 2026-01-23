@@ -207,10 +207,10 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 *
 		 * @since 0.1.0
 		 * @param array<string, array<string, array<int, string>>> $references  References data to cache.
-		 * @param string                                            $post_type   Post type slug.
-		 * @param int                                               $ref_term_id Reference term ID.
-		 * @param int                                               $year        Year filter.
-		 * @param string                                            $type        Reference type filter.
+		 * @param string                                           $post_type   Post type slug.
+		 * @param int                                              $ref_term_id Reference term ID.
+		 * @param int                                              $year        Year filter.
+		 * @param string                                           $type        Reference type filter.
 		 * @return void
 		 */
 		private function cache_references( array $references, string $post_type, int $ref_term_id, int $year, string $type ): void {
@@ -361,8 +361,8 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 *
 		 * @since 0.1.0
 		 * @param array{ref_tax: string, ref_types: array<int, string>} $config     Post type configuration.
-		 * @param int                                                    $ref_term_id Reference term ID.
-		 * @param string                                                 $type        Reference type filter.
+		 * @param int                                                   $ref_term_id Reference term ID.
+		 * @param string                                                $type        Reference type filter.
 		 * @return array<string|int, mixed> Tax query array.
 		 */
 		private function build_tax_query( array $config, int $ref_term_id, string $type ): array {
@@ -400,7 +400,7 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 *
 		 * @since 0.1.0
 		 * @param array{ref_tax: string, ref_types: array<int, string>} $config Post type configuration.
-		 * @param string                                                 $type   Reference type filter.
+		 * @param string                                                $type   Reference type filter.
 		 * @return array<string|int, mixed> Type query array.
 		 */
 		private function build_type_query( array $config, string $type ): array {
@@ -582,7 +582,7 @@ if ( ! class_exists( '\GatherPress\References\Renderer' ) ) {
 		 *
 		 * @since 0.1.0
 		 * @param array<string, array<string, array<int, string>>> $references  Reference data to clean.
-		 * @param string                                            $type_filter Current type filter ('all' or specific type).
+		 * @param string                                           $type_filter Current type filter ('all' or specific type).
 		 * @return array<string, array<string, array<int, string>>> Cleaned reference data.
 		 */
 		private function remove_empty_arrays( array $references, string $type_filter ): array {

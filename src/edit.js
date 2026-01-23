@@ -41,19 +41,25 @@ import './editor.scss';
  */
 export default function Edit( { attributes, setAttributes } ) {
 	// Destructure attributes for easier access
-	const { postType, refTermId, year, referenceType, headingLevel, yearSortOrder } =
-		attributes;
+	const {
+		postType,
+		refTermId,
+		year,
+		referenceType,
+		headingLevel,
+		yearSortOrder,
+	} = attributes;
 
 	/**
 	 * Fetch all post types with gatherpress_references support
 	 */
 	const supportedPostTypes = useSelect( ( select ) => {
 		const postTypes = select( 'core' ).getPostTypes( { per_page: -1 } );
-		
+
 		if ( ! postTypes ) {
 			return [];
 		}
-		
+
 		return postTypes.filter( ( type ) => {
 			return type.supports && type.supports.gatherpress_references;
 		} );
@@ -64,7 +70,7 @@ export default function Edit( { attributes, setAttributes } ) {
 	 */
 	useEffect( () => {
 		if ( ! postType && supportedPostTypes.length === 1 ) {
-			setAttributes( { postType: supportedPostTypes[0].slug } );
+			setAttributes( { postType: supportedPostTypes[ 0 ].slug } );
 		}
 	}, [ postType, supportedPostTypes, setAttributes ] );
 
@@ -76,9 +82,11 @@ export default function Edit( { attributes, setAttributes } ) {
 		if ( postType ) {
 			return postType;
 		}
-		
+
 		// Fall back to first supported post type
-		return supportedPostTypes.length > 0 ? supportedPostTypes[0].slug : null;
+		return supportedPostTypes.length > 0
+			? supportedPostTypes[ 0 ].slug
+			: null;
 	}, [ postType, supportedPostTypes ] );
 
 	/**
@@ -89,36 +97,44 @@ export default function Edit( { attributes, setAttributes } ) {
 			if ( ! activePostType ) {
 				return null;
 			}
-			
-			const postTypeObject = select( 'core' ).getPostType( activePostType );
-			
+
+			const postTypeObject =
+				select( 'core' ).getPostType( activePostType );
+
 			if ( ! postTypeObject || ! postTypeObject.supports ) {
 				return null;
 			}
-			
+
 			// Extract the configuration from the supports object
-			const referencesSupport = postTypeObject.supports.gatherpress_references;
-			
+			const referencesSupport =
+				postTypeObject.supports.gatherpress_references;
+
 			if ( ! referencesSupport ) {
 				return null;
 			}
-			
+
 			// If it's an array, take the first element (WordPress stores support args in arrays)
-			if ( Array.isArray( referencesSupport ) && referencesSupport.length > 0 ) {
-				return referencesSupport[0];
+			if (
+				Array.isArray( referencesSupport ) &&
+				referencesSupport.length > 0
+			) {
+				return referencesSupport[ 0 ];
 			}
-			
+
 			// If it's an object, use it directly
-			if ( typeof referencesSupport === 'object' && referencesSupport !== null ) {
+			if (
+				typeof referencesSupport === 'object' &&
+				referencesSupport !== null
+			) {
 				return referencesSupport;
 			}
-			
+
 			// If it's just true, we need to handle this case
 			if ( referencesSupport === true ) {
 				// Return null as we need actual configuration
 				return null;
 			}
-			
+
 			return null;
 		},
 		[ activePostType ]
@@ -154,7 +170,11 @@ export default function Edit( { attributes, setAttributes } ) {
 	 */
 	const taxonomies = useSelect(
 		( select ) => {
-			if ( ! config || ! config.ref_types || ! Array.isArray( config.ref_types ) ) {
+			if (
+				! config ||
+				! config.ref_types ||
+				! Array.isArray( config.ref_types )
+			) {
 				return [];
 			}
 
@@ -215,9 +235,7 @@ export default function Edit( { attributes, setAttributes } ) {
 
 			// Add reference term name if specific term selected
 			if ( refTermId > 0 ) {
-				const refTerm = refTerms.find(
-					( p ) => p.id === refTermId
-				);
+				const refTerm = refTerms.find( ( p ) => p.id === refTermId );
 				if ( refTerm ) {
 					parts.push( refTerm.name );
 				}
@@ -236,7 +254,8 @@ export default function Edit( { attributes, setAttributes } ) {
 			// Construct final label
 			if ( parts.length > 0 ) {
 				return (
-					__( 'References', 'gatherpress-references' ) + ': ' +
+					__( 'References', 'gatherpress-references' ) +
+					': ' +
 					parts.join( ' • ' )
 				);
 			}
@@ -421,7 +440,10 @@ export default function Edit( { attributes, setAttributes } ) {
 									) }
 								</strong>{ ' ' }
 								{ supportedPostTypes
-									.map( ( type ) => type.labels?.name || type.name )
+									.map(
+										( type ) =>
+											type.labels?.name || type.name
+									)
 									.join( ', ' ) }
 							</p>
 						) }
@@ -443,7 +465,10 @@ export default function Edit( { attributes, setAttributes } ) {
 					{ /* Post Type selector - only show if multiple supported post types */ }
 					{ supportedPostTypes.length > 1 && (
 						<SelectControl
-							label={ __( 'Post Type', 'gatherpress-references' ) }
+							label={ __(
+								'Post Type',
+								'gatherpress-references'
+							) }
 							value={ postType || '' }
 							options={ [
 								{
