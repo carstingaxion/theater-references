@@ -4,9 +4,51 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "4a2063020f1990249c209ca0e4ced2e9",
+    "content-hash": "d40329848ae07bee8c6150406897e6cf",
     "packages": [],
     "packages-dev": [
+        {
+            "name": "akirk/extract-wp-hooks",
+            "version": "dev-main",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/akirk/extract-wp-hooks.git",
+                "reference": "3daf5f5ed589e1e2127e74fce3d406c6c740790b"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/akirk/extract-wp-hooks/zipball/3daf5f5ed589e1e2127e74fce3d406c6c740790b",
+                "reference": "3daf5f5ed589e1e2127e74fce3d406c6c740790b",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.4"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^9.0|^10.0|^11.0",
+                "wp-coding-standards/wpcs": "^3.0"
+            },
+            "default-branch": true,
+            "bin": [
+                "extract-wp-hooks.php"
+            ],
+            "type": "library",
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "GPL-2.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "Alex Kirk"
+                }
+            ],
+            "description": "Extract available WordPress hooks for a Github Wiki",
+            "support": {
+                "issues": "https://github.com/akirk/extract-wp-hooks/issues",
+                "source": "https://github.com/akirk/extract-wp-hooks/tree/main"
+            },
+            "time": "2025-11-13T09:56:28+00:00"
+        },
         {
             "name": "automattic/vipwpcs",
             "version": "3.0.1",
@@ -1879,7 +1921,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {
+        "akirk/extract-wp-hooks": 20
+    },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": [],

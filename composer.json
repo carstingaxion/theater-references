@@ -27,6 +27,7 @@
         "source": "https://github.com/carstingaxion/gatherpress-references"
     },
     "require-dev": {
+        "akirk/extract-wp-hooks": "dev-main",
         "figuren-theater/code-quality": "*"
     },
     "repositories": [
