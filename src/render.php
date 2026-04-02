@@ -140,57 +140,91 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 		 * @return ?array{post_type: string, ref_term_id: int, year: int, type: string, heading_level: int, secondary_heading_level: int, year_sort: string, type_order: array<int, string>, type_labels: array<string, string>}
 		 */
 		private function prepare_render_data( array $attributes ): ?array {
-			// Extract attributes.
-			$post_type     = isset( $attributes['postType'] ) ? sanitize_text_field( $attributes['postType'] ) : '';
-			$ref_term_id   = isset( $attributes['refTermId'] ) ? intval( $attributes['refTermId'] ) : 0;
-			$year          = isset( $attributes['year'] ) ? intval( $attributes['year'] ) : 0;
-			$type          = isset( $attributes['referenceType'] ) ? sanitize_text_field( $attributes['referenceType'] ) : 'all';
-			$heading_level = isset( $attributes['headingLevel'] ) ? intval( $attributes['headingLevel'] ) : 2;
-			$year_sort     = isset( $attributes['yearSortOrder'] ) ? sanitize_text_field( $attributes['yearSortOrder'] ) : 'desc';
-			$type_order    = isset( $attributes['typeOrder'] ) && is_array( $attributes['typeOrder'] ) ? array_map( 'sanitize_text_field', $attributes['typeOrder'] ) : array();
+			$sanitized = $this->sanitize_attributes( $attributes );
 
-			// Validate post type.
-			if ( empty( $post_type ) || ! post_type_supports( $post_type, 'gatherpress_references' ) ) {
-				return null;
-			}
-
-			// Get configuration.
-			$config = $this->config_manager->get_config( $post_type );
+			// Validate post type and get configuration.
+			$config = $this->get_validated_config( $sanitized['post_type'] );
 			if ( ! $config ) {
 				return null;
 			}
 
 			// Normalize heading levels.
-			$heading_level           = max( 1, min( 6, $heading_level ) );
+			$heading_level           = max( 1, min( 6, $sanitized['heading_level'] ) );
 			$secondary_heading_level = min( $heading_level + 1, 6 );
 
 			// Validate sort order.
-			if ( ! in_array( $year_sort, array( 'asc', 'desc' ), true ) ) {
-				$year_sort = 'desc';
-			}
+			$year_sort = in_array( $sanitized['year_sort'], array( 'asc', 'desc' ), true )
+				? $sanitized['year_sort']
+				: 'desc';
 
 			// Auto-detect reference term from archive.
-			if ( $ref_term_id === 0 && is_tax( $config['ref_tax'] ) ) {
-				$term = get_queried_object();
-				if ( $term instanceof \WP_Term ) {
-					$ref_term_id = $term->term_id;
-				}
-			}
-
-			// Get type labels.
-			$type_labels = $this->get_type_labels( $config['ref_types'] );
+			$ref_term_id = $this->resolve_ref_term_id( $sanitized['ref_term_id'], $config['ref_tax'] );
 
 			return array(
-				'post_type'               => $post_type,
+				'post_type'               => $sanitized['post_type'],
 				'ref_term_id'             => $ref_term_id,
-				'year'                    => $year,
-				'type'                    => $type,
+				'year'                    => $sanitized['year'],
+				'type'                    => $sanitized['type'],
 				'heading_level'           => $heading_level,
 				'secondary_heading_level' => $secondary_heading_level,
 				'year_sort'               => $year_sort,
-				'type_order'              => $type_order,
-				'type_labels'             => $type_labels,
+				'type_order'              => $sanitized['type_order'],
+				'type_labels'             => $this->get_type_labels( $config['ref_types'] ),
 			);
+		}
+
+		/**
+		 * Sanitize block attributes
+		 *
+		 * @since 0.1.0
+		 * @param array<string, mixed> $attributes Raw block attributes.
+		 * @return array{post_type: string, ref_term_id: int, year: int, type: string, heading_level: int, year_sort: string, type_order: array<int, string>}
+		 */
+		private function sanitize_attributes( array $attributes ): array {
+			return array(
+				'post_type'     => isset( $attributes['postType'] ) ? sanitize_text_field( $attributes['postType'] ) : '',
+				'ref_term_id'   => isset( $attributes['refTermId'] ) ? intval( $attributes['refTermId'] ) : 0,
+				'year'          => isset( $attributes['year'] ) ? intval( $attributes['year'] ) : 0,
+				'type'          => isset( $attributes['referenceType'] ) ? sanitize_text_field( $attributes['referenceType'] ) : 'all',
+				'heading_level' => isset( $attributes['headingLevel'] ) ? intval( $attributes['headingLevel'] ) : 2,
+				'year_sort'     => isset( $attributes['yearSortOrder'] ) ? sanitize_text_field( $attributes['yearSortOrder'] ) : 'desc',
+				'type_order'    => isset( $attributes['typeOrder'] ) && is_array( $attributes['typeOrder'] )
+					? array_map( 'sanitize_text_field', $attributes['typeOrder'] )
+					: array(),
+			);
+		}
+
+		/**
+		 * Validate post type and return its configuration
+		 *
+		 * @since 0.1.0
+		 * @param string $post_type Post type slug.
+		 * @return ?array{ref_tax: string, ref_types: array<int, string>} Configuration or null.
+		 */
+		private function get_validated_config( string $post_type ): ?array {
+			if ( empty( $post_type ) || ! post_type_supports( $post_type, 'gatherpress_references' ) ) {
+				return null;
+			}
+
+			return $this->config_manager->get_config( $post_type );
+		}
+
+		/**
+		 * Resolve reference term ID, auto-detecting from archive context
+		 *
+		 * @since 0.1.0
+		 * @param int    $ref_term_id Current reference term ID.
+		 * @param string $ref_tax     Reference taxonomy slug.
+		 * @return int Resolved reference term ID.
+		 */
+		private function resolve_ref_term_id( int $ref_term_id, string $ref_tax ): int {
+			if ( $ref_term_id > 0 || ! is_tax( $ref_tax ) ) {
+				return $ref_term_id;
+			}
+
+			$term = get_queried_object();
+
+			return ( $term instanceof \WP_Term ) ? $term->term_id : 0;
 		}
 
 		/**
@@ -309,7 +343,7 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 			int $heading_level,
 			int $secondary_heading_level
 		): string {
-			$is_specific_type = ( $type !== 'all' );
+			$show_type_headings = ( $type === 'all' );
 
 			ob_start();
 			?>
@@ -317,23 +351,54 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 				<?php foreach ( $references as $ref_year => $types ) { ?>
 					<h<?php echo esc_attr( (string) $heading_level ); ?> class="wp-block-heading references-year"><?php echo esc_html( $ref_year ); ?></h<?php echo esc_attr( (string) $heading_level ); ?>>
 
-					<?php foreach ( $types as $ref_type => $items ) { ?>
-						<?php if ( ( $type === $ref_type || ! $is_specific_type ) && ! empty( $items ) ) { ?>
-							<?php if ( ! $is_specific_type ) { ?>
-								<h<?php echo esc_attr( (string) $secondary_heading_level ); ?> class="wp-block-heading references-type"><?php echo esc_html( $type_labels[ $ref_type ] ); ?></h<?php echo esc_attr( (string) $secondary_heading_level ); ?>>
-							<?php } ?>
-
-							<ul class="wp-block-list references-list">
-								<?php foreach ( $items as $item ) { ?>
-									<li><?php echo esc_html( $item ); ?></li>
-								<?php } ?>
-							</ul>
-						<?php } ?>
-					<?php } ?>
+					<?php
+					$this->render_type_sections(
+						$types,
+						$type_labels,
+						$show_type_headings,
+						$secondary_heading_level
+					);
+					?>
 				<?php } ?>
 			</div>
 			<?php
 			return ob_get_clean();
+		}
+
+		/**
+		 * Render type sections for a single year
+		 *
+		 * @since 0.1.0
+		 * @param array<string, array<int, string>> $types                   Types with items.
+		 * @param array<string, string>             $type_labels             Type labels.
+		 * @param bool                              $show_type_headings      Whether to show type headings.
+		 * @param int                               $secondary_heading_level Heading level for type headings.
+		 * @return void
+		 */
+		private function render_type_sections(
+			array $types,
+			array $type_labels,
+			bool $show_type_headings,
+			int $secondary_heading_level
+		): void {
+			foreach ( $types as $ref_type => $items ) {
+				if ( empty( $items ) ) {
+					continue;
+				}
+
+				if ( $show_type_headings ) {
+					?>
+					<h<?php echo esc_attr( (string) $secondary_heading_level ); ?> class="wp-block-heading references-type"><?php echo esc_html( $type_labels[ $ref_type ] ); ?></h<?php echo esc_attr( (string) $secondary_heading_level ); ?>>
+					<?php
+				}
+				?>
+				<ul class="wp-block-list references-list">
+					<?php foreach ( $items as $item ) { ?>
+						<li><?php echo esc_html( $item ); ?></li>
+					<?php } ?>
+				</ul>
+				<?php
+			}
 		}
 	}
 }

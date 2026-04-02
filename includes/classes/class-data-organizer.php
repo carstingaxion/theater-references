@@ -258,25 +258,50 @@ class Data_Organizer {
 	 * @return array<string, array<string, array<int, string>>> Cleaned references.
 	 */
 	private function remove_empty_arrays( array $references, string $type_filter ): array {
-		foreach ( $references as $year => $year_data ) {
-			if ( $type_filter !== 'all' ) {
-				if ( ! isset( $year_data[ $type_filter ] ) || empty( $year_data[ $type_filter ] ) ) {
-					unset( $references[ $year ] );
-					continue;
-				}
-				$references[ $year ] = array(
-					$type_filter => $year_data[ $type_filter ],
-				);
-			} else {
-				foreach ( $year_data as $taxonomy => $items ) {
-					if ( empty( $items ) ) {
-						unset( $references[ $year ][ $taxonomy ] );
-					}
-				}
+		if ( $type_filter !== 'all' ) {
+			return $this->filter_by_specific_type( $references, $type_filter );
+		}
 
-				if ( empty( $references[ $year ] ) ) {
-					unset( $references[ $year ] );
-				}
+		return $this->remove_empty_year_entries( $references );
+	}
+
+	/**
+	 * Filter references to only include a specific type
+	 *
+	 * @since 0.1.0
+	 * @param array<string, array<string, array<int, string>>> $references  References.
+	 * @param string                                           $type_filter Type filter.
+	 * @return array<string, array<string, array<int, string>>> Filtered references.
+	 */
+	private function filter_by_specific_type( array $references, string $type_filter ): array {
+		$filtered = array();
+
+		foreach ( $references as $year => $year_data ) {
+			if ( ! isset( $year_data[ $type_filter ] ) || empty( $year_data[ $type_filter ] ) ) {
+				continue;
+			}
+
+			$filtered[ $year ] = array(
+				$type_filter => $year_data[ $type_filter ],
+			);
+		}
+
+		return $filtered;
+	}
+
+	/**
+	 * Remove years that have no taxonomy entries
+	 *
+	 * @since 0.1.0
+	 * @param array<string, array<string, array<int, string>>> $references References.
+	 * @return array<string, array<string, array<int, string>>> Cleaned references.
+	 */
+	private function remove_empty_year_entries( array $references ): array {
+		foreach ( $references as $year => $year_data ) {
+			$references[ $year ] = array_filter( $year_data );
+
+			if ( empty( $references[ $year ] ) ) {
+				unset( $references[ $year ] );
 			}
 		}
 
