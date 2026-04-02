@@ -67,9 +67,11 @@ class BlockRendererTest extends WP_UnitTestCase {
 		}
 
 		$renderer = Block_Renderer::get_instance();
-		$result   = $renderer->render( array(
-			'postType' => 'nonexistent_post_type',
-		) );
+		$result   = $renderer->render(
+			array(
+				'postType' => 'nonexistent_post_type',
+			) 
+		);
 
 		$this->assertEmpty( $result );
 	}
@@ -101,12 +103,14 @@ class BlockRendererTest extends WP_UnitTestCase {
 		}
 
 		$renderer = Block_Renderer::get_instance();
-		$result   = $renderer->render( array(
-			'postType'      => 'gatherpress_event',
-			'refTermId'     => 99999,
-			'year'          => 1900,
-			'referenceType' => 'all',
-		) );
+		$result   = $renderer->render(
+			array(
+				'postType'      => 'gatherpress_event',
+				'refTermId'     => 99999,
+				'year'          => 1900,
+				'referenceType' => 'all',
+			) 
+		);
 
 		$this->assertEmpty( $result );
 	}

@@ -106,10 +106,13 @@ class QueryBuilderTest extends WP_UnitTestCase {
 			$this->markTestSkipped( 'GatherPress event post type not registered.' );
 		}
 
-		add_filter( 'gatherpress_references_query_args', function( $args ) {
-			$args['posts_per_page'] = 50;
-			return $args;
-		} );
+		add_filter(
+			'gatherpress_references_query_args',
+			function ( $args ) {
+				$args['posts_per_page'] = 50;
+				return $args;
+			} 
+		);
 
 		$result = $this->query_builder->build_args( 'gatherpress_event', 0, 0, 'all' );
 

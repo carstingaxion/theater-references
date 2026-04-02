@@ -83,9 +83,12 @@ class CacheIntegrationTest extends WP_UnitTestCase {
 	 * Test cache expiration filter.
 	 */
 	public function test_cache_expiration_filter() {
-		add_filter( 'gatherpress_references_cache_expiration', function () {
-			return 7200;
-		} );
+		add_filter(
+			'gatherpress_references_cache_expiration',
+			function () {
+				return 7200;
+			} 
+		);
 
 		$filtered_cache_manager = new Cache_Manager();
 
@@ -113,15 +116,19 @@ class CacheIntegrationTest extends WP_UnitTestCase {
 		$this->cache_manager->set( $cache_key, $data );
 		$this->assertNotFalse( $this->cache_manager->get( $cache_key ) );
 
-		$post_id = self::factory()->post->create( array(
-			'post_type'   => 'gatherpress_event',
-			'post_status' => 'draft',
-		) );
+		$post_id = self::factory()->post->create(
+			array(
+				'post_type'   => 'gatherpress_event',
+				'post_status' => 'draft',
+			) 
+		);
 
-		wp_update_post( array(
-			'ID'          => $post_id,
-			'post_status' => 'publish',
-		) );
+		wp_update_post(
+			array(
+				'ID'          => $post_id,
+				'post_status' => 'publish',
+			) 
+		);
 
 		$this->assertFalse( $this->cache_manager->get( $cache_key ) );
 	}
