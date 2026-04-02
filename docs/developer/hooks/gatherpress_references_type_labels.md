@@ -8,8 +8,8 @@ Customize the human-readable labels for each reference type displayed in heading
 Override existing label
 ```php
 add_filter( 'gatherpress_references_type_labels', function( $labels ) {
-	$labels['_gatherpress-award'] = __( 'Prizes & Honours', 'textdomain' );
-	return $labels;
+ $labels['_gatherpress-award'] = __( 'Prizes & Honours', 'textdomain' );
+ return $labels;
 } );
 ```
 
