@@ -58,7 +58,7 @@ class Taxonomy_Manager {
 			}
 
 			// Register reference type taxonomies.
-			if ( ! empty( $config['ref_types'] ) && is_array( $config['ref_types'] ) ) {
+			if ( ! empty( $config['ref_types'] ) ) {
 				foreach ( $config['ref_types'] as $ref_type ) {
 					if ( taxonomy_exists( $ref_type ) ) {
 						continue;

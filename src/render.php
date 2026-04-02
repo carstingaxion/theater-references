@@ -92,7 +92,7 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 		 * Render the block
 		 *
 		 * @since 0.1.0
-		 * @param array<string, mixed> $attributes Block attributes.
+		 * @param array{postType?: string, refTermId?: int, year?: int, referenceType?: string, headingLevel?: int, yearSortOrder?: string, typeOrder?: array<string>} $attributes Block attributes.
 		 * @return string Rendered block HTML.
 		 */
 		public function render( array $attributes ): string {
@@ -136,8 +136,8 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 		 * Prepare render data from attributes
 		 *
 		 * @since 0.1.0
-		 * @param array<string, mixed> $attributes Block attributes.
-		 * @return ?array{post_type: string, ref_term_id: int, year: int, type: string, heading_level: int, secondary_heading_level: int, year_sort: string, type_order: array<int, string>, type_labels: array<string, string>}
+		 * @param array{postType?: string, refTermId?: int, year?: int, referenceType?: string, headingLevel?: int, yearSortOrder?: string, typeOrder?: array<string>} $attributes Block attributes.
+		 * @return ?array{post_type: string, ref_term_id: int, year: int, type: string, heading_level: int, secondary_heading_level: int, year_sort: string, type_order: array<string>, type_labels: array<string, string>}
 		 */
 		private function prepare_render_data( array $attributes ): ?array {
 			$sanitized = $this->sanitize_attributes( $attributes );
@@ -177,8 +177,8 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 		 * Sanitize block attributes
 		 *
 		 * @since 0.1.0
-		 * @param array<string, mixed> $attributes Raw block attributes.
-		 * @return array{post_type: string, ref_term_id: int, year: int, type: string, heading_level: int, year_sort: string, type_order: array<int, string>}
+		 * @param array{postType?: string, refTermId?: int, year?: int, referenceType?: string, headingLevel?: int, yearSortOrder?: string, typeOrder?: array<string>} $attributes Block attributes.
+		 * @return array{post_type: string, ref_term_id: int, year: int, type: string, heading_level: int, year_sort: string, type_order: array<string>}
 		 */
 		private function sanitize_attributes( array $attributes ): array {
 			return array(
@@ -188,9 +188,7 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 				'type'          => isset( $attributes['referenceType'] ) ? sanitize_text_field( $attributes['referenceType'] ) : 'all',
 				'heading_level' => isset( $attributes['headingLevel'] ) ? intval( $attributes['headingLevel'] ) : 2,
 				'year_sort'     => isset( $attributes['yearSortOrder'] ) ? sanitize_text_field( $attributes['yearSortOrder'] ) : 'desc',
-				'type_order'    => isset( $attributes['typeOrder'] ) && is_array( $attributes['typeOrder'] )
-					? array_map( 'sanitize_text_field', $attributes['typeOrder'] )
-					: array(),
+				'type_order'    => isset( $attributes['typeOrder'] ) ? array_map( 'sanitize_text_field', $attributes['typeOrder'] ) : array(),
 			);
 		}
 
@@ -240,7 +238,8 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 			foreach ( $taxonomies as $taxonomy_slug ) {
 				$taxonomy = get_taxonomy( $taxonomy_slug );
 				if ( $taxonomy ) {
-					$type_labels[ $taxonomy_slug ] = $taxonomy->labels->name ?? $taxonomy->name;
+					$_label                        = $taxonomy->labels->name ?? $taxonomy->name;
+					$type_labels[ $taxonomy_slug ] = is_string( $_label ) ? $_label : $taxonomy_slug;
 				}
 			}
 
@@ -292,7 +291,7 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 		 *
 		 * @since 0.1.0
 		 * @param array<string, array<string, array<int, string>>> $references References data.
-		 * @param array<int, string>                               $type_order Custom type order.
+		 * @param array<string>                                    $type_order Custom type order.
 		 * @return array<string, array<string, array<int, string>>> Reordered references data.
 		 */
 		private function apply_type_order( array $references, array $type_order ): array {
@@ -362,7 +361,7 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 				<?php } ?>
 			</div>
 			<?php
-			return ob_get_clean();
+			return (string) ob_get_clean();
 		}
 
 		/**
@@ -413,7 +412,7 @@ if ( ! class_exists( Block_Renderer::class ) ) {
  *   referenceType?: string,
  *   headingLevel?: int,
  *   yearSortOrder?: string,
- *   typeOrder?: array,
+ *   typeOrder?: string[],
  * } $attributes
  */
 $gatherpress_references_renderer = Block_Renderer::get_instance();

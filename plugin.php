@@ -126,7 +126,7 @@ class Plugin {
 		add_action( 'create_term', array( $this, 'clear_cache_on_term_change' ), 10, 3 );
 		add_action( 'edit_term', array( $this, 'clear_cache_on_term_change' ), 10, 3 );
 		add_action( 'delete_term', array( $this, 'clear_cache_on_term_change' ), 10, 3 );
-		add_action( 'set_object_terms', array( $this, 'clear_cache_on_term_relationship' ), 10, 3 );
+		add_action( 'set_object_terms', array( $this, 'clear_cache_on_term_relationship' ) );
 	}
 
 	/**
@@ -162,10 +162,7 @@ class Plugin {
 	 * @param \WP_Post $post       Post object.
 	 * @return void
 	 */
-	public function clear_cache_on_status_change( string $new_status, string $old_status, $post ): void {
-		if ( ! is_object( $post ) || ! isset( $post->post_type ) ) {
-			return;
-		}
+	public function clear_cache_on_status_change( string $new_status, string $old_status, \WP_Post $post ): void {
 
 		if ( ! post_type_supports( $post->post_type, 'gatherpress_references' ) ) {
 			return;
@@ -311,7 +308,9 @@ function gatherpress_references_uninstall(): void {
 		}
 
 		$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			// @phpstan-ignore-next-line
 			$wpdb->prepare(
+				// @phpstan-ignore-next-line
 				"DELETE FROM {$wpdb->term_taxonomy} WHERE taxonomy = %s",
 				$taxonomy
 			)

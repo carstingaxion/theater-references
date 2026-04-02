@@ -44,7 +44,7 @@ class Query_Builder {
 	 * @param int    $ref_term_id Reference term ID.
 	 * @param int    $year        Year filter.
 	 * @param string $type        Reference type filter.
-	 * @return array<string, mixed> WP_Query arguments.
+	 * @return array<mixed> WP_Query arguments.
 	 */
 	public function build_args( string $post_type, int $ref_term_id, int $year, string $type ): array {
 		$config = $this->config_manager->get_config( $post_type );
@@ -68,7 +68,8 @@ class Query_Builder {
 			);
 		}
 
-		return apply_filters( 'gatherpress_references_query_args', $args, $post_type, $ref_term_id, $year, $type );
+		$return_args = apply_filters( 'gatherpress_references_query_args', $args, $post_type, $ref_term_id, $year, $type );
+		return is_array( $return_args ) ? $return_args : $args;
 	}
 
 	/**

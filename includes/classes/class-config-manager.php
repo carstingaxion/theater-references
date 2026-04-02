@@ -35,19 +35,38 @@ class Config_Manager {
 
 		$support = get_all_post_type_supports( $post_type );
 
-		if ( ! isset( $support['gatherpress_references'] ) || ! is_array( $support['gatherpress_references'] ) ) {
+		if ( ! isset( $support['gatherpress_references'] ) ) {
 			return null;
 		}
 
-		$config = $support['gatherpress_references'][0];
+		$raw = $support['gatherpress_references'];
 
-		if ( ! isset( $config['ref_tax'] ) || ! isset( $config['ref_types'] ) || ! is_array( $config['ref_types'] ) ) {
+		// Ensure it's a non-empty array with index 0.
+		if ( ! is_array( $raw ) || ! isset( $raw[0] ) || ! is_array( $raw[0] ) ) {
 			return null;
 		}
+
+		$config = $raw[0];
+
+		if ( ! isset( $config['ref_tax'] ) || ! is_string( $config['ref_tax'] ) ) {
+			return null;
+		}
+
+		if ( ! isset( $config['ref_types'] ) || ! is_array( $config['ref_types'] ) ) {
+			return null;
+		}
+
+		// Force correct type: array<int, string>.
+		$ref_types = array_values(
+			array_filter(
+				$config['ref_types'],
+				static fn( $v ): bool => is_string( $v )
+			)
+		);
 
 		return array(
 			'ref_tax'   => $config['ref_tax'],
-			'ref_types' => $config['ref_types'],
+			'ref_types' => $ref_types,
 		);
 	}
 
@@ -89,7 +108,7 @@ class Config_Manager {
 			if ( ! empty( $config['ref_tax'] ) ) {
 				$taxonomies[] = $config['ref_tax'];
 			}
-			if ( ! empty( $config['ref_types'] ) && is_array( $config['ref_types'] ) ) {
+			if ( ! empty( $config['ref_types'] ) ) {
 				$taxonomies = array_merge( $taxonomies, $config['ref_types'] );
 			}
 		}
@@ -113,8 +132,8 @@ class Config_Manager {
 		// Check if at least one config has both ref_tax and non-empty ref_types.
 		foreach ( $configs as $config ) {
 			if ( ! empty( $config['ref_tax'] ) &&
-				! empty( $config['ref_types'] ) &&
-				is_array( $config['ref_types'] ) ) {
+				! empty( $config['ref_types'] )
+			) {
 				return true;
 			}
 		}

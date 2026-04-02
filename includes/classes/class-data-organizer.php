@@ -83,6 +83,11 @@ class Data_Organizer {
 	 * @return array<int, object{post_id: string, year: string}> Post dates.
 	 */
 	private function get_post_dates( string $post_type, array $post_ids ): array {
+		/**
+		 * Help phpstan understand $wpdb is global.
+		 *
+		 * @var \wpdb  $wpdb WordPress database abstraction object.
+		 */
 		global $wpdb;
 
 		if ( empty( $post_ids ) ) {
@@ -94,25 +99,33 @@ class Data_Organizer {
 
 		if ( $post_type === 'gatherpress_event' ) {
 			$table = $wpdb->prefix . 'gatherpress_events';
-			/** @var literal-string $sql */
+			/**
+			 * Threat as literal string since the table name is dynamic, but we are controlling it and it's not coming from user input, so it should be safe.
+			 *
+			 * @var literal-string $sql
+			 */
 			$sql = "SELECT post_id, YEAR(datetime_start_gmt) AS year
 					FROM {$table}
 					WHERE post_id IN ({$placeholders})
 					ORDER BY datetime_start_gmt DESC";
 		} else {
-			/** @var literal-string $sql */
+			/**
+			 * Threat as literal string since the table name is dynamic, but we are controlling it and it's not coming from user input, so it should be safe.
+			 *
+			 * @var literal-string $sql
+			 */
 			$sql = "SELECT ID as post_id, YEAR(post_date) AS year
 					FROM {$wpdb->posts}
 					WHERE ID IN ({$placeholders})
 					ORDER BY post_date DESC";
 		}
 
-		$results = $wpdb->get_results(
-			$wpdb->prepare( $sql, ...$safe_ids ),
+		$results = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- We need to use a custom query here to get the years, and caching is handled later as transients, so we can skip caching here.
+			$wpdb->prepare( $sql, ...$safe_ids ), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 			OBJECT_K
 		);
 
-		if ( null === $results || ! is_array( $results ) ) {
+		if ( null === $results ) {
 			return array();
 		}
 
