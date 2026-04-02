@@ -1,4 +1,12 @@
 <?php
+/**
+ * Cache Manager class
+ *
+ * Handles all caching operations including cache key generation,
+ * storage, retrieval, and invalidation.
+ *
+ * @package GatherPress_References
+ */
 
 namespace GatherPress\References;
 
@@ -43,7 +51,8 @@ class Cache_Manager {
 	 * @return void
 	 */
 	private function apply_filters(): void {
-		$this->cache_expiration = apply_filters( 'gatherpress_references_cache_expiration', $this->cache_expiration );
+		$new_cache_expiration   = apply_filters( 'gatherpress_references_cache_expiration', $this->cache_expiration );
+		$this->cache_expiration = is_int( $new_cache_expiration ) ? $new_cache_expiration : $this->cache_expiration;
 	}
 
 	/**
@@ -57,7 +66,7 @@ class Cache_Manager {
 	 * @return string Cache key.
 	 */
 	public function get_cache_key( string $post_type, int $ref_term_id, int $year, string $type ): string {
-		return $this->cache_prefix . md5( maybe_serialize( array( $post_type, $ref_term_id, $year, $type ) ) );
+		return $this->cache_prefix . md5( (string) wp_json_encode( array( $post_type, $ref_term_id, $year, $type ) ) );
 	}
 
 	/**
@@ -69,11 +78,16 @@ class Cache_Manager {
 	 */
 	public function get( string $cache_key ) {
 		$cached = get_transient( $cache_key );
-		
-		if ( false !== $cached && is_array( $cached ) && ! empty( $cached ) ) {
+
+		/**
+		 * This is for sure an array of int or false.
+		 *
+		 * @var array<string, array<string, array<int, string>>>|false $cached
+		 */
+		if ( false !== $cached ) {
 			return $cached;
 		}
-		
+
 		return false;
 	}
 
@@ -105,10 +119,11 @@ class Cache_Manager {
 		$transient_pattern = $wpdb->esc_like( '_transient_' . $this->cache_prefix ) . '%';
 		$timeout_pattern   = $wpdb->esc_like( '_transient_timeout_' . $this->cache_prefix ) . '%';
 
-		$table = $wpdb->options;
-		$wpdb->query(
+		$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			// @phpstan-ignore-next-line
 			$wpdb->prepare(
-				"DELETE FROM {$table} WHERE option_name LIKE %s OR option_name LIKE %s",
+				// @phpstan-ignore-next-line
+				"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
 				$transient_pattern,
 				$timeout_pattern
 			)

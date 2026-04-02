@@ -1,4 +1,11 @@
 <?php
+/**
+ * Query Builder class
+ *
+ * Constructs WP_Query arguments based on filters and configuration.
+ *
+ * @package GatherPress_References
+ */
 
 namespace GatherPress\References;
 
@@ -37,31 +44,32 @@ class Query_Builder {
 	 * @param int    $ref_term_id Reference term ID.
 	 * @param int    $year        Year filter.
 	 * @param string $type        Reference type filter.
-	 * @return array<string, mixed> WP_Query arguments.
+	 * @return array<mixed> WP_Query arguments.
 	 */
 	public function build_args( string $post_type, int $ref_term_id, int $year, string $type ): array {
 		$config = $this->config_manager->get_config( $post_type );
-		
+
 		if ( ! $config ) {
 			return array();
 		}
-		
+
 		$args = $this->get_base_args( $post_type );
-		
+
 		// Add taxonomy filters.
 		$tax_query = $this->build_tax_query( $config, $ref_term_id, $type );
 		if ( ! empty( $tax_query ) ) {
-			$args['tax_query'] = $tax_query;
+			$args['tax_query'] = $tax_query; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query -- Tax query is necessary for filtering references.
 		}
-		
+
 		// Add year filter.
 		if ( $year > 0 ) {
 			$args['date_query'] = array(
 				array( 'year' => $year ),
 			);
 		}
-		
-		return apply_filters( 'gatherpress_references_query_args', $args, $post_type, $ref_term_id, $year, $type );
+
+		$return_args = apply_filters( 'gatherpress_references_query_args', $args, $post_type, $ref_term_id, $year, $type );
+		return is_array( $return_args ) ? $return_args : $args;
 	}
 
 	/**
@@ -74,7 +82,7 @@ class Query_Builder {
 	private function get_base_args( string $post_type ): array {
 		$args = array(
 			'post_type'              => $post_type,
-			'posts_per_page'         => 9999,
+			'posts_per_page'         => 999, // phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- Large number to get all references, pagination is handled in PHP.
 			'post_status'            => 'publish',
 			'orderby'                => 'date',
 			'order'                  => 'DESC',
@@ -83,11 +91,11 @@ class Query_Builder {
 			'update_post_meta_cache' => false,
 			'update_post_term_cache' => true,
 		);
-		
+
 		if ( $post_type === 'gatherpress_event' ) {
 			$args['gatherpress_event_query'] = 'past';
 		}
-		
+
 		return $args;
 	}
 
@@ -102,7 +110,7 @@ class Query_Builder {
 	 */
 	private function build_tax_query( array $config, int $ref_term_id, string $type ): array {
 		$tax_query = array();
-		
+
 		if ( $ref_term_id > 0 && ! empty( $config['ref_tax'] ) ) {
 			$tax_query[] = array(
 				'taxonomy' => $config['ref_tax'],
@@ -110,18 +118,18 @@ class Query_Builder {
 				'terms'    => $ref_term_id,
 			);
 		}
-		
+
 		if ( $type !== 'all' ) {
 			$type_query = $this->build_type_query( $config, $type );
 			if ( ! empty( $type_query ) ) {
 				$tax_query[] = $type_query;
 			}
 		}
-		
+
 		if ( count( $tax_query ) > 1 ) {
 			$tax_query = array_merge( array( 'relation' => 'AND' ), $tax_query );
 		}
-		
+
 		return $tax_query;
 	}
 
@@ -137,14 +145,14 @@ class Query_Builder {
 		if ( ! in_array( $type, $config['ref_types'], true ) ) {
 			return array();
 		}
-		
+
 		if ( count( $config['ref_types'] ) === 1 ) {
 			return array(
 				'taxonomy' => $type,
 				'operator' => 'EXISTS',
 			);
 		}
-		
+
 		$type_query = array( 'relation' => 'OR' );
 		foreach ( $config['ref_types'] as $taxonomy ) {
 			$type_query[] = array(
@@ -152,7 +160,7 @@ class Query_Builder {
 				'operator' => 'EXISTS',
 			);
 		}
-		
+
 		return $type_query;
 	}
 }

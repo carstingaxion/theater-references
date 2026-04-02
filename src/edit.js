@@ -43,6 +43,9 @@ import './editor.scss';
  * @return {Element} React element to render in editor
  */
 export default function Edit( { attributes, setAttributes } ) {
+	// Always call hooks unconditionally at the top level.
+	const blockProps = useBlockProps();
+
 	// Destructure attributes for easier access
 	const {
 		postType,
@@ -240,6 +243,8 @@ export default function Edit( { attributes, setAttributes } ) {
 
 	/**
 	 * Move type up in order
+	 *
+	 * @param {string} typeKey The key of the type to move up
 	 */
 	const moveTypeUp = ( typeKey ) => {
 		const currentIndex = orderedTypeKeys.indexOf( typeKey );
@@ -257,10 +262,15 @@ export default function Edit( { attributes, setAttributes } ) {
 
 	/**
 	 * Move type down in order
+	 *
+	 * @param {string} typeKey The key of the type to move down
 	 */
 	const moveTypeDown = ( typeKey ) => {
 		const currentIndex = orderedTypeKeys.indexOf( typeKey );
-		if ( currentIndex === -1 || currentIndex >= orderedTypeKeys.length - 1 ) {
+		if (
+			currentIndex === -1 ||
+			currentIndex >= orderedTypeKeys.length - 1
+		) {
 			return;
 		}
 
@@ -488,6 +498,12 @@ export default function Edit( { attributes, setAttributes } ) {
 	const showTypeReorderControls =
 		referenceType === 'all' && orderedTypeKeys.length > 1;
 
+	// Compute the year sort toggle label using string literals
+	const yearSortLabel =
+		yearSortOrder === 'asc'
+			? __( 'Sort Years Oldest First', 'gatherpress-references' )
+			: __( 'Sort Years Newest First', 'gatherpress-references' );
+
 	// Show configuration error if block is not properly configured
 	if ( ! isConfigured || ! activePostType ) {
 		return (
@@ -507,7 +523,7 @@ export default function Edit( { attributes, setAttributes } ) {
 						</Notice>
 					</PanelBody>
 				</InspectorControls>
-				<div { ...useBlockProps() }>
+				<div { ...blockProps }>
 					<Notice status="warning" isDismissible={ false }>
 						<p>
 							{ __(
@@ -637,12 +653,7 @@ export default function Edit( { attributes, setAttributes } ) {
 					{ /* Year sort order toggle (only when no specific year) */ }
 					{ showYearSortControl && (
 						<ToggleControl
-							label={ __(
-								yearSortOrder === 'asc'
-									? 'Sort Years Oldest First'
-									: 'Sort Years Newest First',
-								'gatherpress-references'
-							) }
+							label={ yearSortLabel }
 							checked={ yearSortOrder === 'asc' }
 							onChange={ ( value ) =>
 								setAttributes( {
@@ -706,7 +717,7 @@ export default function Edit( { attributes, setAttributes } ) {
 			</InspectorControls>
 
 			{ /* Block content preview */ }
-			<div { ...useBlockProps() }>
+			<div { ...blockProps }>
 				{ Object.keys( filteredData ).length > 0 && (
 					<>
 						{ /* Loop through sorted years */ }
@@ -741,12 +752,18 @@ export default function Edit( { attributes, setAttributes } ) {
 												{ showTypeHeadings && (
 													<div className="references-type-header">
 														<TypeHeading className="references-type">
-															{ typeLabels[ typeKey ] }
+															{
+																typeLabels[
+																	typeKey
+																]
+															}
 														</TypeHeading>
 														{ showTypeReorderControls && (
 															<ButtonGroup className="references-type-movers">
 																<Button
-																	icon={ chevronUp }
+																	icon={
+																		chevronUp
+																	}
 																	onClick={ () =>
 																		moveTypeUp(
 																			typeKey
@@ -759,10 +776,12 @@ export default function Edit( { attributes, setAttributes } ) {
 																	disabled={
 																		isFirstType
 																	}
-																	isSmall
+																	size="small"
 																/>
 																<Button
-																	icon={ chevronDown }
+																	icon={
+																		chevronDown
+																	}
 																	onClick={ () =>
 																		moveTypeDown(
 																			typeKey
@@ -775,7 +794,7 @@ export default function Edit( { attributes, setAttributes } ) {
 																	disabled={
 																		isLastType
 																	}
-																	isSmall
+																	size="small"
 																/>
 															</ButtonGroup>
 														) }
@@ -783,11 +802,13 @@ export default function Edit( { attributes, setAttributes } ) {
 												) }
 
 												<ul className="references-list">
-													{ items.map( ( item, index ) => (
-														<li key={ index }>
-															{ item }
-														</li>
-													) ) }
+													{ items.map(
+														( item, index ) => (
+															<li key={ index }>
+																{ item }
+															</li>
+														)
+													) }
 												</ul>
 											</div>
 										);
@@ -795,7 +816,7 @@ export default function Edit( { attributes, setAttributes } ) {
 								</div>
 							);
 						} ) }
-				</>
+					</>
 				) }
 			</div>
 		</>

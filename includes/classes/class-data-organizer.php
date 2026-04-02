@@ -1,4 +1,11 @@
 <?php
+/**
+ * Data Organizer class
+ *
+ * Handles organization of query results into structured reference data.
+ *
+ * @package GatherPress_References
+ */
 
 namespace GatherPress\References;
 
@@ -42,21 +49,28 @@ class Data_Organizer {
 		if ( empty( $query->posts ) ) {
 			return array();
 		}
-		
+
 		$config = $this->config_manager->get_config( $post_type );
-		
+
 		if ( ! $config ) {
 			return array();
 		}
-		
-		/** @var array<int, int> $post_ids */
+
+		/**
+		 * This will be an array of post IDs since we are only selecting the 'ids' as the 'fields' parameter in Query_Builder->get_base_args().
+		 *
+		 * As long, as nobody touched 'fields' param using the 'gatherpress_references_query_args' filter, this will always be an array of integers (post IDs).
+		 * If 'fields' param is modified, this may not be the case anymore.
+		 *
+		 * @var array<int, int> $post_ids
+		 */
 		$post_ids = $query->posts;
-		
+
 		$post_dates = $this->get_post_dates( $post_type, $post_ids );
 		$post_terms = $this->get_post_terms( $post_ids, $config['ref_types'] );
-		
+
 		$references = $this->group_by_year( $post_ids, $post_dates, $post_terms, $config['ref_types'], $type );
-		
+
 		return $references;
 	}
 
@@ -69,40 +83,58 @@ class Data_Organizer {
 	 * @return array<int, object{post_id: string, year: string}> Post dates.
 	 */
 	private function get_post_dates( string $post_type, array $post_ids ): array {
+		/**
+		 * Help phpstan understand $wpdb is global.
+		 *
+		 * @var \wpdb  $wpdb WordPress database abstraction object.
+		 */
 		global $wpdb;
-		
+
 		if ( empty( $post_ids ) ) {
 			return array();
 		}
-		
+
 		$safe_ids     = array_map( 'intval', $post_ids );
 		$placeholders = implode( ',', array_fill( 0, count( $safe_ids ), '%d' ) );
-		
+
 		if ( $post_type === 'gatherpress_event' ) {
 			$table = $wpdb->prefix . 'gatherpress_events';
-			/** @var literal-string $sql */
+			/**
+			 * Threat as literal string since the table name is dynamic, but we are controlling it and it's not coming from user input, so it should be safe.
+			 *
+			 * @var literal-string $sql
+			 */
 			$sql = "SELECT post_id, YEAR(datetime_start_gmt) AS year
 					FROM {$table}
 					WHERE post_id IN ({$placeholders})
 					ORDER BY datetime_start_gmt DESC";
 		} else {
-			/** @var literal-string $sql */
+			/**
+			 * Threat as literal string since the table name is dynamic, but we are controlling it and it's not coming from user input, so it should be safe.
+			 *
+			 * @var literal-string $sql
+			 */
 			$sql = "SELECT ID as post_id, YEAR(post_date) AS year
 					FROM {$wpdb->posts}
 					WHERE ID IN ({$placeholders})
 					ORDER BY post_date DESC";
 		}
-		
-		$results = $wpdb->get_results(
-			$wpdb->prepare( $sql, ...$safe_ids ),
+
+		$results = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- We need to use a custom query here to get the years, and caching is handled later as transients, so we can skip caching here.
+			$wpdb->prepare( $sql, ...$safe_ids ), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 			OBJECT_K
 		);
-		
-		if ( null === $results || ! is_array( $results ) ) {
+
+		if ( null === $results ) {
 			return array();
 		}
-		
-		/** @var array<int, object{post_id: string, year: string}> $results */
+
+		/**
+		 * The results will be an associative array where the keys are the post IDs (because of OBJECT_K)
+		 * and the values are objects containing the post_id and year.
+		 *
+		 * @var array<int, object{post_id: string, year: string}> $results
+		 */
 		return $results;
 	}
 
@@ -118,21 +150,21 @@ class Data_Organizer {
 		if ( empty( $post_ids ) || empty( $taxonomies ) ) {
 			return array();
 		}
-		
+
 		$organized_terms = array();
-		
+
 		foreach ( $post_ids as $post_id ) {
 			$organized_terms[ $post_id ] = array();
-			
+
 			foreach ( $taxonomies as $taxonomy ) {
 				$terms = get_the_terms( $post_id, $taxonomy );
-				
+
 				if ( $terms && ! is_wp_error( $terms ) ) {
 					$organized_terms[ $post_id ][ $taxonomy ] = $terms;
 				}
 			}
 		}
-		
+
 		return $organized_terms;
 	}
 
@@ -149,25 +181,25 @@ class Data_Organizer {
 	 */
 	private function group_by_year( array $post_ids, array $post_dates, array $post_terms, array $taxonomies, string $type_filter ): array {
 		$references = array();
-		
+
 		foreach ( $post_ids as $post_id ) {
 			if ( ! isset( $post_dates[ $post_id ] ) ) {
 				continue;
 			}
-			
+
 			$year  = $post_dates[ $post_id ]->year;
 			$terms = isset( $post_terms[ $post_id ] ) ? $post_terms[ $post_id ] : array();
-			
+
 			if ( ! isset( $references[ $year ] ) ) {
 				$references[ $year ] = $this->init_year_structure( $taxonomies );
 			}
-			
+
 			$this->add_terms_to_year( $references[ $year ], $terms, $taxonomies );
 		}
-		
+
 		$references = $this->sort_term_names( $references );
 		$references = $this->remove_empty_arrays( $references, $type_filter );
-		
+
 		return $references;
 	}
 
@@ -190,21 +222,21 @@ class Data_Organizer {
 	 * Add terms to year
 	 *
 	 * @since 0.1.0
-	 * @param array<string, array<int, string>>       $year_data  Year data.
-	 * @param ?array<string, array<\WP_Term>>         $terms      Terms.
-	 * @param array<int, string>                      $taxonomies Taxonomies.
+	 * @param array<string, array<int, string>> $year_data  Year data.
+	 * @param ?array<string, array<\WP_Term>>   $terms      Terms.
+	 * @param array<int, string>                $taxonomies Taxonomies.
 	 * @return void
 	 */
 	private function add_terms_to_year( array &$year_data, ?array $terms, array $taxonomies ): void {
 		if ( empty( $terms ) ) {
 			return;
 		}
-		
+
 		foreach ( $taxonomies as $taxonomy ) {
 			if ( ! isset( $terms[ $taxonomy ] ) ) {
 				continue;
 			}
-			
+
 			foreach ( $terms[ $taxonomy ] as $term ) {
 				if ( ! in_array( $term->name, $year_data[ $taxonomy ], true ) ) {
 					$year_data[ $taxonomy ][] = $term->name;
@@ -239,28 +271,53 @@ class Data_Organizer {
 	 * @return array<string, array<string, array<int, string>>> Cleaned references.
 	 */
 	private function remove_empty_arrays( array $references, string $type_filter ): array {
+		if ( $type_filter !== 'all' ) {
+			return $this->filter_by_specific_type( $references, $type_filter );
+		}
+
+		return $this->remove_empty_year_entries( $references );
+	}
+
+	/**
+	 * Filter references to only include a specific type
+	 *
+	 * @since 0.1.0
+	 * @param array<string, array<string, array<int, string>>> $references  References.
+	 * @param string                                           $type_filter Type filter.
+	 * @return array<string, array<string, array<int, string>>> Filtered references.
+	 */
+	private function filter_by_specific_type( array $references, string $type_filter ): array {
+		$filtered = array();
+
 		foreach ( $references as $year => $year_data ) {
-			if ( $type_filter !== 'all' ) {
-				if ( ! isset( $year_data[ $type_filter ] ) || empty( $year_data[ $type_filter ] ) ) {
-					unset( $references[ $year ] );
-					continue;
-				}
-				$references[ $year ] = array(
-					$type_filter => $year_data[ $type_filter ],
-				);
-			} else {
-				foreach ( $year_data as $taxonomy => $items ) {
-					if ( empty( $items ) ) {
-						unset( $references[ $year ][ $taxonomy ] );
-					}
-				}
-				
-				if ( empty( $references[ $year ] ) ) {
-					unset( $references[ $year ] );
-				}
+			if ( ! isset( $year_data[ $type_filter ] ) || empty( $year_data[ $type_filter ] ) ) {
+				continue;
+			}
+
+			$filtered[ $year ] = array(
+				$type_filter => $year_data[ $type_filter ],
+			);
+		}
+
+		return $filtered;
+	}
+
+	/**
+	 * Remove years that have no taxonomy entries
+	 *
+	 * @since 0.1.0
+	 * @param array<string, array<string, array<int, string>>> $references References.
+	 * @return array<string, array<string, array<int, string>>> Cleaned references.
+	 */
+	private function remove_empty_year_entries( array $references ): array {
+		foreach ( $references as $year => $year_data ) {
+			$references[ $year ] = array_filter( $year_data );
+
+			if ( empty( $references[ $year ] ) ) {
+				unset( $references[ $year ] );
 			}
 		}
-		
+
 		return $references;
 	}
 
@@ -276,20 +333,20 @@ class Data_Organizer {
 		if ( empty( $references ) ) {
 			return $references;
 		}
-		
+
 		$years = array_keys( $references );
-		
+
 		if ( $sort_order === 'asc' ) {
 			sort( $years, SORT_NUMERIC );
 		} else {
 			rsort( $years, SORT_NUMERIC );
 		}
-		
+
 		$sorted = array();
 		foreach ( $years as $year ) {
 			$sorted[ (string) $year ] = $references[ (string) $year ];
 		}
-		
+
 		return $sorted;
 	}
 }

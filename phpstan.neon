@@ -8,7 +8,7 @@ parameters:
         - src/
         - plugin.php
     scanDirectories:
-        - ../gatherpress
+        - wp-content/plugins/gatherpress
     excludePaths:
         analyse:
             - vendor/
@@ -17,5 +17,5 @@ parameters:
             - wp-content/ (?)
             - tests/ (?)
         analyseAndScan:
-            - build/
-            - node_modules/
+            - build/ (?)
+            - node_modules/ (?)

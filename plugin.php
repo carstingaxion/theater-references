@@ -120,13 +120,13 @@ class Plugin {
 	private function init_hooks(): void {
 		add_action( 'registered_post_type_gatherpress_event', array( $this, 'register_taxonomies' ) );
 		add_action( 'registered_post_type_gatherpress_event', array( $this, 'register_block' ) );
-		
+
 		// Cache invalidation hooks.
 		add_action( 'transition_post_status', array( $this, 'clear_cache_on_status_change' ), 10, 3 );
 		add_action( 'create_term', array( $this, 'clear_cache_on_term_change' ), 10, 3 );
 		add_action( 'edit_term', array( $this, 'clear_cache_on_term_change' ), 10, 3 );
 		add_action( 'delete_term', array( $this, 'clear_cache_on_term_change' ), 10, 3 );
-		add_action( 'set_object_terms', array( $this, 'clear_cache_on_term_relationship' ), 10, 3 );
+		add_action( 'set_object_terms', array( $this, 'clear_cache_on_term_relationship' ) );
 	}
 
 	/**
@@ -149,7 +149,7 @@ class Plugin {
 		if ( ! $this->config_manager->should_register_block() ) {
 			return;
 		}
-		
+
 		register_block_type( __DIR__ . '/build/' );
 	}
 
@@ -162,15 +162,12 @@ class Plugin {
 	 * @param \WP_Post $post       Post object.
 	 * @return void
 	 */
-	public function clear_cache_on_status_change( string $new_status, string $old_status, $post ): void {
-		if ( ! is_object( $post ) || ! isset( $post->post_type ) ) {
-			return;
-		}
-		
+	public function clear_cache_on_status_change( string $new_status, string $old_status, \WP_Post $post ): void {
+
 		if ( ! post_type_supports( $post->post_type, 'gatherpress_references' ) ) {
 			return;
 		}
-		
+
 		if ( ( 'publish' === $new_status || 'publish' === $old_status ) && $new_status !== $old_status ) {
 			$this->cache_manager->clear_all();
 		}
@@ -187,7 +184,7 @@ class Plugin {
 	 */
 	public function clear_cache_on_term_change( int $term_id, int $tt_id, string $taxonomy ): void {
 		$all_taxonomies = $this->config_manager->get_all_taxonomies();
-		
+
 		if ( in_array( $taxonomy, $all_taxonomies, true ) ) {
 			$this->cache_manager->clear_all();
 		}
@@ -197,18 +194,16 @@ class Plugin {
 	 * Clear cache on term relationship
 	 *
 	 * @since 0.1.0
-	 * @param int             $object_id Object ID.
-	 * @param array<int, int> $terms     Terms.
-	 * @param array<int, int> $tt_ids    Term taxonomy IDs.
+	 * @param int $object_id Object ID.
 	 * @return void
 	 */
-	public function clear_cache_on_term_relationship( int $object_id, array $terms, array $tt_ids ): void {
+	public function clear_cache_on_term_relationship( int $object_id ): void {
 		$post = get_post( $object_id );
-		
+
 		if ( ! $post || ! post_type_supports( $post->post_type, 'gatherpress_references' ) || $post->post_status !== 'publish' ) {
 			return;
 		}
-		
+
 		$this->cache_manager->clear_all();
 	}
 
@@ -254,7 +249,7 @@ function register_post_type_support(): void {
 		'ref_tax'   => 'gatherpress-production',
 		'ref_types' => array( '_gatherpress-client', '_gatherpress-festival', '_gatherpress-award' ),
 	);
-	
+
 	add_post_type_support( 'gatherpress_event', 'gatherpress_references', $config );
 }
 add_action( 'registered_post_type_gatherpress_event', __NAMESPACE__ . '\register_post_type_support', 9 );
@@ -296,7 +291,7 @@ function gatherpress_references_uninstall(): void {
 
 	$config_manager = new Config_Manager();
 	$taxonomies     = $config_manager->get_all_taxonomies();
-	
+
 	foreach ( $taxonomies as $taxonomy ) {
 		$terms = get_terms(
 			array(
@@ -312,8 +307,10 @@ function gatherpress_references_uninstall(): void {
 			}
 		}
 
-		$wpdb->query(
+		$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			// @phpstan-ignore-next-line
 			$wpdb->prepare(
+				// @phpstan-ignore-next-line
 				"DELETE FROM {$wpdb->term_taxonomy} WHERE taxonomy = %s",
 				$taxonomy
 			)
