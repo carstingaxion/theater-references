@@ -19,6 +19,7 @@
 	},
 	"main": "build/index.js",
 	"devDependencies": {
+		"@wordpress/env": "^11.3.0",
 		"@wordpress/i18n": "^6.16.0",
 		"@wordpress/icons": "^12.1.0",
 		"@wordpress/scripts": "^31.8.0"
@@ -43,6 +44,13 @@
 		"lint:pkg-json": "wp-scripts lint-pkg-json",
 		"packages-update": "wp-scripts packages-update",
 		"plugin-zip": "wp-scripts plugin-zip",
+		"env:start": "wp-env start",
+		"env:stop": "wp-env stop",
+		"env:destroy": "wp-env destroy",
+		"pretest:php": "wp-env start",
+		"test:php": "wp-env run tests-cli --env-cwd='wp-content/plugins/gatherpress-references' bash -c 'WP_TESTS_DIR=/wordpress-phpunit vendor/bin/phpunit'",
+		"test:php:unit": "wp-env run tests-cli --env-cwd='wp-content/plugins/gatherpress-references' bash -c 'WP_TESTS_DIR=/wordpress-phpunit vendor/bin/phpunit --testsuite unit'",
+		"test:php:integration": "wp-env run tests-cli --env-cwd='wp-content/plugins/gatherpress-references' bash -c 'WP_TESTS_DIR=/wordpress-phpunit vendor/bin/phpunit --testsuite integration'",
 		"start": "wp-scripts start --blocks-manifest"
 	}
 }
