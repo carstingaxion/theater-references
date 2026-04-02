@@ -1,22 +1,23 @@
 /**
  * GatherPress References Block Styles
- * 
+ *
  * Minimal defaults with CSS custom properties for easy theming.
  * Designed for maximum flexibility with minimal opinionated styling.
- * 
- * 
+ *
+ *
  * CSS Custom Properties (Customizable by theme):
  * --wp--custom--gatherpress-references--year-margin-top
  * --wp--custom--gatherpress-references--year-border-opacity
- * 
+ *
  * --wp--custom--gatherpress-references--type-margin-top
  * --wp--custom--gatherpress-references--type-border-opacity
- * 
+ *
  * --wp--custom--gatherpress-references--list-padding-left
  * --wp--custom--gatherpress-references--list-bullet-opacity
  */
 
 .wp-block-gatherpress-references {
+
 	/* Block Container */
 	margin-block: var(--wp--preset--spacing--50, 1.5em);
 	margin-inline: 0;
@@ -25,19 +26,13 @@
 	 * Year Headings
 	 */
 	.references-year {
-		margin-block-start: var(
-			--wp--custom--gatherpress-references--year-margin-top,
-			var(--wp--preset--spacing--50, 1.5em)
-		);
+		margin-block-start: var(--wp--custom--gatherpress-references--year-margin-top, var(--wp--preset--spacing--50, 1.5em));
 		margin-block-end: var(--wp--preset--spacing--30, 0.75em);
 		margin-inline: 0;
 		padding: 0;
 
-		border-block-end: 1px solid currentColor;
-		opacity: var(
-			--wp--custom--gatherpress-references--year-border-opacity,
-			0.7
-		);
+		border-block-end: 1px solid currentcolor;
+		opacity: var(--wp--custom--gatherpress-references--year-border-opacity, 0.7);
 
 		&:first-child {
 			margin-block-start: 0;
@@ -48,19 +43,13 @@
 	 * Type Headings
 	 */
 	.references-type {
-		margin-block-start: var(
-			--wp--custom--gatherpress-references--type-margin-top,
-			var(--wp--preset--spacing--40, 1em)
-		);
+		margin-block-start: var(--wp--custom--gatherpress-references--type-margin-top, var(--wp--preset--spacing--40, 1em));
 		margin-block-end: var(--wp--preset--spacing--20, 0.5em);
 		margin-inline: 0;
 		padding-inline-start: var(--wp--preset--spacing--20, 0.5em);
 
-		border-inline-start: 2px solid currentColor;
-		opacity: var(
-			--wp--custom--gatherpress-references--type-border-opacity,
-			0.8
-		);
+		border-inline-start: 2px solid currentcolor;
+		opacity: var(--wp--custom--gatherpress-references--type-border-opacity, 0.8);
 	}
 
 	/**
@@ -70,10 +59,7 @@
 		list-style: none;
 		margin-block: var(--wp--preset--spacing--20, 0.5em) var(--wp--preset--spacing--30, 1em);
 		margin-inline: 0;
-		padding-inline-start: var(
-			--wp--custom--gatherpress-references--list-padding-left,
-			var(--wp--preset--spacing--40, 1.5em)
-		);
+		padding-inline-start: var(--wp--custom--gatherpress-references--list-padding-left, var(--wp--preset--spacing--40, 1.5em));
 
 		li {
 			position: relative;
@@ -82,17 +68,9 @@
 			&::before {
 				content: "•";
 				position: absolute;
-				inset-inline-start: calc(
-					var(
-						--wp--custom--gatherpress-references--list-padding-left,
-						var(--wp--preset--spacing--40, 1.5em)
-					) * -1
-				);
-				color: currentColor;
-				opacity: var(
-					--wp--custom--gatherpress-references--list-bullet-opacity,
-					0.3
-				);
+				inset-inline-start: calc(var(--wp--custom--gatherpress-references--list-padding-left, var(--wp--preset--spacing--40, 1.5em)) * -1);
+				color: currentcolor;
+				opacity: var(--wp--custom--gatherpress-references--list-bullet-opacity, 0.3);
 			}
 		}
 	}
@@ -101,6 +79,7 @@
 	 * Responsive
 	 */
 	@media (max-width: 781px) {
+
 		.references-year {
 			// font-size: var(--wp--preset--font-size--medium, 1.25em);
 		}
@@ -174,6 +153,7 @@
 		}
 
 		.references-list {
+
 			li {
 				color: #4a3f33;
 				line-height: 1.8;
@@ -195,7 +175,7 @@
 	 */
 	&.is-style-modern-corporate {
 		font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-		background: #ffffff;
+		background: #fff;
 		padding: var(--wp--preset--spacing--50, 2.5em);
 		border-radius: 8px;
 		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.06);
@@ -208,7 +188,7 @@
 			padding-inline: 1em;
 			margin-inline: -1em;
 			background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-			border-inline-start: 4px solid #0066cc;
+			border-inline-start: 4px solid #06c;
 			border-block-end: none;
 			border-radius: 4px;
 		}
@@ -220,7 +200,7 @@
 			text-transform: uppercase;
 			letter-spacing: 0.08em;
 			padding-inline-start: 1.2em;
-			border-inline-start: 3px solid #0066cc;
+			border-inline-start: 3px solid #06c;
 			position: relative;
 
 			&::before {
@@ -230,13 +210,14 @@
 				inset-block-start: 50%;
 				width: 6px;
 				height: 6px;
-				background: #0066cc;
+				background: #06c;
 				border-radius: 50%;
 				transform: translate(-4.5px, -50%);
 			}
 		}
 
 		.references-list {
+
 			li {
 				color: #495057;
 				line-height: 1.6;
@@ -245,13 +226,13 @@
 
 				&::before {
 					content: "▸";
-					color: #0066cc;
+					color: #06c;
 					opacity: 0.7;
 					font-size: 0.9em;
 				}
 
 				&:hover {
-					color: #0066cc;
+					color: #06c;
 				}
 			}
 		}
@@ -275,8 +256,9 @@
 			content: "";
 			position: absolute;
 			inset: 0;
-			background: radial-gradient(circle at 20% 80%, rgba(236, 72, 153, 0.15) 0%, transparent 50%),
-						radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.15) 0%, transparent 50%);
+			background:
+				radial-gradient(circle at 20% 80%, rgba(236, 72, 153, 0.15) 0%, transparent 50%),
+				radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.15) 0%, transparent 50%);
 			pointer-events: none;
 		}
 
@@ -319,6 +301,7 @@
 		}
 
 		.references-list {
+			/* stylelint-disable-next-line no-descending-specificity */
 			li {
 				color: #d1d5db;
 				line-height: 1.7;
@@ -336,7 +319,7 @@
 				}
 
 				&:hover {
-					color: #ffffff;
+					color: #fff;
 					transform: translateX(4px);
 				}
 			}
@@ -350,9 +333,9 @@
 	&.is-style-eco-cyberpunk {
 		font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
 		background: linear-gradient(135deg, #0a0e0f 0%, #0d1b1e 50%, #1a2f23 100%);
-		color: #00ff88;
+		color: #0f8;
 		padding: var(--wp--preset--spacing--60, 3em);
-		border: 2px solid #00ff88;
+		border: 2px solid #0f8;
 		border-radius: 4px;
 		box-shadow: 0 0 20px rgba(0, 255, 136, 0.3), inset 0 0 60px rgba(0, 255, 136, 0.05);
 		position: relative;
@@ -361,13 +344,7 @@
 			content: "";
 			position: absolute;
 			inset: 0;
-			background: repeating-linear-gradient(
-				0deg,
-				rgba(0, 255, 136, 0.03) 0px,
-				transparent 1px,
-				transparent 2px,
-				rgba(0, 255, 136, 0.03) 3px
-			);
+			background: repeating-linear-gradient(0deg, rgba(0, 255, 136, 0.03) 0, transparent 1px, transparent 2px, rgba(0, 255, 136, 0.03) 3px);
 			pointer-events: none;
 			opacity: 0.5;
 		}
@@ -378,7 +355,7 @@
 			inset-block-start: 1em;
 			inset-inline-end: 1.5em;
 			font-size: 0.7em;
-			color: #00ff88;
+			color: #0f8;
 			opacity: 0.4;
 			letter-spacing: 0.15em;
 			pointer-events: none;
@@ -387,12 +364,12 @@
 		.references-year {
 			font-weight: 700;
 			font-size: 1.6em;
-			color: #00ff88;
-			text-shadow: 0 0 10px #00ff88, 0 0 20px rgba(0, 255, 136, 0.5);
+			color: #0f8;
+			text-shadow: 0 0 10px #0f8, 0 0 20px rgba(0, 255, 136, 0.5);
 			letter-spacing: 0.2em;
 			padding-block: 0.5em;
 			padding-inline-start: 2.5em;
-			border-block-end: 1px dashed #00ff88;
+			border-block-end: 1px dashed #0f8;
 			position: relative;
 			z-index: 1;
 
@@ -400,7 +377,7 @@
 				content: ">> ";
 				position: absolute;
 				inset-inline-start: 0;
-				color: #00ff88;
+				color: #0f8;
 				opacity: 0.7;
 				animation: blink 1.5s infinite;
 			}
@@ -416,11 +393,11 @@
 		.references-type {
 			font-weight: 600;
 			font-size: 1em;
-			color: #66ffaa;
+			color: #6fa;
 			text-transform: uppercase;
 			letter-spacing: 0.15em;
 			padding-inline-start: 2em;
-			border-inline-start: 3px solid #00ff88;
+			border-inline-start: 3px solid #0f8;
 			position: relative;
 			z-index: 1;
 
@@ -428,7 +405,7 @@
 				content: "// ";
 				position: absolute;
 				inset-inline-start: 0.3em;
-				color: #00ff88;
+				color: #0f8;
 				opacity: 0.5;
 			}
 
@@ -439,16 +416,18 @@
 				inset-block-start: 50%;
 				width: 8px;
 				height: 8px;
-				background: #00ff88;
+				background: #0f8;
 				border-radius: 50%;
-				box-shadow: 0 0 10px #00ff88;
+				box-shadow: 0 0 10px #0f8;
 				transform: translateY(-50%);
 			}
 		}
 
 		.references-list {
+
+			/* stylelint-disable-next-line no-descending-specificity */
 			li {
-				color: #99ffcc;
+				color: #9fc;
 				line-height: 1.8;
 				padding-block: 0.3em;
 				position: relative;
@@ -458,10 +437,10 @@
 
 				&::before {
 					content: "├─ ";
-					color: #00ff88;
+					color: #0f8;
 					opacity: 0.6;
 					font-size: 1em;
-					text-shadow: 0 0 5px #00ff88;
+					text-shadow: 0 0 5px #0f8;
 				}
 
 				&:last-child::before {
@@ -469,8 +448,8 @@
 				}
 
 				&:hover {
-					color: #ffffff;
-					text-shadow: 0 0 8px #00ff88;
+					color: #fff;
+					text-shadow: 0 0 8px #0f8;
 					transform: translateX(4px);
 				}
 			}
@@ -482,10 +461,14 @@
  * Blink animation for eco-cyberpunk style
  */
 @keyframes blink {
-	0%, 49% {
+
+	0%,
+	49% {
 		opacity: 0.7;
 	}
-	50%, 100% {
+
+	50%,
+	100% {
 		opacity: 0.3;
 	}
 }
