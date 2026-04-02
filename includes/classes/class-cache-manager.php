@@ -1,4 +1,12 @@
 <?php
+/**
+ * Cache Manager class
+ *
+ * Handles all caching operations including cache key generation,
+ * storage, retrieval, and invalidation.
+ *
+ * @package GatherPress_References
+ */
 
 namespace GatherPress\References;
 
@@ -69,11 +77,11 @@ class Cache_Manager {
 	 */
 	public function get( string $cache_key ) {
 		$cached = get_transient( $cache_key );
-		
+
 		if ( false !== $cached && is_array( $cached ) && ! empty( $cached ) ) {
 			return $cached;
 		}
-		
+
 		return false;
 	}
 
@@ -105,10 +113,9 @@ class Cache_Manager {
 		$transient_pattern = $wpdb->esc_like( '_transient_' . $this->cache_prefix ) . '%';
 		$timeout_pattern   = $wpdb->esc_like( '_transient_timeout_' . $this->cache_prefix ) . '%';
 
-		$table = $wpdb->options;
-		$wpdb->query(
+		$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->prepare(
-				"DELETE FROM {$table} WHERE option_name LIKE %s OR option_name LIKE %s",
+				"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
 				$transient_pattern,
 				$timeout_pattern
 			)

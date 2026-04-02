@@ -1,4 +1,11 @@
 <?php
+/**
+ * Data Organizer class
+ *
+ * Handles organization of query results into structured reference data.
+ *
+ * @package GatherPress_References
+ */
 
 namespace GatherPress\References;
 
@@ -42,21 +49,28 @@ class Data_Organizer {
 		if ( empty( $query->posts ) ) {
 			return array();
 		}
-		
+
 		$config = $this->config_manager->get_config( $post_type );
-		
+
 		if ( ! $config ) {
 			return array();
 		}
-		
-		/** @var array<int, int> $post_ids */
+
+		/**
+		 * This will be an array of post IDs since we are only selecting the 'ids' as the 'fields' parameter in Query_Builder->get_base_args().
+		 *
+		 * As long, as nobody touched 'fields' param using the 'gatherpress_references_query_args' filter, this will always be an array of integers (post IDs).
+		 * If 'fields' param is modified, this may not be the case anymore.
+		 *
+		 * @var array<int, int> $post_ids
+		 */
 		$post_ids = $query->posts;
-		
+
 		$post_dates = $this->get_post_dates( $post_type, $post_ids );
 		$post_terms = $this->get_post_terms( $post_ids, $config['ref_types'] );
-		
+
 		$references = $this->group_by_year( $post_ids, $post_dates, $post_terms, $config['ref_types'], $type );
-		
+
 		return $references;
 	}
 
@@ -70,14 +84,14 @@ class Data_Organizer {
 	 */
 	private function get_post_dates( string $post_type, array $post_ids ): array {
 		global $wpdb;
-		
+
 		if ( empty( $post_ids ) ) {
 			return array();
 		}
-		
+
 		$safe_ids     = array_map( 'intval', $post_ids );
 		$placeholders = implode( ',', array_fill( 0, count( $safe_ids ), '%d' ) );
-		
+
 		if ( $post_type === 'gatherpress_event' ) {
 			$table = $wpdb->prefix . 'gatherpress_events';
 			/** @var literal-string $sql */
@@ -92,17 +106,22 @@ class Data_Organizer {
 					WHERE ID IN ({$placeholders})
 					ORDER BY post_date DESC";
 		}
-		
+
 		$results = $wpdb->get_results(
 			$wpdb->prepare( $sql, ...$safe_ids ),
 			OBJECT_K
 		);
-		
+
 		if ( null === $results || ! is_array( $results ) ) {
 			return array();
 		}
-		
-		/** @var array<int, object{post_id: string, year: string}> $results */
+
+		/**
+		 * The results will be an associative array where the keys are the post IDs (because of OBJECT_K)
+		 * and the values are objects containing the post_id and year.
+		 *
+		 * @var array<int, object{post_id: string, year: string}> $results
+		 */
 		return $results;
 	}
 
@@ -118,21 +137,21 @@ class Data_Organizer {
 		if ( empty( $post_ids ) || empty( $taxonomies ) ) {
 			return array();
 		}
-		
+
 		$organized_terms = array();
-		
+
 		foreach ( $post_ids as $post_id ) {
 			$organized_terms[ $post_id ] = array();
-			
+
 			foreach ( $taxonomies as $taxonomy ) {
 				$terms = get_the_terms( $post_id, $taxonomy );
-				
+
 				if ( $terms && ! is_wp_error( $terms ) ) {
 					$organized_terms[ $post_id ][ $taxonomy ] = $terms;
 				}
 			}
 		}
-		
+
 		return $organized_terms;
 	}
 
@@ -149,25 +168,25 @@ class Data_Organizer {
 	 */
 	private function group_by_year( array $post_ids, array $post_dates, array $post_terms, array $taxonomies, string $type_filter ): array {
 		$references = array();
-		
+
 		foreach ( $post_ids as $post_id ) {
 			if ( ! isset( $post_dates[ $post_id ] ) ) {
 				continue;
 			}
-			
+
 			$year  = $post_dates[ $post_id ]->year;
 			$terms = isset( $post_terms[ $post_id ] ) ? $post_terms[ $post_id ] : array();
-			
+
 			if ( ! isset( $references[ $year ] ) ) {
 				$references[ $year ] = $this->init_year_structure( $taxonomies );
 			}
-			
+
 			$this->add_terms_to_year( $references[ $year ], $terms, $taxonomies );
 		}
-		
+
 		$references = $this->sort_term_names( $references );
 		$references = $this->remove_empty_arrays( $references, $type_filter );
-		
+
 		return $references;
 	}
 
@@ -190,21 +209,21 @@ class Data_Organizer {
 	 * Add terms to year
 	 *
 	 * @since 0.1.0
-	 * @param array<string, array<int, string>>       $year_data  Year data.
-	 * @param ?array<string, array<\WP_Term>>         $terms      Terms.
-	 * @param array<int, string>                      $taxonomies Taxonomies.
+	 * @param array<string, array<int, string>> $year_data  Year data.
+	 * @param ?array<string, array<\WP_Term>>   $terms      Terms.
+	 * @param array<int, string>                $taxonomies Taxonomies.
 	 * @return void
 	 */
 	private function add_terms_to_year( array &$year_data, ?array $terms, array $taxonomies ): void {
 		if ( empty( $terms ) ) {
 			return;
 		}
-		
+
 		foreach ( $taxonomies as $taxonomy ) {
 			if ( ! isset( $terms[ $taxonomy ] ) ) {
 				continue;
 			}
-			
+
 			foreach ( $terms[ $taxonomy ] as $term ) {
 				if ( ! in_array( $term->name, $year_data[ $taxonomy ], true ) ) {
 					$year_data[ $taxonomy ][] = $term->name;
@@ -254,13 +273,13 @@ class Data_Organizer {
 						unset( $references[ $year ][ $taxonomy ] );
 					}
 				}
-				
+
 				if ( empty( $references[ $year ] ) ) {
 					unset( $references[ $year ] );
 				}
 			}
 		}
-		
+
 		return $references;
 	}
 
@@ -276,20 +295,20 @@ class Data_Organizer {
 		if ( empty( $references ) ) {
 			return $references;
 		}
-		
+
 		$years = array_keys( $references );
-		
+
 		if ( $sort_order === 'asc' ) {
 			sort( $years, SORT_NUMERIC );
 		} else {
 			rsort( $years, SORT_NUMERIC );
 		}
-		
+
 		$sorted = array();
 		foreach ( $years as $year ) {
 			$sorted[ (string) $year ] = $references[ (string) $year ];
 		}
-		
+
 		return $sorted;
 	}
 }

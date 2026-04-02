@@ -16,7 +16,7 @@ namespace GatherPress\References;
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
-if( ! class_exists( Block_Renderer::class ) ) {
+if ( ! class_exists( Block_Renderer::class ) ) {
 	/**
 	 * Block Renderer
 	 *
@@ -68,11 +68,11 @@ if( ! class_exists( Block_Renderer::class ) ) {
 		 */
 		private function __construct() {
 			$plugin = Plugin::get_instance();
-			
-			$this->config_manager  = new Config_Manager();
-			$this->cache_manager   = $plugin->get_cache_manager();
-			$this->query_builder   = $plugin->get_query_builder();
-			$this->data_organizer  = $plugin->get_data_organizer();
+
+			$this->config_manager = new Config_Manager();
+			$this->cache_manager  = $plugin->get_cache_manager();
+			$this->query_builder  = $plugin->get_query_builder();
+			$this->data_organizer = $plugin->get_data_organizer();
 		}
 
 		/**
@@ -93,14 +93,12 @@ if( ! class_exists( Block_Renderer::class ) ) {
 		 *
 		 * @since 0.1.0
 		 * @param array<string, mixed> $attributes Block attributes.
-		 * @param string              $content    Block content.
-		 * @param \WP_Block            $block      Block instance.
 		 * @return string Rendered block HTML.
 		 */
-		public function render( array $attributes, string $content, \WP_Block $block ): string {
+		public function render( array $attributes ): string {
 			// Extract and sanitize attributes.
 			$render_data = $this->prepare_render_data( $attributes );
-			
+
 			if ( ! $render_data ) {
 				return '';
 			}
@@ -111,14 +109,14 @@ if( ! class_exists( Block_Renderer::class ) ) {
 				$render_data['year'],
 				$render_data['type']
 			);
-			
+
 			if ( empty( $references ) ) {
 				return '';
 			}
-			
+
 			// Sort years.
 			$references = $this->data_organizer->sort_years( $references, $render_data['year_sort'] );
-			
+
 			// Apply custom type order if specified.
 			if ( ! empty( $render_data['type_order'] ) ) {
 				$references = $this->apply_type_order( $references, $render_data['type_order'] );
@@ -130,8 +128,7 @@ if( ! class_exists( Block_Renderer::class ) ) {
 				$render_data['type'],
 				$render_data['type_labels'],
 				$render_data['heading_level'],
-				$render_data['secondary_heading_level'],
-				$block
+				$render_data['secondary_heading_level']
 			);
 		}
 
@@ -144,34 +141,34 @@ if( ! class_exists( Block_Renderer::class ) ) {
 		 */
 		private function prepare_render_data( array $attributes ): ?array {
 			// Extract attributes.
-			$post_type      = isset( $attributes['postType'] ) ? sanitize_text_field( $attributes['postType'] ) : '';
-			$ref_term_id    = isset( $attributes['refTermId'] ) ? intval( $attributes['refTermId'] ) : 0;
-			$year           = isset( $attributes['year'] ) ? intval( $attributes['year'] ) : 0;
-			$type           = isset( $attributes['referenceType'] ) ? sanitize_text_field( $attributes['referenceType'] ) : 'all';
-			$heading_level  = isset( $attributes['headingLevel'] ) ? intval( $attributes['headingLevel'] ) : 2;
-			$year_sort      = isset( $attributes['yearSortOrder'] ) ? sanitize_text_field( $attributes['yearSortOrder'] ) : 'desc';
-			$type_order     = isset( $attributes['typeOrder'] ) && is_array( $attributes['typeOrder'] ) ? array_map( 'sanitize_text_field', $attributes['typeOrder'] ) : array();
-			
+			$post_type     = isset( $attributes['postType'] ) ? sanitize_text_field( $attributes['postType'] ) : '';
+			$ref_term_id   = isset( $attributes['refTermId'] ) ? intval( $attributes['refTermId'] ) : 0;
+			$year          = isset( $attributes['year'] ) ? intval( $attributes['year'] ) : 0;
+			$type          = isset( $attributes['referenceType'] ) ? sanitize_text_field( $attributes['referenceType'] ) : 'all';
+			$heading_level = isset( $attributes['headingLevel'] ) ? intval( $attributes['headingLevel'] ) : 2;
+			$year_sort     = isset( $attributes['yearSortOrder'] ) ? sanitize_text_field( $attributes['yearSortOrder'] ) : 'desc';
+			$type_order    = isset( $attributes['typeOrder'] ) && is_array( $attributes['typeOrder'] ) ? array_map( 'sanitize_text_field', $attributes['typeOrder'] ) : array();
+
 			// Validate post type.
 			if ( empty( $post_type ) || ! post_type_supports( $post_type, 'gatherpress_references' ) ) {
 				return null;
 			}
-			
+
 			// Get configuration.
 			$config = $this->config_manager->get_config( $post_type );
 			if ( ! $config ) {
 				return null;
 			}
-			
+
 			// Normalize heading levels.
-			$heading_level = max( 1, min( 6, $heading_level ) );
+			$heading_level           = max( 1, min( 6, $heading_level ) );
 			$secondary_heading_level = min( $heading_level + 1, 6 );
-			
+
 			// Validate sort order.
 			if ( ! in_array( $year_sort, array( 'asc', 'desc' ), true ) ) {
 				$year_sort = 'desc';
 			}
-			
+
 			// Auto-detect reference term from archive.
 			if ( $ref_term_id === 0 && is_tax( $config['ref_tax'] ) ) {
 				$term = get_queried_object();
@@ -179,10 +176,10 @@ if( ! class_exists( Block_Renderer::class ) ) {
 					$ref_term_id = $term->term_id;
 				}
 			}
-			
+
 			// Get type labels.
 			$type_labels = $this->get_type_labels( $config['ref_types'] );
-			
+
 			return array(
 				'post_type'               => $post_type,
 				'ref_term_id'             => $ref_term_id,
@@ -205,14 +202,14 @@ if( ! class_exists( Block_Renderer::class ) ) {
 		 */
 		private function get_type_labels( array $taxonomies ): array {
 			$type_labels = array();
-			
+
 			foreach ( $taxonomies as $taxonomy_slug ) {
 				$taxonomy = get_taxonomy( $taxonomy_slug );
 				if ( $taxonomy ) {
 					$type_labels[ $taxonomy_slug ] = $taxonomy->labels->name ?? $taxonomy->name;
 				}
 			}
-			
+
 			/**
 			 * Filter the type labels displayed in headings.
 			 *
@@ -236,23 +233,23 @@ if( ! class_exists( Block_Renderer::class ) ) {
 			// Try cache first.
 			$cache_key  = $this->cache_manager->get_cache_key( $post_type, $ref_term_id, $year, $type );
 			$references = $this->cache_manager->get( $cache_key );
-			
+
 			if ( false !== $references ) {
 				return $references;
 			}
-			
+
 			// Build and execute query.
 			$args  = $this->query_builder->build_args( $post_type, $ref_term_id, $year, $type );
 			$query = new \WP_Query( $args );
-			
+
 			// Organize results.
 			$references = $this->data_organizer->organize_results( $post_type, $query, $type );
-			
+
 			// Cache if we have data.
 			if ( ! empty( $references ) ) {
 				$this->cache_manager->set( $cache_key, $references );
 			}
-			
+
 			return $references;
 		}
 
@@ -261,7 +258,7 @@ if( ! class_exists( Block_Renderer::class ) ) {
 		 *
 		 * @since 0.1.0
 		 * @param array<string, array<string, array<int, string>>> $references References data.
-		 * @param array<int, string>                                $type_order Custom type order.
+		 * @param array<int, string>                               $type_order Custom type order.
 		 * @return array<string, array<string, array<int, string>>> Reordered references data.
 		 */
 		private function apply_type_order( array $references, array $type_order ): array {
@@ -274,14 +271,14 @@ if( ! class_exists( Block_Renderer::class ) ) {
 			foreach ( $references as $year => $types ) {
 				$reordered_types = array();
 
-				// First, add types in the specified order
+				// First, add types in the specified order.
 				foreach ( $type_order as $type_slug ) {
 					if ( isset( $types[ $type_slug ] ) ) {
 						$reordered_types[ $type_slug ] = $types[ $type_slug ];
 					}
 				}
 
-				// Then, add any remaining types that weren't in the order
+				// Then, add any remaining types that weren't in the order.
 				foreach ( $types as $type_slug => $items ) {
 					if ( ! isset( $reordered_types[ $type_slug ] ) ) {
 						$reordered_types[ $type_slug ] = $items;
@@ -303,7 +300,6 @@ if( ! class_exists( Block_Renderer::class ) ) {
 		 * @param array<string, string>                            $type_labels           Type labels.
 		 * @param int                                              $heading_level         Primary heading level.
 		 * @param int                                              $secondary_heading_level Secondary heading level.
-		 * @param \WP_Block                                         $block                 Block instance.
 		 * @return string HTML output.
 		 */
 		private function generate_html(
@@ -311,23 +307,22 @@ if( ! class_exists( Block_Renderer::class ) ) {
 			string $type,
 			array $type_labels,
 			int $heading_level,
-			int $secondary_heading_level,
-			\WP_Block $block
+			int $secondary_heading_level
 		): string {
 			$is_specific_type = ( $type !== 'all' );
-			
+
 			ob_start();
 			?>
 			<div <?php echo get_block_wrapper_attributes(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- get_block_wrapper_attributes() is escaped internally. ?>>
 				<?php foreach ( $references as $ref_year => $types ) { ?>
 					<h<?php echo esc_attr( (string) $heading_level ); ?> class="wp-block-heading references-year"><?php echo esc_html( $ref_year ); ?></h<?php echo esc_attr( (string) $heading_level ); ?>>
-					
+
 					<?php foreach ( $types as $ref_type => $items ) { ?>
 						<?php if ( ( $type === $ref_type || ! $is_specific_type ) && ! empty( $items ) ) { ?>
 							<?php if ( ! $is_specific_type ) { ?>
 								<h<?php echo esc_attr( (string) $secondary_heading_level ); ?> class="wp-block-heading references-type"><?php echo esc_html( $type_labels[ $ref_type ] ); ?></h<?php echo esc_attr( (string) $secondary_heading_level ); ?>>
 							<?php } ?>
-							
+
 							<ul class="wp-block-list references-list">
 								<?php foreach ( $items as $item ) { ?>
 									<li><?php echo esc_html( $item ); ?></li>
@@ -342,6 +337,19 @@ if( ! class_exists( Block_Renderer::class ) ) {
 		}
 	}
 }
-// Initialize renderer and handle the render callback.
-$renderer = Block_Renderer::get_instance();
-echo $renderer->render( $attributes, $content, $block );
+
+/**
+ * Extract and sanitize block attributes.
+ *
+ * @var array{
+ *   postType?: string,
+ *   refTermId?: int,
+ *   year?: int,
+ *   referenceType?: string,
+ *   headingLevel?: int,
+ *   yearSortOrder?: string,
+ *   typeOrder?: array,
+ * } $attributes
+ */
+$gatherpress_references_renderer = Block_Renderer::get_instance();
+echo $gatherpress_references_renderer->render( $attributes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Output is escaped within the render method.

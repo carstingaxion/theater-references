@@ -1,4 +1,11 @@
 <?php
+/**
+ * Taxonomy Manager class
+ *
+ * Handles registration of custom taxonomies based on post type configurations.
+ *
+ * @package GatherPress_References
+ */
 
 namespace GatherPress\References;
 
@@ -37,26 +44,26 @@ class Taxonomy_Manager {
 	 */
 	public function register_taxonomies(): void {
 		$configs = $this->config_manager->get_all_configs();
-		
+
 		if ( empty( $configs ) ) {
 			return;
 		}
-		
+
 		foreach ( $configs as $post_type => $config ) {
 			// Register reference taxonomy.
-			if ( ! empty( $config['ref_tax'] ) && 
-				$config['ref_tax'] === 'gatherpress-production' && 
+			if ( ! empty( $config['ref_tax'] ) &&
+				$config['ref_tax'] === 'gatherpress-production' &&
 				! taxonomy_exists( $config['ref_tax'] ) ) {
 				$this->register_reference_taxonomy( $post_type );
 			}
-			
+
 			// Register reference type taxonomies.
 			if ( ! empty( $config['ref_types'] ) && is_array( $config['ref_types'] ) ) {
 				foreach ( $config['ref_types'] as $ref_type ) {
 					if ( taxonomy_exists( $ref_type ) ) {
 						continue;
 					}
-					
+
 					$this->register_type_taxonomy( $ref_type, $post_type );
 				}
 			}
@@ -110,11 +117,11 @@ class Taxonomy_Manager {
 	 */
 	private function register_type_taxonomy( string $taxonomy, string $post_type ): void {
 		$taxonomy_config = $this->get_taxonomy_config( $taxonomy );
-		
+
 		if ( ! $taxonomy_config ) {
 			return;
 		}
-		
+
 		$args = array(
 			'labels'             => $taxonomy_config['labels'],
 			'hierarchical'       => false,
@@ -179,7 +186,7 @@ class Taxonomy_Manager {
 				),
 			),
 		);
-		
+
 		return $configs[ $taxonomy ] ?? null;
 	}
 }
