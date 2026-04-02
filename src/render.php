@@ -244,10 +244,37 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 			}
 
 			/**
-			 * Filter the type labels displayed in headings.
+			 * Customize the human-readable labels for each reference type displayed in headings.
 			 *
 			 * @since 0.1.0
+			 *
 			 * @param array<string, string> $labels Array of taxonomy slug => label pairs.
+			 * @return array<string, string> Filtered type labels.
+			 *
+			 * @example
+			 * Override existing label
+			 * ```php
+			 * add_filter( 'gatherpress_references_type_labels', function( $labels ) {
+			 * 	$labels['_gatherpress-award'] = __( 'Prizes & Honours', 'textdomain' );
+			 * 	return $labels;
+			 * } );
+			 * ```
+			 *
+			 * @example
+			 * Locale-specific labels
+			 * ```php
+			 * add_filter( 'gatherpress_references_type_labels', function( $labels ) {
+			 *     $locale = get_locale();
+			 *
+			 *     if ( $locale === 'de_DE' ) {
+			 *         $labels['_gatherpress-client'] = 'Gastspiele & Kunden';
+			 *         $labels['_gatherpress-festival'] = 'Festivals';
+			 *         $labels['_gatherpress-award'] = 'Auszeichnungen';
+			 *     }
+			 *
+			 *     return $labels;
+			 * } );
+			 * ```
 			 */
 			return apply_filters( 'gatherpress_references_type_labels', $type_labels );
 		}

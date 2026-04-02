@@ -68,6 +68,33 @@ class Query_Builder {
 			);
 		}
 
+		/**
+		 * Modify WP_Query arguments before the posts, that affect the reference-display, are queried.
+		 *
+		 * @since 0.1.0
+		 *
+		 * @param array<mixed> $args        WP_Query arguments.
+		 * @param string       $post_type   Post type slug.
+		 * @param int          $ref_term_id Reference term ID.
+		 * @param int          $year        Year filter.
+		 * @param string       $type        Reference type filter.
+		 * @return array<mixed> Modified WP_Query arguments.
+		 *
+		 * @example
+		 * Add custom meta query
+		 * ```php
+		 * add_filter( 'gatherpress_references_query_args', function( $args ) {
+		 *     $args['meta_query'] = array(
+		 *         array(
+		 *             'key'     => 'featured',
+		 *             'value'   => '1',
+		 *             'compare' => '='
+		 *         )
+		 *     );
+		 *     return $args;
+		 * } );
+		 * ```
+		 */
 		$return_args = apply_filters( 'gatherpress_references_query_args', $args, $post_type, $ref_term_id, $year, $type );
 		return is_array( $return_args ) ? $return_args : $args;
 	}

@@ -41,7 +41,7 @@ class Cache_Manager {
 	 * @since 0.1.0
 	 */
 	public function __construct() {
-		$this->apply_filters();
+		$this->apply_filterable_props();
 	}
 
 	/**
@@ -50,7 +50,31 @@ class Cache_Manager {
 	 * @since 0.1.0
 	 * @return void
 	 */
-	private function apply_filters(): void {
+	private function apply_filterable_props(): void {
+		/**
+		 * Allows filtering the cache expiration time in seconds.
+		 *
+		 * Defaults to: 3600s = 1h
+		 *
+		 * @since 0.1.0
+		 *
+		 * @param int $cache_expiration Cache expiration time in seconds.
+		 * @return int Filtered cache expiration time.
+		 *
+		 * @example
+		 * Increase cache to 2 hours:
+		 * ```php
+		 * add_filter( 'gatherpress_references_cache_expiration', function( $expiration ) {
+		 *     return 7200; // Set cache expiration to 2 hours
+		 * } );
+		 * ```
+		 *
+		 * @example
+		 * Disable caching by setting expiration to 0:
+		 * ```php
+		 * add_filter( 'gatherpress_references_cache_expiration', '__return_zero' );
+		 * ```
+		 */
 		$new_cache_expiration   = apply_filters( 'gatherpress_references_cache_expiration', $this->cache_expiration );
 		$this->cache_expiration = is_int( $new_cache_expiration ) ? $new_cache_expiration : $this->cache_expiration;
 	}

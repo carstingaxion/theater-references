@@ -6,7 +6,8 @@
 	"exclude_dirs": [
 		"vendor",
 		"tests",
-		"wp-content"
+		"wp-content",
+    "build"
 	],
 	"github_wiki": false
 }
