@@ -75,7 +75,8 @@ class Cache_Manager {
 		 * add_filter( 'gatherpress_references_cache_expiration', '__return_zero' );
 		 * ```
 		 */
-		$new_cache_expiration   = apply_filters( 'gatherpress_references_cache_expiration', $this->cache_expiration );
+		$new_cache_expiration = apply_filters( 'gatherpress_references_cache_expiration', $this->cache_expiration );
+		// @phpstan-ignore-next-line -- Ensure the filter returns an integer, otherwise fallback to default expiration.
 		$this->cache_expiration = is_int( $new_cache_expiration ) ? $new_cache_expiration : $this->cache_expiration;
 	}
 

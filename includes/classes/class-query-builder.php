@@ -96,6 +96,7 @@ class Query_Builder {
 		 * ```
 		 */
 		$return_args = apply_filters( 'gatherpress_references_query_args', $args, $post_type, $ref_term_id, $year, $type );
+		// @phpstan-ignore-next-line -- Ensure the filter returns an array, otherwise fallback to original args.
 		return is_array( $return_args ) ? $return_args : $args;
 	}
 

@@ -255,8 +255,8 @@ if ( ! class_exists( Block_Renderer::class ) ) {
 			 * Override existing label
 			 * ```php
 			 * add_filter( 'gatherpress_references_type_labels', function( $labels ) {
-			 * 	$labels['_gatherpress-award'] = __( 'Prizes & Honours', 'textdomain' );
-			 * 	return $labels;
+			 *  $labels['_gatherpress-award'] = __( 'Prizes & Honours', 'textdomain' );
+			 *  return $labels;
 			 * } );
 			 * ```
 			 *
