@@ -17,5 +17,5 @@ parameters:
             - wp-content/ (?)
             - tests/ (?)
         analyseAndScan:
-            - build/
-            - node_modules/
+            - build/ (?)
+            - node_modules/ (?)
