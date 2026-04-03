@@ -1,0 +1,355 @@
+# German (formal) translation for GatherPress References
+# Copyright (C) 2026 Carsten Bach
+# This file is distributed under the GPLv2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: GatherPress References 0.1.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/gatherpress-"
+"references\n"
+"POT-Creation-Date: 2026-04-03T04:46:18+02:00\n"
+"PO-Revision-Date: 2026-04-03 04:55+0200\n"
+"Last-Translator: Carsten Bach\n"
+"Language-Team: German (Formal)\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.4.4\n"
+"X-Domain: gatherpress-references\n"
+
+#. Plugin Name of the plugin
+msgid "GatherPress References"
+msgstr "GatherPress Referenzen"
+
+#. Description of the plugin
+msgid ""
+"Display references such as clients, festivals and awards in a structured, "
+"chronological format."
+msgstr ""
+"Referenzen wie Auftraggeber, Festivals und Auszeichnungen in einem "
+"strukturierten, chronologischen Format anzeigen."
+
+#. Author of the plugin
+msgid "caba & WordPress Telex"
+msgstr ""
+
+#: includes/classes/class-taxonomy-manager.php:82
+#: includes/classes/class-taxonomy-manager.php:92
+msgid "Productions"
+msgstr "Produktionen"
+
+#: includes/classes/class-taxonomy-manager.php:83
+msgid "Production"
+msgstr "Produktion"
+
+#: includes/classes/class-taxonomy-manager.php:84
+msgid "Search Productions"
+msgstr "Produktionen durchsuchen"
+
+#: includes/classes/class-taxonomy-manager.php:85
+msgid "All Productions"
+msgstr "Alle Produktionen"
+
+#: includes/classes/class-taxonomy-manager.php:86
+msgid "Parent Production"
+msgstr "Übergeordnete Produktion"
+
+#: includes/classes/class-taxonomy-manager.php:87
+msgid "Parent Production:"
+msgstr "Übergeordnete Produktion:"
+
+#: includes/classes/class-taxonomy-manager.php:88
+msgid "Edit Production"
+msgstr "Produktion bearbeiten"
+
+#: includes/classes/class-taxonomy-manager.php:89
+msgid "Update Production"
+msgstr "Produktion aktualisieren"
+
+#: includes/classes/class-taxonomy-manager.php:90
+msgid "Add New Production"
+msgstr "Neue Produktion hinzufügen"
+
+#: includes/classes/class-taxonomy-manager.php:91
+msgid "New Production Name"
+msgstr "Neuer Produktionsname"
+
+#: includes/classes/class-taxonomy-manager.php:151
+#: includes/classes/class-taxonomy-manager.php:159
+msgid "Clients"
+msgstr "Auftraggeber"
+
+#: includes/classes/class-taxonomy-manager.php:152
+msgid "Client"
+msgstr "Auftraggeber"
+
+#: includes/classes/class-taxonomy-manager.php:153
+msgid "Search Clients"
+msgstr "Auftraggeber durchsuchen"
+
+#: includes/classes/class-taxonomy-manager.php:154
+msgid "All Clients"
+msgstr "Alle Auftraggeber"
+
+#: includes/classes/class-taxonomy-manager.php:155
+msgid "Edit Client"
+msgstr "Auftraggeber bearbeiten"
+
+#: includes/classes/class-taxonomy-manager.php:156
+msgid "Update Client"
+msgstr "Auftraggeber aktualisieren"
+
+#: includes/classes/class-taxonomy-manager.php:157
+msgid "Add New Client"
+msgstr "Neuen Auftraggeber hinzufügen"
+
+#: includes/classes/class-taxonomy-manager.php:158
+msgid "New Client Name"
+msgstr "Neuer Auftraggebername"
+
+#: includes/classes/class-taxonomy-manager.php:164
+#: includes/classes/class-taxonomy-manager.php:172
+msgid "Festivals"
+msgstr "Festivals"
+
+#: includes/classes/class-taxonomy-manager.php:165
+msgid "Festival"
+msgstr "Festival"
+
+#: includes/classes/class-taxonomy-manager.php:166
+msgid "Search Festivals"
+msgstr "Festivals durchsuchen"
+
+#: includes/classes/class-taxonomy-manager.php:167
+msgid "All Festivals"
+msgstr "Alle Festivals"
+
+#: includes/classes/class-taxonomy-manager.php:168
+msgid "Edit Festival"
+msgstr "Festival bearbeiten"
+
+#: includes/classes/class-taxonomy-manager.php:169
+msgid "Update Festival"
+msgstr "Festival aktualisieren"
+
+#: includes/classes/class-taxonomy-manager.php:170
+msgid "Add New Festival"
+msgstr "Neues Festival hinzufügen"
+
+#: includes/classes/class-taxonomy-manager.php:171
+msgid "New Festival Name"
+msgstr "Neuer Festivalname"
+
+#: includes/classes/class-taxonomy-manager.php:177
+#: includes/classes/class-taxonomy-manager.php:185
+msgid "Awards"
+msgstr "Auszeichnungen"
+
+#: includes/classes/class-taxonomy-manager.php:178
+msgid "Award"
+msgstr "Auszeichnung"
+
+#: includes/classes/class-taxonomy-manager.php:179
+msgid "Search Awards"
+msgstr "Auszeichnungen durchsuchen"
+
+#: includes/classes/class-taxonomy-manager.php:180
+msgid "All Awards"
+msgstr "Alle Auszeichnungen"
+
+#: includes/classes/class-taxonomy-manager.php:181
+msgid "Edit Award"
+msgstr "Auszeichnung bearbeiten"
+
+#: includes/classes/class-taxonomy-manager.php:182
+msgid "Update Award"
+msgstr "Auszeichnung aktualisieren"
+
+#: includes/classes/class-taxonomy-manager.php:183
+msgid "Add New Award"
+msgstr "Neue Auszeichnung hinzufügen"
+
+#: includes/classes/class-taxonomy-manager.php:184
+msgid "New Award Name"
+msgstr "Neuer Auszeichnungsname"
+
+#: build/index.js:109 build/index.js:203 src/components/not-configured.js:30
+#: src/components/reference-inspector.js:63 build/index.js:48
+#: build/index.js:152
+msgid "Reference Settings"
+msgstr "Referenz-Einstellungen"
+
+#: build/index.js:113 src/components/not-configured.js:36 build/index.js:54
+msgid ""
+"References block requires a post type with gatherpress_references support."
+msgstr ""
+"Der Referenzen-Block erfordert einen Inhaltstyp mit gatherpress_references-"
+"Unterstützung."
+
+#: build/index.js:122 src/components/not-configured.js:46 build/index.js:64
+msgid ""
+"This block requires a post type with gatherpress_references support "
+"configured."
+msgstr ""
+"Dieser Block erfordert einen Inhaltstyp mit konfigurierter "
+"gatherpress_references-Unterstützung."
+
+#: build/index.js:125 src/components/not-configured.js:54 build/index.js:72
+msgid "Supported post types:"
+msgstr "Unterstützte Inhaltstypen:"
+
+#: build/index.js:200 src/components/reference-inspector.js:57
+#: build/index.js:146
+msgid "Sort Years Oldest First"
+msgstr "Jahre aufsteigend sortieren"
+
+#: build/index.js:200 src/components/reference-inspector.js:58
+#: build/index.js:147
+msgid "Sort Years Newest First"
+msgstr "Jahre absteigend sortieren"
+
+#: build/index.js:205 src/components/reference-inspector.js:67
+#: build/index.js:156
+msgid "Post Type"
+msgstr "Inhaltstyp"
+
+#: build/index.js:208 src/components/reference-inspector.js:71
+#: build/index.js:160
+msgid "Select post type"
+msgstr "Inhaltstyp auswählen"
+
+#: build/index.js:217 src/components/reference-inspector.js:85
+#: build/index.js:174
+msgid "Select which post type to query for references"
+msgstr "Inhaltstyp für die Referenzabfrage auswählen"
+
+#: build/index.js:219 src/components/reference-inspector.js:95
+#: build/index.js:184
+msgid "Reference Term"
+msgstr "Referenzbegriff"
+
+#: build/index.js:222 src/components/reference-inspector.js:100
+#: build/index.js:189
+msgid "All (or auto-detect)"
+msgstr "Alle (oder automatisch erkennen)"
+
+#: build/index.js:231 src/components/reference-inspector.js:117
+#: build/index.js:206
+msgid "Select a specific \"%s\" or leave as auto-detect"
+msgstr "„%s“ auswählen oder automatisch erkennen lassen"
+
+#: build/index.js:231 src/components/reference-inspector.js:123
+#: build/index.js:212
+msgid "Select a specific reference term or leave as auto-detect"
+msgstr ""
+"Einen bestimmten Referenzbegriff auswählen oder automatische Erkennung "
+"verwenden"
+
+#: build/index.js:233 src/components/reference-inspector.js:131
+#: build/index.js:220
+msgid "Year"
+msgstr "Jahr"
+
+#: build/index.js:244 src/components/reference-inspector.js:142
+#: build/index.js:231
+msgid "Leave empty for all years"
+msgstr "Leer lassen für alle Jahre"
+
+#: build/index.js:245 src/components/reference-inspector.js:146
+#: build/index.js:235
+msgid "Enter a specific year (e.g., 2024) or leave empty for all years"
+msgstr ""
+"Ein bestimmtes Jahr eingeben (z.B. 2024) oder leer lassen für alle Jahre"
+
+#: build/index.js:252 src/components/reference-inspector.js:161
+#: build/index.js:250
+msgid "Toggle to sort years from oldest to newest. Default is newest first."
+msgstr ""
+"Umschalten, um Jahre vom ältesten zum neuesten zu sortieren. Standard ist "
+"neuestes zuerst."
+
+#: build/index.js:254 src/components/reference-inspector.js:169
+#: build/index.js:258
+msgid "Reference Type"
+msgstr "Referenztyp"
+
+#: build/index.js:257 src/components/reference-inspector.js:173
+#: build/index.js:262
+msgid "All Types"
+msgstr "Alle Typen"
+
+#: build/index.js:266 src/components/reference-inspector.js:184
+#: build/index.js:273
+msgid "Choose which type of references to display"
+msgstr "Art der anzuzeigenden Referenzen auswählen"
+
+#: build/index.js:268 src/components/reference-inspector.js:191
+#: build/index.js:280
+msgid "Year Heading Level"
+msgstr "Überschriftenebene für Jahre"
+
+#: build/index.js:275 src/components/reference-inspector.js:201
+#: build/index.js:290
+msgid ""
+"Choose the heading level for year headings (H1-H5). Type headings will be "
+"one level smaller."
+msgstr ""
+"Überschriftenebene für Jahresüberschriften wählen (H1–H5). Typüberschriften "
+"werden eine Ebene kleiner dargestellt."
+
+#: build/index.js:377 src/components/reference-preview.js:94 build/index.js:393
+msgid "Move up"
+msgstr "Nach oben"
+
+#: build/index.js:383 src/components/reference-preview.js:108
+#: build/index.js:407
+msgid "Move down"
+msgstr "Nach unten"
+
+#: build/index.js:653 build/index.js:655 src/hooks/use-block-label.js:67
+#: src/hooks/use-block-label.js:71 build/index.js:646 build/index.js:650
+msgid "References"
+msgstr "Referenzen"
+
+#: build/block.json src/block.json
+msgctxt "block title"
+msgid "GatherPress References"
+msgstr "GatherPress Referenzen"
+
+#: build/block.json src/block.json
+msgctxt "block description"
+msgid ""
+"Display references such as clients, festivals and awards in a structured, "
+"chronological format."
+msgstr ""
+"Referenzen wie Auftraggeber, Festivals und Auszeichnungen in einem "
+"strukturierten, chronologischen Format anzeigen."
+
+#: build/block.json src/block.json
+msgctxt "block style label"
+msgid "Default"
+msgstr "Standard"
+
+#: build/block.json src/block.json
+msgctxt "block style label"
+msgid "Classic Serif"
+msgstr "Klassisch Serif"
+
+#: build/block.json src/block.json
+msgctxt "block style label"
+msgid "Modern Corporate"
+msgstr "Modern Corporate"
+
+#: build/block.json src/block.json
+msgctxt "block style label"
+msgid "Neon Gradient"
+msgstr "Neon-Verlauf"
+
+#: build/block.json src/block.json
+msgctxt "block style label"
+msgid "Eco Cyberpunk"
+msgstr "Öko-Cyberpunk"
+
+#~ msgid "Carsten Bach"
+#~ msgstr "Carsten Bach"

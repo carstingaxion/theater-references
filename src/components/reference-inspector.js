@@ -9,7 +9,7 @@
 /**
  * WordPress dependencies
  */
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import { InspectorControls } from '@wordpress/block-editor';
 import {
 	PanelBody,
@@ -113,7 +113,13 @@ export default function ReferenceInspector( {
 					}
 					help={
 						refTaxonomy?.labels?.singular_name
-							? `Select a specific ${ refTaxonomy.labels.singular_name.toLowerCase() } or leave as auto-detect`
+							? sprintf(
+										__(
+											'Select a specific "%s" or leave as auto-detect',
+											'gatherpress-references'
+										),
+										refTaxonomy.labels.singular_name
+								  )
 							: __(
 									'Select a specific reference term or leave as auto-detect',
 									'gatherpress-references'
