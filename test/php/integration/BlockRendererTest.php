@@ -25,6 +25,9 @@ class BlockRendererTest extends WP_UnitTestCase {
 	public function set_up() {
 		parent::set_up();
 
+		// Dummy data.
+		$attributes = array();
+
 		// Ensure the render.php is loaded so Block_Renderer is available.
 		$render_file = dirname( __DIR__, 3 ) . '/src/render.php';
 		if ( file_exists( $render_file ) && ! class_exists( Block_Renderer::class ) ) {
