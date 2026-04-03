@@ -19,14 +19,9 @@
 	},
 	"main": "build/index.js",
 	"devDependencies": {
-		"@wordpress/block-editor": "^15.16.0",
-		"@wordpress/blocks": "^15.16.0",
-		"@wordpress/components": "^32.5.0",
-		"@wordpress/data": "^10.43.0",
-		"@wordpress/element": "^6.43.0",
 		"@wordpress/i18n": "^6.16.0",
 		"@wordpress/icons": "^12.1.0",
-		"@wordpress/scripts": "^31.8.0"
+		"@wordpress/scripts": "^30.15.0"
 	},
 	"scripts": {
 		"build": "wp-scripts build --webpack-copy-php",
