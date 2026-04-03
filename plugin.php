@@ -10,6 +10,7 @@
  * License:           GPLv2 or later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       gatherpress-references
+ * Domain Path:       /languages
  *
  * @package GatherPress_References
  */
@@ -120,6 +121,7 @@ class Plugin {
 	private function init_hooks(): void {
 		add_action( 'registered_post_type_gatherpress_event', array( $this, 'register_taxonomies' ) );
 		add_action( 'registered_post_type_gatherpress_event', array( $this, 'register_block' ) );
+		add_action( 'init', array( $this, 'load_textdomain' ) );
 
 		// Cache invalidation hooks.
 		add_action( 'transition_post_status', array( $this, 'clear_cache_on_status_change' ), 10, 3 );
@@ -127,6 +129,21 @@ class Plugin {
 		add_action( 'edit_term', array( $this, 'clear_cache_on_term_change' ), 10, 3 );
 		add_action( 'delete_term', array( $this, 'clear_cache_on_term_change' ), 10, 3 );
 		add_action( 'set_object_terms', array( $this, 'clear_cache_on_term_relationship' ) );
+	}
+
+	/**
+	 * Loads the plugin text domain for translations.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @return void
+	 */
+	public function load_textdomain(): void {
+		load_plugin_textdomain(
+			'gatherpress-references',
+			false,
+			dirname( plugin_basename( __FILE__ ) ) . '/languages'
+		);
 	}
 
 	/**
