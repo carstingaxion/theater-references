@@ -114,6 +114,7 @@ export default function ReferenceInspector( {
 					help={
 						refTaxonomy?.labels?.singular_name
 							? sprintf(
+									/* translators: %s: taxonomy singular name */
 									__(
 										'Select a specific "%s" or leave as auto-detect',
 										'gatherpress-references'
