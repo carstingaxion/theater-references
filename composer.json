@@ -29,7 +29,10 @@
     "require-dev": {
         "akirk/extract-wp-hooks": "dev-main",
         "figuren-theater/code-quality": "*",
-        "wpackagist-plugin/gatherpress": "*"
+        "phpunit/phpunit": "9.6",
+        "wp-phpunit/wp-phpunit": "^6.9",
+        "wpackagist-plugin/gatherpress": "*",
+        "yoast/phpunit-polyfills": "^2.0"
     },
     "repositories": [
         {

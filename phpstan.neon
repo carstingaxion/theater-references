@@ -15,7 +15,7 @@ parameters:
             # "/wp-content/" is created during composer install,
             # when package is tested
             - wp-content/ (?)
-            - tests/ (?)
+            - test/ (?)
         analyseAndScan:
             - build/ (?)
             - node_modules/ (?)

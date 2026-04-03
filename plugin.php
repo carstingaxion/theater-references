@@ -125,10 +125,8 @@ class Plugin {
 
 		// Cache invalidation hooks.
 		add_action( 'transition_post_status', array( $this, 'clear_cache_on_status_change' ), 10, 3 );
-		add_action( 'create_term', array( $this, 'clear_cache_on_term_change' ), 10, 3 );
-		add_action( 'edit_term', array( $this, 'clear_cache_on_term_change' ), 10, 3 );
 		add_action( 'delete_term', array( $this, 'clear_cache_on_term_change' ), 10, 3 );
-		add_action( 'set_object_terms', array( $this, 'clear_cache_on_term_relationship' ) );
+		add_action( 'set_object_terms', array( $this, 'clear_cache_on_term_relationship' ), 10, 4 );
 	}
 
 	/**
@@ -185,6 +183,9 @@ class Plugin {
 			return;
 		}
 
+		// @todo #48 if GatherPress event, only if past event
+		// ...
+
 		if ( ( 'publish' === $new_status || 'publish' === $old_status ) && $new_status !== $old_status ) {
 			$this->cache_manager->clear_all();
 		}
@@ -211,13 +212,26 @@ class Plugin {
 	 * Clear cache on term relationship
 	 *
 	 * @since 0.1.0
-	 * @param int $object_id Object ID.
+	 * @param int               $object_id Object ID.
+	 * @param array<int|string> $terms     An array of object term IDs or slugs.
+	 * @param int[]             $tt_ids    An array of term taxonomy IDs.
+	 * @param string            $taxonomy  Taxonomy slug.
 	 * @return void
 	 */
-	public function clear_cache_on_term_relationship( int $object_id ): void {
+	public function clear_cache_on_term_relationship( int $object_id, array $terms, array $tt_ids, string $taxonomy ): void {
 		$post = get_post( $object_id );
 
 		if ( ! $post || ! post_type_supports( $post->post_type, 'gatherpress_references' ) || $post->post_status !== 'publish' ) {
+			return;
+		}
+
+		// if GatherPress event, only if past event
+		// ...
+		// @todo #48 Add safeguard to only delete cache, when past events are related.
+
+		$all_taxonomies = $this->config_manager->get_all_taxonomies();
+
+		if ( ! in_array( $taxonomy, $all_taxonomies, true ) ) {
 			return;
 		}
 

@@ -142,16 +142,25 @@ class Cache_Manager {
 		}
 
 		$transient_pattern = $wpdb->esc_like( '_transient_' . $this->cache_prefix ) . '%';
-		$timeout_pattern   = $wpdb->esc_like( '_transient_timeout_' . $this->cache_prefix ) . '%';
-
-		$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			// @phpstan-ignore-next-line
+		$transients_names  = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->prepare(
 				// @phpstan-ignore-next-line
-				"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
-				$transient_pattern,
-				$timeout_pattern
-			)
+				"SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE %s",
+				$transient_pattern
+			),
+			ARRAY_A
 		);
+
+		// Reduce to simple array.
+		$transients_names = wp_list_pluck( (array) $transients_names, 'option_name' );
+
+		// Delete each via API (handles both object cache and DB).
+		foreach ( $transients_names as $option_name ) {
+			if ( ! is_string( $option_name ) || empty( $option_name ) ) {
+				continue;
+			}
+			$transient_key = str_replace( '_transient_', '', $option_name );
+			delete_transient( $transient_key );
+		}
 	}
 }
