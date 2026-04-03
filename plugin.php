@@ -209,13 +209,22 @@ class Plugin {
 	 * Clear cache on term relationship
 	 *
 	 * @since 0.1.0
-	 * @param int $object_id Object ID.
+	 * @param int    $object_id Object ID.
+	 * @param array  $terms     An array of object term IDs or slugs.
+	 * @param array  $tt_ids    An array of term taxonomy IDs.
+	 * @param string $taxonomy  Taxonomy slug.
 	 * @return void
 	 */
-	public function clear_cache_on_term_relationship( int $object_id ): void {
+	public function clear_cache_on_term_relationship( int $object_id, array $terms, array $tt_ids, string $taxonomy ): void {
 		$post = get_post( $object_id );
 
 		if ( ! $post || ! post_type_supports( $post->post_type, 'gatherpress_references' ) || $post->post_status !== 'publish' ) {
+			return;
+		}
+
+		$all_taxonomies = $this->config_manager->get_all_taxonomies();
+
+		if ( ! in_array( $taxonomy, $all_taxonomies, true ) ) {
 			return;
 		}
 
