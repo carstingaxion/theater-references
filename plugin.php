@@ -17,8 +17,14 @@
 
 namespace GatherPress\References;
 
-defined( 'ABSPATH' ) || exit;
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit; // @codeCoverageIgnore
 
+// Constants.
+define( 'GATHERPRESS_REFERENCES_VERSION', current( get_file_data( __FILE__, array( 'Version' ), 'plugin' ) ) );
+define( 'GATHERPRESS_REFERENCES_CORE_PATH', __DIR__ );
+
+require_once __DIR__ . '/includes/classes/class-block-styles.php';
 require_once __DIR__ . '/includes/classes/class-cache-manager.php';
 require_once __DIR__ . '/includes/classes/class-config-manager.php';
 require_once __DIR__ . '/includes/classes/class-data-organizer.php';
@@ -76,6 +82,13 @@ class Plugin {
 	private Data_Organizer $data_organizer;
 
 	/**
+	 * Block styles manager
+	 *
+	 * @var Block_Styles
+	 */
+	private Block_Styles $block_styles;
+
+	/**
 	 * Constructor
 	 *
 	 * @since 0.1.0
@@ -110,6 +123,7 @@ class Plugin {
 		$this->taxonomy_manager = new Taxonomy_Manager( $this->config_manager );
 		$this->query_builder    = new Query_Builder( $this->config_manager );
 		$this->data_organizer   = new Data_Organizer( $this->config_manager );
+		$this->block_styles     = new Block_Styles();
 	}
 
 	/**
@@ -166,6 +180,9 @@ class Plugin {
 		}
 
 		register_block_type( __DIR__ . '/build/' );
+
+		// Register modular block styles with separate CSS files.
+		$this->block_styles->register();
 	}
 
 	/**

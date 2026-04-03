@@ -1,0 +1,143 @@
+/**
+ * Style: Eco-Cyberpunk - Futuristic Nature Tech
+ * Blend of organic and digital with terminal aesthetics.
+ *
+ * To disable this style from your theme or plugin:
+ * wp_dequeue_style( 'gatherpress-references-style-eco-cyberpunk' );
+ * unregister_block_style( 'gatherpress/references', 'eco-cyberpunk' );
+ */
+
+.wp-block-gatherpress-references.is-style-eco-cyberpunk {
+	font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
+	background: linear-gradient(135deg, #0a0e0f 0%, #0d1b1e 50%, #1a2f23 100%);
+	color: #0f8;
+	padding: var(--wp--preset--spacing--60, 3em);
+	border: 2px solid #0f8;
+	border-radius: 4px;
+	box-shadow: 0 0 20px rgba(0, 255, 136, 0.3), inset 0 0 60px rgba(0, 255, 136, 0.05);
+	position: relative;
+}
+
+.wp-block-gatherpress-references.is-style-eco-cyberpunk::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background:
+		repeating-linear-gradient(0deg, rgba(0, 255, 136, 0.03) 0, transparent 1px, transparent 2px, rgba(0, 255, 136, 0.03) 3px);
+	pointer-events: none;
+	opacity: 0.5;
+}
+
+.wp-block-gatherpress-references.is-style-eco-cyberpunk::after {
+	content: "[ARCHIVE.LOG]";
+	position: absolute;
+	inset-block-start: 1em;
+	inset-inline-end: 1.5em;
+	font-size: 0.7em;
+	color: #0f8;
+	opacity: 0.4;
+	letter-spacing: 0.15em;
+	pointer-events: none;
+}
+
+.wp-block-gatherpress-references.is-style-eco-cyberpunk .references-year {
+	font-weight: 700;
+	font-size: 1.6em;
+	color: #0f8;
+	text-shadow: 0 0 10px #0f8, 0 0 20px rgba(0, 255, 136, 0.5);
+	letter-spacing: 0.2em;
+	padding-block: 0.5em;
+	padding-inline-start: 2.5em;
+	border-block-end: 1px dashed #0f8;
+	position: relative;
+	z-index: 1;
+}
+
+.wp-block-gatherpress-references.is-style-eco-cyberpunk .references-year::before {
+	content: ">> ";
+	position: absolute;
+	inset-inline-start: 0;
+	color: #0f8;
+	opacity: 0.7;
+	animation: gatherpress-refs-blink 1.5s infinite;
+}
+
+.wp-block-gatherpress-references.is-style-eco-cyberpunk .references-year::after {
+	content: " [" attr(data-entries) " entries]";
+	font-size: 0.5em;
+	vertical-align: middle;
+	opacity: 0.6;
+}
+
+.wp-block-gatherpress-references.is-style-eco-cyberpunk .references-type {
+	font-weight: 600;
+	font-size: 1em;
+	color: #6fa;
+	text-transform: uppercase;
+	letter-spacing: 0.15em;
+	padding-inline-start: 2em;
+	border-inline-start: 3px solid #0f8;
+	position: relative;
+	z-index: 1;
+}
+
+.wp-block-gatherpress-references.is-style-eco-cyberpunk .references-type::before {
+	content: "// ";
+	position: absolute;
+	inset-inline-start: 0.3em;
+	color: #0f8;
+	opacity: 0.5;
+}
+
+.wp-block-gatherpress-references.is-style-eco-cyberpunk .references-type::after {
+	content: "";
+	position: absolute;
+	inset-inline-start: -5px;
+	inset-block-start: 50%;
+	width: 8px;
+	height: 8px;
+	background: #0f8;
+	border-radius: 50%;
+	box-shadow: 0 0 10px #0f8;
+	transform: translateY(-50%);
+}
+
+.wp-block-gatherpress-references.is-style-eco-cyberpunk .references-list li {
+	color: #9fc;
+	line-height: 1.8;
+	padding-block: 0.3em;
+	position: relative;
+	z-index: 1;
+	transition: all 0.3s ease;
+	font-size: 0.95em;
+}
+
+.wp-block-gatherpress-references.is-style-eco-cyberpunk .references-list li::before {
+	content: "\251C\2500 ";
+	color: #0f8;
+	opacity: 0.6;
+	font-size: 1em;
+	text-shadow: 0 0 5px #0f8;
+}
+
+.wp-block-gatherpress-references.is-style-eco-cyberpunk .references-list li:last-child::before {
+	content: "\2514\2500 ";
+}
+
+.wp-block-gatherpress-references.is-style-eco-cyberpunk .references-list li:hover {
+	color: #fff;
+	text-shadow: 0 0 8px #0f8;
+	transform: translateX(4px);
+}
+
+@keyframes gatherpress-refs-blink {
+	0%,
+	49% {
+		opacity: 0.7;
+	}
+
+	50%,
+	100% {
+		opacity: 0.3;
+	}
+}
