@@ -114,12 +114,12 @@ export default function ReferenceInspector( {
 					help={
 						refTaxonomy?.labels?.singular_name
 							? sprintf(
-										__(
-											'Select a specific "%s" or leave as auto-detect',
-											'gatherpress-references'
-										),
-										refTaxonomy.labels.singular_name
-								  )
+									__(
+										'Select a specific "%s" or leave as auto-detect',
+										'gatherpress-references'
+									),
+									refTaxonomy.labels.singular_name
+							  )
 							: __(
 									'Select a specific reference term or leave as auto-detect',
 									'gatherpress-references'
