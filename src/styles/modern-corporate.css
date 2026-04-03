@@ -1,0 +1,70 @@
+/**
+ * Style: Modern Corporate - Professional & Clean
+ * Sleek design with strong hierarchy and contemporary feel.
+ *
+ * To disable this style from your theme or plugin:
+ * wp_dequeue_style( 'gatherpress-references-style-modern-corporate' );
+ * unregister_block_style( 'gatherpress/references', 'modern-corporate' );
+ */
+
+.wp-block-gatherpress-references.is-style-modern-corporate {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+	background: #fff;
+	padding: var(--wp--preset--spacing--50, 2.5em);
+	border-radius: 8px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.wp-block-gatherpress-references.is-style-modern-corporate .references-year {
+	font-weight: 700;
+	color: #1a1a1a;
+	font-size: 1.5em;
+	padding-block: 0.5em;
+	padding-inline: 1em;
+	margin-inline: -1em;
+	background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+	border-inline-start: 4px solid #06c;
+	border-block-end: none;
+	border-radius: 4px;
+}
+
+.wp-block-gatherpress-references.is-style-modern-corporate .references-type {
+	font-weight: 600;
+	color: #495057;
+	font-size: 1.1em;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	padding-inline-start: 1.2em;
+	border-inline-start: 3px solid #06c;
+	position: relative;
+}
+
+.wp-block-gatherpress-references.is-style-modern-corporate .references-type::before {
+	content: "";
+	position: absolute;
+	inset-inline-start: 0;
+	inset-block-start: 50%;
+	width: 6px;
+	height: 6px;
+	background: #06c;
+	border-radius: 50%;
+	transform: translate(-4.5px, -50%);
+}
+
+.wp-block-gatherpress-references.is-style-modern-corporate .references-list li {
+	color: #495057;
+	line-height: 1.6;
+	padding-block: 0.35em;
+	transition: color 0.2s ease;
+}
+
+.wp-block-gatherpress-references.is-style-modern-corporate .references-list li::before {
+	content: "\25B8";
+	color: #06c;
+	opacity: 0.7;
+	font-size: 0.9em;
+}
+
+.wp-block-gatherpress-references.is-style-modern-corporate .references-list li:hover {
+	color: #06c;
+}

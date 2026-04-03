@@ -97,22 +97,6 @@
 			"name": "default",
 			"label": "Default",
 			"isDefault": true
-		},
-		{
-			"name": "classic-serif",
-			"label": "Classic Serif"
-		},
-		{
-			"name": "modern-corporate",
-			"label": "Modern Corporate"
-		},
-		{
-			"name": "neon-gradient",
-			"label": "Neon Gradient"
-		},
-		{
-			"name": "eco-cyberpunk",
-			"label": "Eco Cyberpunk"
 		}
 	],
 	"style": "file:./style-index.css",
