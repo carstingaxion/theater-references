@@ -152,10 +152,13 @@ class Cache_Manager {
 		);
 
 		// Reduce to simple array.
-		$transients_names = wp_list_pluck( $transients_names, 'option_name' );
+		$transients_names = wp_list_pluck( (array) $transients_names, 'option_name' );
 
 		// Delete each via API (handles both object cache and DB).
 		foreach ( $transients_names as $option_name ) {
+			if ( ! is_string( $option_name ) || empty( $option_name ) ) {
+				continue;
+			}
 			$transient_key = str_replace( '_transient_', '', $option_name );
 			delete_transient( $transient_key );
 		}

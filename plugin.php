@@ -212,10 +212,10 @@ class Plugin {
 	 * Clear cache on term relationship
 	 *
 	 * @since 0.1.0
-	 * @param int    $object_id Object ID.
-	 * @param array  $terms     An array of object term IDs or slugs.
-	 * @param array  $tt_ids    An array of term taxonomy IDs.
-	 * @param string $taxonomy  Taxonomy slug.
+	 * @param int               $object_id Object ID.
+	 * @param array<int|string> $terms     An array of object term IDs or slugs.
+	 * @param int[]             $tt_ids    An array of term taxonomy IDs.
+	 * @param string            $taxonomy  Taxonomy slug.
 	 * @return void
 	 */
 	public function clear_cache_on_term_relationship( int $object_id, array $terms, array $tt_ids, string $taxonomy ): void {
