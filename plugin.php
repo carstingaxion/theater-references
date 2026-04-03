@@ -125,10 +125,8 @@ class Plugin {
 
 		// Cache invalidation hooks.
 		add_action( 'transition_post_status', array( $this, 'clear_cache_on_status_change' ), 10, 3 );
-		add_action( 'create_term', array( $this, 'clear_cache_on_term_change' ), 10, 3 );
-		add_action( 'edit_term', array( $this, 'clear_cache_on_term_change' ), 10, 3 );
 		add_action( 'delete_term', array( $this, 'clear_cache_on_term_change' ), 10, 3 );
-		add_action( 'set_object_terms', array( $this, 'clear_cache_on_term_relationship' ) );
+		add_action( 'set_object_terms', array( $this, 'clear_cache_on_term_relationship' ), 10, 4 );
 	}
 
 	/**
