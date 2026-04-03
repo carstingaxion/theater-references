@@ -183,6 +183,9 @@ class Plugin {
 			return;
 		}
 
+		// @todo #48 if GatherPress event, only if past event
+		// ...
+
 		if ( ( 'publish' === $new_status || 'publish' === $old_status ) && $new_status !== $old_status ) {
 			$this->cache_manager->clear_all();
 		}
@@ -221,6 +224,10 @@ class Plugin {
 		if ( ! $post || ! post_type_supports( $post->post_type, 'gatherpress_references' ) || $post->post_status !== 'publish' ) {
 			return;
 		}
+
+		// if GatherPress event, only if past event
+		// ...
+		// @todo #48 Add safeguard to only delete cache, when past events are related.
 
 		$all_taxonomies = $this->config_manager->get_all_taxonomies();
 
