@@ -5,10 +5,10 @@
  * @package GatherPress_References
  */
 
-// namespace GatherPress\References\Tests\Unit;
+namespace GatherPress\References\Tests\Unit;
 
 use GatherPress\References\Config_Manager;
-// use WP_UnitTestCase;
+use WP_UnitTestCase;
 
 /**
  * Class ConfigManagerTest

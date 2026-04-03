@@ -28,7 +28,7 @@ class BlockRendererTest extends WP_UnitTestCase {
 		// Ensure the render.php is loaded so Block_Renderer is available.
 		$render_file = dirname( __DIR__, 3 ) . '/src/render.php';
 		if ( file_exists( $render_file ) && ! class_exists( Block_Renderer::class ) ) {
-			require_once $render_file;
+			require_once $render_file; // phpcs:ignore WordPressVIPMinimum.Files.IncludingFile.UsingVariable
 		}
 	}
 
@@ -70,7 +70,7 @@ class BlockRendererTest extends WP_UnitTestCase {
 		$result   = $renderer->render(
 			array(
 				'postType' => 'nonexistent_post_type',
-			) 
+			)
 		);
 
 		$this->assertEmpty( $result );
@@ -109,7 +109,7 @@ class BlockRendererTest extends WP_UnitTestCase {
 				'refTermId'     => 99999,
 				'year'          => 1900,
 				'referenceType' => 'all',
-			) 
+			)
 		);
 
 		$this->assertEmpty( $result );
