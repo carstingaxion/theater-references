@@ -19,6 +19,8 @@
 	},
 	"main": "build/index.js",
 	"devDependencies": {
+		"@testing-library/react": "^16.3.2",
+		"@wordpress/block-editor": "^15.16.0",
 		"@wordpress/env": "^11.3.0",
 		"@wordpress/i18n": "^6.16.0",
 		"@wordpress/icons": "^12.1.0",
